@@ -1,0 +1,7 @@
+./*.lock
+dist/*
+node_modules/*
+.env
+*.log
+yarn.lock
+.node-version

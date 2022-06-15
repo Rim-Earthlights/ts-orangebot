@@ -1,0 +1,40 @@
+{
+    "dependencies": {
+        "@discordjs/builders": "^0.15.0",
+        "@discordjs/rest": "^0.5.0",
+        "@types/axios": "^0.14.0",
+        "@types/ejs": "^3.1.1",
+        "@types/node": "^17.0.43",
+        "@types/typescript": "^2.0.0",
+        "axios": "^0.27.2",
+        "discord.js": "^13.8.0",
+        "dotenv": "^16.0.1",
+        "ejs": "^3.1.8",
+        "eslint": "^8.17.0",
+        "eslint-config-prettier": "^8.5.0",
+        "fs": "^0.0.1-security",
+        "kysely": "^0.19.3",
+        "nodemon": "^2.0.16",
+        "prettier": "^2.7.0",
+        "ts-node": "^10.8.1",
+        "tsc": "^2.0.4",
+        "typescript": "^4.7.3"
+    },
+    "name": "ts-orangebot",
+    "version": "1.0.0",
+    "description": "[TypeScript] Discord Bot for Orange-Server.",
+    "main": "src/app.ts",
+    "author": "Rim Earthlights",
+    "license": "MIT",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "lint": "yarn run eslint src/**/*.ts",
+        "dev": "yarn run nodemon",
+        "compile": "yarn run tsc -p ."
+    },
+    "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "^5.28.0",
+        "@typescript-eslint/parser": "^5.28.0",
+        "eslint-config-google": "^0.14.0"
+    }
+}
