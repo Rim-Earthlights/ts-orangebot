@@ -33,7 +33,9 @@ client.on('messageCreate', async (message: Message) => {
     // mention to bot
     if (message.mentions.users.find((x) => x.id === client.user?.id)) {
         if (message.content.includes('言語は')) {
-            const res = `今動いている言語は[TypeScript]版だよ！今はまだ機能がないから許してね……\n`;
+            let res = `今動いている言語は[TypeScript]版だよ！今はまだ機能がないから許してね……\n`;
+            res += 'コードはここから見れるよ～！\n';
+            res += 'https://gitlab.com/Rim_EarthLights/ts-orangebot';
             message.reply(res);
             return;
         }
