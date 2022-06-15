@@ -1,5 +1,6 @@
 import { Message, Client, MessageEmbed } from 'discord.js';
 import { REST } from '@discordjs/rest';
+import * as SendCommand from './sendCommand';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -27,12 +28,14 @@ client.on('messageCreate', async (message: Message) => {
     if (message.author.bot) {
         return;
     }
-    console.log('Author:  ', message.author);
-    console.log('Content: ', message.content);
+    console.log('> Received Message');
+    console.log('  * Author:  ', message.author.tag);
+    console.log('  * Content: ', message.cleanContent);
+    console.log('');
 
     // mention to bot
     if (message.mentions.users.find((x) => x.id === client.user?.id)) {
-        if (message.content.includes('言語は')) {
+        if (message.content.match('言語は')) {
             let res = `今動いている言語は[TypeScript]版だよ！今はまだ機能がないから許してね……\n`;
             res += 'コードはここから見れるよ～！\n';
             res += 'https://gitlab.com/Rim_EarthLights/ts-orangebot';
@@ -46,10 +49,19 @@ client.on('messageCreate', async (message: Message) => {
     if (message.content.startsWith('.')) {
         const content = message.content.replace('.', '').trimEnd().split(' ');
         const command = content[0];
+        content.shift();
 
         switch (command) {
             case 'ping': {
-                message.channel.send('Pong!');
+                SendCommand.ping(message);
+                break;
+            }
+            case 'debug': {
+                SendCommand.debug(message, content);
+                break;
+            }
+            case 'dice': {
+                SendCommand.dice(message, content);
                 break;
             }
         }
