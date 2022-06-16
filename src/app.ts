@@ -1,7 +1,7 @@
 import { Message, Client, MessageEmbed } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import * as SendCommand from './sendCommand';
-import * as GREETING from './constant/greeting';
+import * as GREETING from './constant/words/greeting';
 import dotenv from 'dotenv';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ja';
@@ -31,6 +31,7 @@ client.on('messageCreate', async (message: Message) => {
     if (message.author.bot) {
         return;
     }
+
     console.log('> Received Message');
     console.log('  * Author:  ', message.author.tag);
     console.log('  * Content: ', message.cleanContent);
@@ -50,23 +51,23 @@ client.on('messageCreate', async (message: Message) => {
         if (message.content.match('おはよ')) {
             if (hour < 11) {
                 // 5:00 - 10:59
-                const num = SendCommand.getRndNumber(1, GREETING.OHAYOU.MORNING.length);
-                const result = GREETING.OHAYOU.MORNING[num - 1];
+                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.MORNING.length - 1);
+                const result = GREETING.OHAYOU.MORNING[num];
                 message.reply(result);
             } else if (hour < 17) {
                 // 11:00 - 16:59
-                const num = SendCommand.getRndNumber(1, GREETING.OHAYOU.NOON.length);
-                const result = GREETING.OHAYOU.NOON[num - 1];
+                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.NOON.length - 1);
+                const result = GREETING.OHAYOU.NOON[num];
                 message.reply(result);
             } else if (hour < 19) {
                 // 17:00 - 18:59
-                const num = SendCommand.getRndNumber(1, GREETING.OHAYOU.EVENING.length);
-                const result = GREETING.OHAYOU.EVENING[num - 1];
+                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.EVENING.length - 1);
+                const result = GREETING.OHAYOU.EVENING[num];
                 message.reply(result);
             } else if (hour >= 19 || hour < 5) {
                 // 19:00 - 4:59
-                const num = SendCommand.getRndNumber(1, GREETING.OHAYOU.NIGHT.length);
-                const result = GREETING.OHAYOU.NIGHT[num - 1];
+                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.NIGHT.length - 1);
+                const result = GREETING.OHAYOU.NIGHT[num];
                 message.reply(result);
             }
             return;
@@ -98,8 +99,12 @@ client.on('messageCreate', async (message: Message) => {
             }
             return;
         }
-        if (message.content.match('(かわい|かわよ)')) {
+        if (message.content.match('(かわい|かわよ|可愛い)')) {
             message.reply('えへへ～！ありがと嬉しい～！');
+            return;
+        }
+        if (message.content.match('(癒して|癒やして|いやして)')) {
+            message.reply('どしたの…？よしよし……');
             return;
         }
         if (message.content.match('(運勢|みくじ)')) {
