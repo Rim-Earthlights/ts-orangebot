@@ -8,7 +8,7 @@ import * as mention from './bot/mention';
 import dotenv from 'dotenv';
 import 'dayjs/locale/ja';
 import { routers } from './routers';
-import { DISCORD_CLIENT } from './constant/constants';
+import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
 
 dotenv.config();
 
@@ -65,6 +65,12 @@ DISCORD_CLIENT.once('ready', () => {
 });
 
 DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
+    const coordinationId = COORDINATION_ID.find((id) => id === message.author.id);
+    if (coordinationId) {
+        // TODO: 特定IDとの絡み/連携
+        return;
+    }
+
     // 発言者がbotの場合は落とす
     if (message.author.bot) {
         return;
