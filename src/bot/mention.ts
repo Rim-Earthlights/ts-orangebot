@@ -12,7 +12,11 @@ export async function morning(message: Message) {
     let result;
     const hour = getHour();
 
-    if (hour >= 5 && hour < 11) {
+    if (hour >= 19 || hour < 5) {
+        // 19:00 - 4:59
+        const num = getRndNumber(0, GREETING.morning.night.length - 1);
+        result = GREETING.morning.night[num];
+    } else if (hour >= 5 && hour < 11) {
         // 5:00 - 10:59
         const num = getRndNumber(0, GREETING.morning.morning.length - 1);
         result = GREETING.morning.morning[num];
@@ -24,10 +28,6 @@ export async function morning(message: Message) {
         // 17:00 - 18:59
         const num = getRndNumber(0, GREETING.morning.evening.length - 1);
         result = GREETING.morning.evening[num];
-    } else if (hour >= 19 || hour < 5) {
-        // 19:00 - 4:59
-        const num = getRndNumber(0, GREETING.morning.night.length - 1);
-        result = GREETING.morning.night[num];
     }
 
     message.reply(result ? result : '');
