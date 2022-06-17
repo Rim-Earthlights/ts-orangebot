@@ -1,32 +1,70 @@
-import { Message, Client, MessageEmbed } from 'discord.js';
-import { REST } from '@discordjs/rest';
-import * as SendCommand from './sendCommand';
-import * as GREETING from './constant/words/greeting';
+import Express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import { Message } from 'discord.js';
+import * as SendCommand from './bot/commands';
+import * as mention from './bot/mention';
 import dotenv from 'dotenv';
-import dayjs from 'dayjs';
 import 'dayjs/locale/ja';
+import { routers } from './routers';
+import { DISCORD_CLIENT } from './constant/constants';
 
 dotenv.config();
+
+/**
+ * =======================
+ * API Server
+ * =======================
+ */
+// express/helmet/cors
+const app = Express();
+app.use(helmet());
+app.use(cors());
+
+// ejs
+app.set('view engine', 'ejs');
+
+//body-parser
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+// port
+const port = Number(process.env.PORT) || 4044;
+// const user = process.env.USER ? process.env.USER : 'default';
+const hostName = process.env.HOSTNAME ? process.env.HOSTNAME : 'localhost';
+
+// route settings in routers.ts
+app.use('/', routers);
+
+// No match uri
+app.use((req, res) => {
+    res.status(404).send({ status: 404, message: 'NOT FOUND' });
+});
+
+// launch server.
+app.listen(port, hostName);
+
+/**
+ * =======================
+ * Bot Process
+ * =======================
+ */
 
 if (!process.env.TOKEN) {
     console.log('');
     throw Error('env/token is undefind');
 }
 
-const commands = [{ name: 'ping', description: 'reply with pong' }];
-const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+// const commands = [{ name: 'ping', description: 'reply with pong' }];
+// const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-const client = new Client({
-    partials: ['CHANNEL'],
-    intents: ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES']
-});
-
-client.once('ready', () => {
+DISCORD_CLIENT.once('ready', () => {
     console.log('Ready!');
-    console.log(`Logged In: ${client?.user?.tag}`);
+    console.log(`Logged In: ${DISCORD_CLIENT?.user?.tag}`);
 });
 
-client.on('messageCreate', async (message: Message) => {
+DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     // 発言者がbotの場合は落とす
     if (message.author.bot) {
         return;
@@ -38,39 +76,12 @@ client.on('messageCreate', async (message: Message) => {
     console.log('');
 
     // mention to bot
-    if (message.mentions.users.find((x) => x.id === client.user?.id)) {
-        const hour = Number(dayjs().format('HH'));
-
-        if (message.content.match('言語は')) {
-            let res = `今動いている言語は[TypeScript]版だよ！今はまだ機能がないから許してね……\n`;
-            res += 'コードはここから見れるよ～！\n';
-            res += 'https://gitlab.com/Rim_EarthLights/ts-orangebot';
-            message.reply(res);
-            return;
+    if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
+        if (message.content.match('(言語は|ヘルプ)')) {
+            SendCommand.help(message);
         }
         if (message.content.match('おはよ')) {
-            if (hour < 11) {
-                // 5:00 - 10:59
-                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.MORNING.length - 1);
-                const result = GREETING.OHAYOU.MORNING[num];
-                message.reply(result);
-            } else if (hour < 17) {
-                // 11:00 - 16:59
-                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.NOON.length - 1);
-                const result = GREETING.OHAYOU.NOON[num];
-                message.reply(result);
-            } else if (hour < 19) {
-                // 17:00 - 18:59
-                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.EVENING.length - 1);
-                const result = GREETING.OHAYOU.EVENING[num];
-                message.reply(result);
-            } else if (hour >= 19 || hour < 5) {
-                // 19:00 - 4:59
-                const num = SendCommand.getRndNumber(0, GREETING.OHAYOU.NIGHT.length - 1);
-                const result = GREETING.OHAYOU.NIGHT[num];
-                message.reply(result);
-            }
-            return;
+            mention.morning(message);
         }
         if (message.content.match('(こんにちは|こんにちわ)')) {
             message.reply('こんにちは～！');
@@ -80,24 +91,8 @@ client.on('messageCreate', async (message: Message) => {
             message.reply('こんばんは～！');
             return;
         }
-        if (message.content.match('(おやすみ|寝る)')) {
-            if (hour >= 19 || hour === 0) {
-                // 20:00 - 0:59
-                message.reply('おやすみなさーい！明日もいっぱい遊ぼうね！');
-            } else if (hour < 5) {
-                // 1:00 - 4:59
-                message.reply('すや……すや……おやすみなさい……');
-            } else if (hour < 11) {
-                // 5:00 - 10:59
-                message.reply('え、私起きたところなんだけど…！？');
-            } else if (hour < 17) {
-                // 11:00 - 16:59
-                message.reply('お昼寝するの！あんまり寝すぎないようにね～！');
-            } else if (hour < 19) {
-                // 17:00 - 18:59
-                message.reply('疲れちゃった？ちゃんと目覚まし合わせた～？');
-            }
-            return;
+        if (message.content.match('(おやすみ|寝るね|ねるね)')) {
+            mention.goodNight(message);
         }
         if (message.content.match('(かわい|かわよ|可愛い)')) {
             message.reply('えへへ～！ありがと嬉しい～！');
@@ -115,7 +110,7 @@ client.on('messageCreate', async (message: Message) => {
             SendCommand.weatherToday(message);
             return;
         }
-        message.reply('呼んだ？');
+        message.reply('ごめんなさい、わからなかった……');
     }
 
     // command
@@ -125,6 +120,10 @@ client.on('messageCreate', async (message: Message) => {
         content.shift();
 
         switch (command) {
+            case 'help': {
+                SendCommand.help(message);
+                break;
+            }
             case 'ping': {
                 SendCommand.ping(message);
                 break;
@@ -149,4 +148,4 @@ client.on('messageCreate', async (message: Message) => {
     }
 });
 
-client.login(process.env.TOKEN);
+DISCORD_CLIENT.login(process.env.TOKEN);

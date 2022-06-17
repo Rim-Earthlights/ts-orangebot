@@ -1,35 +1,35 @@
 // おはよう
-export const OHAYOU = {
-    MORNING: ['おはよ～！今日も元気に頑張ってこ～！'],
-    NOON: ['おはよ？ねぼすけさんだ！'],
-    EVENING: ['もう夕方だよ！？ねすぎ！！'],
-    NIGHT: ['おは……よ……？もう夜だよ……？'],
-    MIDNIGHT: ['おは……よ……？もう夜だよ……？']
+export const morning = {
+    morning: ['おはよ～！今日も元気に頑張ってこ～！'],
+    noon: ['おはよ？ねぼすけさんだ！'],
+    evening: ['もう夕方だよ！？ねすぎ～！！'],
+    night: ['おは……よ……？もう夜だよ……？'],
+    midnight: ['すや……すや……って、今起きた……の…？']
 };
 
 // こんにちは
-export const KONCHA = {
-    MORNING: [],
-    NOON: [],
-    EVENING: [],
-    NIGHT: [],
-    MIDNIGHT: []
+export const noon = {
+    morning: [],
+    noon: [],
+    evening: [],
+    night: [],
+    midnight: []
 };
 
 // こんばんは
-export const KONBAN = {
-    MORNING: [],
-    NOON: [],
-    EVENING: [],
-    NIGHT: [],
-    MIDNIGHT: []
+export const evening = {
+    morning: [],
+    noon: [],
+    evening: [],
+    night: [],
+    midnight: []
 };
 
 // おやすみ
-export const OYASUMI = {
-    MORNING: [],
-    NOON: [],
-    EVENING: [],
-    NIGHT: [],
-    MIDNIGHT: []
+export const sleep = {
+    morning: [],
+    noon: [],
+    evening: [],
+    night: [],
+    midnight: []
 };

@@ -1,4 +1,5 @@
 import { Message, MessageEmbed } from 'discord.js';
+import { getRndNumber } from '../common/common';
 
 /**
  * Ping-Pong
@@ -20,6 +21,29 @@ export async function debug(message: Message, args?: string[]) {
     message.reply(`args: ${args}`);
 }
 
+/**
+ * 現在の言語、コマンドを表示する
+ * @param message
+ */
+export async function help(message: Message) {
+    let res = `今動いている言語は[TypeScript]版だよ！\n`;
+    res += 'コマンドはここだよ～！';
+    res += '```';
+    res += '.dice [ダイスの振る数] [ダイスの面の数]';
+    res += ' > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))';
+    res += '.luck';
+    res += ' > おみくじを引く';
+    res += '```';
+    message.reply(res);
+    return;
+}
+
+/**
+ * サイコロを振る
+ * @param message
+ * @param args 0: x回振る 1: x面体
+ * @returns
+ */
 export async function dice(message: Message, args?: string[]) {
     if (args == undefined || args.length < 2) {
         message.reply('どう振っていいのかわかんない！！\n(例: [.dice 5 6] 6面体ダイスを5回振る のように指定してね)');
@@ -72,6 +96,7 @@ export async function dice(message: Message, args?: string[]) {
  * @param args 地名
  * @returns
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function weather(message: Message, args?: string[]) {
     console.log('Not Implements.');
     return;
@@ -81,6 +106,7 @@ export async function weather(message: Message, args?: string[]) {
  * 今日の天気を返す.
  * @param message 受け取ったメッセージング情報
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function weatherToday(message: Message) {
     console.log('Not Implements.');
     return;
@@ -127,14 +153,4 @@ export async function luck(message: Message) {
 
     message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
     return;
-}
-
-/**
- * 乱数生成機
- * n-mまでの整数を出力する.
- * @param n 最小値
- * @param m 最大値
- */
-export function getRndNumber(n: number, m: number) {
-    return Math.floor(Math.random() * (m + 1 - n)) + n;
 }
