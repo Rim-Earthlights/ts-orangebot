@@ -12,7 +12,7 @@ export async function morning(message: Message) {
     let result;
     const hour = getHour();
 
-    if (hour < 11) {
+    if (hour >= 5 || hour < 11) {
         // 5:00 - 10:59
         const num = getRndNumber(0, GREETING.morning.morning.length - 1);
         result = GREETING.morning.morning[num];

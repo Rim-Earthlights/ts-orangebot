@@ -88,6 +88,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         }
         if (message.content.match('おはよ')) {
             mention.morning(message);
+            return;
         }
         if (message.content.match('(こんにちは|こんにちわ)')) {
             message.reply('こんにちは～！');
@@ -99,6 +100,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         }
         if (message.content.match('(おやすみ|寝るね|ねるね)')) {
             mention.goodNight(message);
+            return;
         }
         if (message.content.match('(かわい|かわよ|可愛い)')) {
             message.reply('えへへ～！ありがと嬉しい～！');
