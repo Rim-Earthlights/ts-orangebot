@@ -4,6 +4,13 @@ import { DISCORD_CLIENT } from '../constant/constants';
 
 export const messagingRouter = Express.Router();
 
+/**
+ * /message POST
+ * botへ直接メッセージを送信させる
+ *
+ * @param req.body.channel 指定チャンネルID
+ * @param req.body.message 送信メッセージ
+ */
 messagingRouter.post('/message', (req: Express.Request, res: Express.Response) => {
     console.log('> Send Chat');
     console.log(`  * channel: ${req.body.channel}`);
