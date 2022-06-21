@@ -189,26 +189,26 @@ export async function weatherToday(message: Message) {
  * @returns
  */
 export async function luck(message: Message) {
-    const rnd = getRndNumber(0, 999);
+    const rnd = Math.random();
     let luck = '';
     let luckDescription = '';
 
-    if (rnd < 141) {
+    if (rnd < 0.141) {
         luck = '大吉';
         luckDescription = 'おめでとういいことあるよ！！！';
-    } else if (rnd < 426) {
+    } else if (rnd < 0.426) {
         luck = '吉';
         luckDescription = '結構よき！誇っていいよ！';
-    } else if (rnd < 560) {
+    } else if (rnd < 0.56) {
         luck = '中吉';
         luckDescription = 'それなりにいいことありそう。';
-    } else if (rnd < 692) {
+    } else if (rnd < 0.692) {
         luck = '小吉';
         luckDescription = 'ふつうがいちばんだよね。';
-    } else if (rnd < 831) {
+    } else if (rnd < 0.831) {
         luck = '末吉';
         luckDescription = 'まあこういうときもあるよね。';
-    } else if (rnd < 975) {
+    } else if (rnd < 0.975) {
         luck = '凶';
         luckDescription = '気をつけようね。';
     } else {
