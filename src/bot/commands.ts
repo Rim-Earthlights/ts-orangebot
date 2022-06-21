@@ -1,5 +1,9 @@
 import { Message, MessageEmbed } from 'discord.js';
 import { getRndNumber } from '../common/common';
+import axios from 'axios';
+import { Forecast, FORECAST_URI } from '../constant/forecast/forecast';
+import { Geocoding, GEOCODING_URI } from '../constant/forecast/geocoding';
+import url from 'url';
 
 /**
  * Ping-Pong
@@ -54,7 +58,16 @@ export async function dice(message: Message, args?: string[]) {
     const diceMax = Number(args[1]);
 
     if (diceNum <= 0 || diceMax <= 0) {
-        message.reply('いじわる！きらい！\n(数字に0以下はだめだよ)');
+        const send = new MessageEmbed().setColor('#ff0000').setTitle('失敗').setDescription('ダイスの数が0以下です');
+
+        message.reply({ content: `いじわる！きらい！`, embeds: [send] });
+        return;
+    }
+
+    if (diceNum >= 1000) {
+        const send = new MessageEmbed().setColor('#ff0000').setTitle('失敗').setDescription('ダイスの数が多すぎます');
+
+        message.reply({ content: `一度にそんなに振れないよ～……`, embeds: [send] });
         return;
     }
 
@@ -63,10 +76,21 @@ export async function dice(message: Message, args?: string[]) {
         result.push(getRndNumber(1, diceMax));
     }
 
+    const diceResult = result.join(', ');
+    if (diceResult.length >= 4096) {
+        const send = new MessageEmbed()
+            .setColor('#0099ff')
+            .setTitle('失敗')
+            .setDescription('4096文字以上の文字の送信に失敗');
+
+        message.reply({ content: `振らせすぎ！もうちょっと少なくして～！`, embeds: [send] });
+        return;
+    }
+
     const send = new MessageEmbed()
         .setColor('#0099ff')
         .setTitle('サイコロ振ったよ～！')
-        .setDescription(result.join(', '))
+        .setDescription(diceResult)
         .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/dice.jpg')
         .addFields({
             name: '足した結果',
@@ -98,8 +122,55 @@ export async function dice(message: Message, args?: string[]) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function weather(message: Message, args?: string[]) {
-    console.log('Not Implements.');
-    return;
+    try {
+        const forecastKey = process.env.FORECAST_KEY;
+        if (!forecastKey) {
+            throw new Error('天気情報取得用のAPIキーが登録されていません');
+        }
+
+        const geoResponse = await axios.get(GEOCODING_URI, {
+            params: new url.URLSearchParams({
+                q: '相模原市',
+                limit: '5',
+                appid: forecastKey,
+                lang: 'ja',
+                unit: 'metric'
+            })
+        });
+
+        const geoList = <Geocoding[]>geoResponse.data;
+
+        const geocoding = geoList.find((g) => g.country === 'JP');
+
+        if (geocoding == undefined) {
+            throw new Error('名前から場所を検索できませんでした');
+        }
+
+        const forecastResponse = await axios.get(FORECAST_URI, {
+            params: new url.URLSearchParams({
+                lat: geocoding.lat.toString(),
+                lon: geocoding.lon.toString(),
+                appid: forecastKey,
+                lang: 'ja',
+                units: 'metric'
+            })
+        });
+        const forecast = <Forecast>forecastResponse.data;
+        let description = `${forecast.weather[0].main}(${forecast.weather[0].description})`;
+        description += ``;
+
+        const send = new MessageEmbed()
+            .setColor('#0099ff')
+            .setTitle('相模原市の天気')
+            .setDescription(JSON.stringify(description, null, 2));
+
+        message.reply({ content: `今日の天気ね！はいどーぞ！`, embeds: [send] });
+    } catch (e) {
+        const error = <Error>e;
+        const send = new MessageEmbed().setColor('#f00').setTitle('エラー').setDescription(error.message);
+
+        message.reply({ content: `ありゃ、エラーみたい…なんだろ？`, embeds: [send] });
+    }
 }
 
 /**
