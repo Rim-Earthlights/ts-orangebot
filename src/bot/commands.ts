@@ -192,17 +192,20 @@ export async function weather(message: Message, args?: string[]) {
         const onecall = <Onecall>onecallResponse.data;
 
         let description: string[] = [];
+        let icon = '';
         if (day === 0) {
             description = await weatherToday(forecast, onecall);
+            icon = forecast.weather[0].icon;
         } else {
             description = await weatherDay(onecall, day);
+            icon = onecall.daily[day].weather[0].icon;
         }
 
         const send = new MessageEmbed()
             .setColor('#0099ff')
             .setTitle(`${cityName} の天気`)
             .setDescription(description.join('\n'))
-            .setThumbnail(`http://openweathermap.org/img/wn/${forecast.weather[0].icon}@2x.png`);
+            .setThumbnail(`http://openweathermap.org/img/wn/${icon}@2x.png`);
 
         if (day === 0) {
             message.reply({ content: `今日の天気ね！はいどーぞ！`, embeds: [send] });
