@@ -233,8 +233,8 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
     const weather = forecast.weather[0].description;
     const temp = forecast.main.temp.toFixed(1);
     const feelLike = forecast.main.feels_like.toFixed(1);
-    const tempMin = forecast.main.temp_min.toFixed(1);
-    const tempMax = forecast.main.temp_max.toFixed(1);
+    const tempMin = onecall.daily[0].temp.min.toFixed(1);
+    const tempMax = onecall.daily[0].temp.max.toFixed(1);
 
     // 降水確率
     const popDay = (onecall.daily[0].pop * 100).toFixed(0);
@@ -272,14 +272,15 @@ async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
     const tempMax = onecall.daily[index].temp.max.toFixed(1);
 
     // 降水確率
-    const popDay = (onecall.daily[0].pop * 100).toFixed(0);
-    const humidityDay = onecall.daily[0].humidity;
+    const popDay = (onecall.daily[index].pop * 100).toFixed(0);
+    const humidityDay = onecall.daily[index].humidity;
     // UVインデックス
     const uvi = uvstr(onecall.daily[index].uvi);
     // 風
     const windDeg = findDeg(onecall.daily[index].wind_deg);
     const windSpeed = onecall.daily[index].wind_speed.toFixed(0);
 
+    // 情報の整形
     const description = [];
     description.push(`天候: ${weather}`);
     description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);

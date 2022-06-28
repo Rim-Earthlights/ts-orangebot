@@ -125,11 +125,22 @@ function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('(天気|てんき)')) {
-        const match = message.content.match(/\w+(区|市|村)/);
-        if (match == null) {
+        const cityName = message.content.match(/ .+(区|市|村)/);
+        if (cityName == null) {
             return;
         }
-        SendCommand.weather(message, [match[0]]);
+        const when = message.content.match(/今日|明日|\d日後/);
+        let day = 0;
+        if (when != null) {
+            if (when[0] === '明日') {
+                day++;
+            }
+            if (when[0].includes('日後')) {
+                const d = when[0].replace('日後', '');
+                day = Number(d);
+            }
+        }
+        SendCommand.weather(message, [cityName[0].trimStart(), day.toString()]);
         return;
     }
     if (message.content.match(/\d+d\d+/)) {
