@@ -125,7 +125,7 @@ export async function dice(message: Message, args?: string[]) {
  */
 export async function weather(message: Message, args?: string[]) {
     try {
-        const forecastKey = process.env.FORECAST_KEY;
+        const forecastKey = CONFIG.FORECAST_KEY;
         if (!forecastKey) {
             throw new Error('天気情報取得用のAPIキーが登録されていません');
         }
