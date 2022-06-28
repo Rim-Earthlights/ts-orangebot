@@ -237,6 +237,7 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
     const tempMax = forecast.main.temp_max.toFixed(1);
 
     // 降水確率
+    const popDay = (onecall.daily[0].pop * 100).toFixed(0);
     const humidityDay = onecall.daily[0].humidity;
     // UVインデックス
     const uvi = uvstr(onecall.daily[0].uvi);
@@ -249,7 +250,7 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
     description.push(`天候: ${weather}`);
     description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
     description.push(`体感: ${feelLike} ℃`);
-    description.push(`降水確率: ${humidityDay} ％`);
+    description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
 
     description.push(`風速: ${windDeg} ${windSpeed}m/s`);
     description.push(`UV指数: ${uvi}`);
@@ -271,7 +272,8 @@ async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
     const tempMax = onecall.daily[index].temp.max.toFixed(1);
 
     // 降水確率
-    const humidityDay = onecall.daily[index].humidity;
+    const popDay = (onecall.daily[0].pop * 100).toFixed(0);
+    const humidityDay = onecall.daily[0].humidity;
     // UVインデックス
     const uvi = uvstr(onecall.daily[index].uvi);
     // 風
@@ -282,7 +284,7 @@ async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
     description.push(`天候: ${weather}`);
     description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
     description.push(`体感: ${feelLike} ℃`);
-    description.push(`降水確率: ${humidityDay} ％`);
+    description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
 
     description.push(`風速: ${windDeg} ${windSpeed}m/s`);
     description.push(`UV指数: ${uvi}`);
