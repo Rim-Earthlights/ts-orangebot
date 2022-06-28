@@ -1,0 +1,7 @@
+export const CONFIG = {
+    HOSTNAME: '127.0.0.1',
+    PORT: '4044',
+    USER: 'USER',
+    TOKEN: 'YOUR_DISCORD_TOKEN',
+    FORECAST_KEY: 'YOUR_FORECAST_KEY'
+};

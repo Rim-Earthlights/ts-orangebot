@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import 'dayjs/locale/ja';
 import { routers } from './routers';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
+import { CONFIG } from './config/config';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ dotenv.config();
  * API Server
  * =======================
  */
+
 // express/helmet/cors
 const app = Express();
 app.use(helmet());
@@ -30,9 +32,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // port
-const port = Number(process.env.PORT) || 4044;
+const port = CONFIG.PORT;
 // const user = process.env.USER ? process.env.USER : 'default';
-const hostName = process.env.HOSTNAME ? process.env.HOSTNAME : 'localhost';
+const hostName = CONFIG.HOSTNAME;
 
 // route settings in routers.ts
 app.use('/', routers);
@@ -50,14 +52,6 @@ app.listen(port, hostName);
  * Bot Process
  * =======================
  */
-
-if (!process.env.TOKEN) {
-    console.log('');
-    throw Error('env/token is undefind');
-}
-
-// const commands = [{ name: 'ping', description: 'reply with pong' }];
-// const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 DISCORD_CLIENT.once('ready', () => {
     console.log('Ready!');
@@ -83,77 +77,109 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
 
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
-        if (message.content.match('(言語は|ヘルプ)')) {
-            SendCommand.help(message);
-        }
-        if (message.content.match('おはよ')) {
-            mention.morning(message);
-            return;
-        }
-        if (message.content.match('(こんにちは|こんにちわ)')) {
-            message.reply('こんにちは～！');
-            return;
-        }
-        if (message.content.match('(こんばんは|こんばんわ)')) {
-            message.reply('こんばんは～！');
-            return;
-        }
-        if (message.content.match('(おやすみ|寝るね|ねるね)')) {
-            mention.goodNight(message);
-            return;
-        }
-        if (message.content.match('(かわい|かわよ|可愛い)')) {
-            message.reply('えへへ～！ありがと嬉しい～！');
-            return;
-        }
-        if (message.content.match('(癒して|癒やして|いやして)')) {
-            message.reply('どしたの…？よしよし……');
-            return;
-        }
-        if (message.content.match('(運勢|みくじ)')) {
-            SendCommand.luck(message);
-            return;
-        }
-        if (message.content.match('(天気|てんき)')) {
-            SendCommand.weatherToday(message);
-            return;
-        }
-        message.reply('ごめんなさい、わからなかった……');
+        wordSelector(message);
     }
 
     // command
     if (message.content.startsWith('.')) {
-        const content = message.content.replace('.', '').trimEnd().split(' ');
-        const command = content[0];
-        content.shift();
-
-        switch (command) {
-            case 'help': {
-                SendCommand.help(message);
-                break;
-            }
-            case 'ping': {
-                SendCommand.ping(message);
-                break;
-            }
-            case 'debug': {
-                SendCommand.debug(message, content);
-                break;
-            }
-            case 'dice': {
-                SendCommand.dice(message, content);
-                break;
-            }
-            case 'tenki': {
-                SendCommand.weather(message, content);
-                break;
-            }
-            case 'luck': {
-                SendCommand.luck(message);
-                break;
-            }
-        }
+        commandSelector(message);
     }
 });
 
-DISCORD_CLIENT.login(process.env.TOKEN);
+/**
+ * 反応ワードから処理を実行する
+ * @param message 渡されたメッセージ
+ * @returns
+ */
+function wordSelector(message: Message) {
+    if (message.content.match('(言語は|ヘルプ)')) {
+        SendCommand.help(message);
+        return;
+    }
+    if (message.content.match('おはよ')) {
+        mention.morning(message);
+        return;
+    }
+    if (message.content.match('(こんにちは|こんにちわ)')) {
+        message.reply('こんにちは～！');
+        return;
+    }
+    if (message.content.match('(こんばんは|こんばんわ)')) {
+        message.reply('こんばんは～！');
+        return;
+    }
+    if (message.content.match('(おやすみ|寝るね|ねるね)')) {
+        mention.goodNight(message);
+        return;
+    }
+    if (message.content.match('(かわい|かわよ|可愛い)')) {
+        message.reply('えへへ～！ありがと嬉しい～！');
+        return;
+    }
+    if (message.content.match('(癒して|癒やして|いやして)')) {
+        message.reply('どしたの…？よしよし……');
+        return;
+    }
+    if (message.content.match('(運勢|みくじ)')) {
+        SendCommand.luck(message);
+        return;
+    }
+    if (message.content.match('(天気|てんき)')) {
+        const match = message.content.match(/\w+(区|市|村)/);
+        if (match == null) {
+            return;
+        }
+        SendCommand.weather(message, [match[0]]);
+        return;
+    }
+    if (message.content.match(/\d+d\d+/)) {
+        const match = message.content.match(/\d+d\d+/);
+        if (match == null) {
+            return;
+        }
+        const dice = match[0].split('d');
+        SendCommand.dice(message, dice);
+        return;
+    }
+    message.reply('ごめんなさい、わからなかった……');
+}
+
+/**
+ * 渡されたコマンドから処理を実行する
+ *
+ * @param command 渡されたメッセージ
+ */
+function commandSelector(message: Message) {
+    const content = message.content.replace('.', '').trimEnd().split(' ');
+    const command = content[0];
+    content.shift();
+
+    switch (command) {
+        case 'help': {
+            SendCommand.help(message);
+            break;
+        }
+        case 'ping': {
+            SendCommand.ping(message);
+            break;
+        }
+        case 'debug': {
+            SendCommand.debug(message, content);
+            break;
+        }
+        case 'dice': {
+            SendCommand.dice(message, content);
+            break;
+        }
+        case 'tenki': {
+            SendCommand.weather(message, content);
+            break;
+        }
+        case 'luck': {
+            SendCommand.luck(message);
+            break;
+        }
+    }
+}
+
+DISCORD_CLIENT.login(CONFIG.TOKEN);

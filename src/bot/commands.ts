@@ -1,9 +1,12 @@
 import { Message, MessageEmbed } from 'discord.js';
 import { getRndNumber } from '../common/common';
 import axios from 'axios';
-import { Forecast, FORECAST_URI } from '../constant/forecast/forecast';
-import { Geocoding, GEOCODING_URI } from '../constant/forecast/geocoding';
+import { Forecast, FORECAST_URI } from '../interface/forecast';
+import { Geocoding, GEOCODING_URI } from '../interface/geocoding';
 import url from 'url';
+import { getAsync } from '../common/webWrapper';
+import { Onecall, ONECALL_URI } from '../interface/onecall';
+import { CONFIG } from '../config/config';
 
 /**
  * Ping-Pong
@@ -31,13 +34,13 @@ export async function debug(message: Message, args?: string[]) {
  */
 export async function help(message: Message) {
     let res = `今動いている言語は[TypeScript]版だよ！\n`;
-    res += 'コマンドはここだよ～！';
-    res += '```';
-    res += '.dice [ダイスの振る数] [ダイスの面の数]';
-    res += ' > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))';
-    res += '.luck';
-    res += ' > おみくじを引く';
-    res += '```';
+    res += 'コマンドはここだよ～！\n';
+    res += '```\n';
+    res += '.dice [ダイスの振る数] [ダイスの面の数]\n';
+    res += ' > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))\n';
+    res += '.luck\n';
+    res += ' > おみくじを引く\n';
+    res += '```\n';
     message.reply(res);
     return;
 }
@@ -120,23 +123,34 @@ export async function dice(message: Message, args?: string[]) {
  * @param args 地名
  * @returns
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function weather(message: Message, args?: string[]) {
     try {
         const forecastKey = process.env.FORECAST_KEY;
         if (!forecastKey) {
             throw new Error('天気情報取得用のAPIキーが登録されていません');
         }
+        if (args == undefined || args.length === 0) {
+            throw new Error('地名が入力されていません');
+        }
 
-        const geoResponse = await axios.get(GEOCODING_URI, {
-            params: new url.URLSearchParams({
-                q: '相模原市',
+        const cityName = args[0];
+        let day = 0;
+
+        const addDay = Number(args[1]);
+        if (addDay != undefined && addDay <= 6) {
+            day = day + addDay;
+        }
+
+        const geoResponse = await getAsync(
+            GEOCODING_URI,
+            new url.URLSearchParams({
+                q: cityName,
                 limit: '5',
                 appid: forecastKey,
                 lang: 'ja',
                 unit: 'metric'
             })
-        });
+        );
 
         const geoList = <Geocoding[]>geoResponse.data;
 
@@ -146,25 +160,57 @@ export async function weather(message: Message, args?: string[]) {
             throw new Error('名前から場所を検索できませんでした');
         }
 
-        const forecastResponse = await axios.get(FORECAST_URI, {
-            params: new url.URLSearchParams({
+        console.log('> return geocoding API');
+        console.log(`  * lat: ${geocoding.lat.toString()}, lon: ${geocoding.lon.toString()}`);
+        console.log(`  * name: ${geocoding.name}`);
+        console.log('');
+
+        const forecastResponse = await getAsync(
+            FORECAST_URI,
+            new url.URLSearchParams({
                 lat: geocoding.lat.toString(),
                 lon: geocoding.lon.toString(),
                 appid: forecastKey,
                 lang: 'ja',
                 units: 'metric'
             })
-        });
+        );
+
+        const onecallResponse = await getAsync(
+            ONECALL_URI,
+            new url.URLSearchParams({
+                lat: geocoding.lat.toString(),
+                lon: geocoding.lon.toString(),
+                exclude: 'current,minutely,hourly',
+                appid: forecastKey,
+                units: 'metric',
+                lang: 'ja'
+            })
+        );
+
         const forecast = <Forecast>forecastResponse.data;
-        let description = `${forecast.weather[0].main}(${forecast.weather[0].description})`;
-        description += ``;
+        const onecall = <Onecall>onecallResponse.data;
+
+        let description: string[] = [];
+        if (day === 0) {
+            description = await weatherToday(forecast, onecall);
+        } else {
+            description = await weatherDay(onecall);
+        }
 
         const send = new MessageEmbed()
             .setColor('#0099ff')
-            .setTitle('相模原市の天気')
-            .setDescription(JSON.stringify(description, null, 2));
+            .setTitle(`${cityName} の天気`)
+            .setDescription(description.join('\n'))
+            .setThumbnail(`http://openweathermap.org/img/wn/${forecast.weather[0].icon}@2x.png`);
 
-        message.reply({ content: `今日の天気ね！はいどーぞ！`, embeds: [send] });
+        if (day === 0) {
+            message.reply({ content: `今日の天気ね！はいどーぞ！`, embeds: [send] });
+        } else if (day === 1) {
+            message.reply({ content: `明日の天気ね！はいどーぞ！`, embeds: [send] });
+        } else {
+            message.reply({ content: `${day}日後の天気ね！はいどーぞ！`, embeds: [send] });
+        }
     } catch (e) {
         const error = <Error>e;
         const send = new MessageEmbed().setColor('#f00').setTitle('エラー').setDescription(error.message);
@@ -178,9 +224,65 @@ export async function weather(message: Message, args?: string[]) {
  * @param message 受け取ったメッセージング情報
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function weatherToday(message: Message) {
-    console.log('Not Implements.');
-    return;
+export async function weatherToday(forecast: Forecast, onecall: Onecall) {
+    const forecastKey = CONFIG.FORECAST_KEY;
+
+    // 気温や気象情報
+    const weather = forecast.weather[0].description;
+    const temp = forecast.main.temp.toFixed(1);
+    const feelLike = forecast.main.feels_like.toFixed(1);
+    const tempMin = forecast.main.temp_min.toFixed(1);
+    const tempMax = forecast.main.temp_max.toFixed(1);
+
+    // 降水確率
+    const humidityDay = onecall.daily[0].humidity;
+    // UVインデックス
+    const uvi = onecall.daily[0].uvi;
+    // 風
+    const windDeg = forecast.wind.deg;
+    const windSpeed = forecast.wind.speed.toFixed(0);
+
+    // 情報の整形
+    const description = [];
+    description.push(`天候: ${weather}`);
+    description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
+    description.push(`体感: ${feelLike} ℃`);
+    description.push(`降水確率: ${humidityDay} ％`);
+
+    if (uvi >= 11) {
+        description.push(`UV指数: ${uvi} (極端に強い)`);
+    } else if (uvi >= 8) {
+        description.push(`UV指数: ${uvi} (非常に強い)`);
+    } else if (uvi >= 6) {
+        description.push(`UV指数: ${uvi} (強い)`);
+    } else if (uvi >= 3) {
+        description.push(`UV指数: ${uvi} (中程度)`);
+    } else {
+        description.push(`UV指数: ${uvi} (弱い)`);
+    }
+
+    if (windDeg >= 337.5 || windDeg <= 22.5) {
+        description.push(`風速: 北 ${windSpeed}m/s`);
+    } else if (windDeg > 292.5) {
+        description.push(`風速: 北西 ${windSpeed}m/s`);
+    } else if (windDeg > 247.5) {
+        description.push(`風速: 西 ${windSpeed}m/s`);
+    } else if (windDeg > 202.5) {
+        description.push(`風速: 南西 ${windSpeed}m/s`);
+    } else if (windDeg > 157.5) {
+        description.push(`風速: 南 ${windSpeed}m/s`);
+    } else if (windDeg > 112.5) {
+        description.push(`風速: 南東 ${windSpeed}m/s`);
+    } else if (windDeg > 67.5) {
+        description.push(`風速: 東 ${windSpeed}m/s`);
+    } else {
+        description.push(`風速: 北東 ${windSpeed}m/s`);
+    }
+    return description;
+}
+
+async function weatherDay(onecall: Onecall): Promise<string[]> {
+    throw 'Not Implement Error';
 }
 
 /**
