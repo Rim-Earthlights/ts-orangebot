@@ -195,7 +195,7 @@ export async function weather(message: Message, args?: string[]) {
         if (day === 0) {
             description = await weatherToday(forecast, onecall);
         } else {
-            description = await weatherDay(onecall);
+            description = await weatherDay(onecall, day);
         }
 
         const send = new MessageEmbed()
@@ -221,12 +221,11 @@ export async function weather(message: Message, args?: string[]) {
 
 /**
  * 今日の天気を返す.
- * @param message 受け取ったメッセージング情報
+ * @param forecast
+ * @param onecall
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function weatherToday(forecast: Forecast, onecall: Onecall) {
-    const forecastKey = CONFIG.FORECAST_KEY;
-
     // 気温や気象情報
     const weather = forecast.weather[0].description;
     const temp = forecast.main.temp.toFixed(1);
@@ -237,9 +236,9 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
     // 降水確率
     const humidityDay = onecall.daily[0].humidity;
     // UVインデックス
-    const uvi = onecall.daily[0].uvi;
+    const uvi = uvstr(onecall.daily[0].uvi);
     // 風
-    const windDeg = forecast.wind.deg;
+    const windDeg = findDeg(forecast.wind.deg);
     const windSpeed = forecast.wind.speed.toFixed(0);
 
     // 情報の整形
@@ -249,40 +248,87 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
     description.push(`体感: ${feelLike} ℃`);
     description.push(`降水確率: ${humidityDay} ％`);
 
-    if (uvi >= 11) {
-        description.push(`UV指数: ${uvi} (極端に強い)`);
-    } else if (uvi >= 8) {
-        description.push(`UV指数: ${uvi} (非常に強い)`);
-    } else if (uvi >= 6) {
-        description.push(`UV指数: ${uvi} (強い)`);
-    } else if (uvi >= 3) {
-        description.push(`UV指数: ${uvi} (中程度)`);
-    } else {
-        description.push(`UV指数: ${uvi} (弱い)`);
-    }
-
-    if (windDeg >= 337.5 || windDeg <= 22.5) {
-        description.push(`風速: 北 ${windSpeed}m/s`);
-    } else if (windDeg > 292.5) {
-        description.push(`風速: 北西 ${windSpeed}m/s`);
-    } else if (windDeg > 247.5) {
-        description.push(`風速: 西 ${windSpeed}m/s`);
-    } else if (windDeg > 202.5) {
-        description.push(`風速: 南西 ${windSpeed}m/s`);
-    } else if (windDeg > 157.5) {
-        description.push(`風速: 南 ${windSpeed}m/s`);
-    } else if (windDeg > 112.5) {
-        description.push(`風速: 南東 ${windSpeed}m/s`);
-    } else if (windDeg > 67.5) {
-        description.push(`風速: 東 ${windSpeed}m/s`);
-    } else {
-        description.push(`風速: 北東 ${windSpeed}m/s`);
-    }
+    description.push(`風速: ${windDeg} ${windSpeed}m/s`);
+    description.push(`UV指数: ${uvi}`);
     return description;
 }
 
-async function weatherDay(onecall: Onecall): Promise<string[]> {
-    throw 'Not Implement Error';
+/**
+ * 指定日の天気を返す
+ * @param onecall
+ * @param index
+ * @returns
+ */
+async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
+    // 気温や気象情報
+    const weather = onecall.daily[index].weather[0].description;
+    const temp = onecall.daily[index].temp.day.toFixed(1);
+    const feelLike = onecall.daily[index].feels_like.day.toFixed(1);
+    const tempMin = onecall.daily[index].temp.min.toFixed(1);
+    const tempMax = onecall.daily[index].temp.max.toFixed(1);
+
+    // 降水確率
+    const humidityDay = onecall.daily[index].humidity;
+    // UVインデックス
+    const uvi = uvstr(onecall.daily[index].uvi);
+    // 風
+    const windDeg = findDeg(onecall.daily[index].wind_deg);
+    const windSpeed = onecall.daily[index].wind_speed.toFixed(0);
+
+    const description = [];
+    description.push(`天候: ${weather}`);
+    description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
+    description.push(`体感: ${feelLike} ℃`);
+    description.push(`降水確率: ${humidityDay} ％`);
+
+    description.push(`風速: ${windDeg} ${windSpeed}m/s`);
+    description.push(`UV指数: ${uvi}`);
+
+    return description;
+}
+
+/**
+ * UV指数に強さを入れて返す
+ * @param uvi
+ * @returns
+ */
+function uvstr(uvi: number): string {
+    if (uvi >= 11) {
+        return `${uvi} (極端に強い)`;
+    } else if (uvi >= 8) {
+        return `${uvi} (非常に強い)`;
+    } else if (uvi >= 6) {
+        return `${uvi} (強い)`;
+    } else if (uvi >= 3) {
+        return `${uvi} (中程度)`;
+    } else {
+        return `${uvi} (弱い)`;
+    }
+}
+
+/**
+ * 風向を返す
+ * @param deg Forecast.wind.deg
+ * @returns 方角
+ */
+function findDeg(deg: number): string {
+    if (deg >= 337.5 || deg <= 22.5) {
+        return '北';
+    } else if (deg > 292.5) {
+        return '北西';
+    } else if (deg > 247.5) {
+        return '西';
+    } else if (deg > 202.5) {
+        return '南西';
+    } else if (deg > 157.5) {
+        return '南';
+    } else if (deg > 112.5) {
+        return '南東';
+    } else if (deg > 67.5) {
+        return '東';
+    } else {
+        return '北東';
+    }
 }
 
 /**

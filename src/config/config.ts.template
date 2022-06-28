@@ -1,7 +1,12 @@
 export const CONFIG = {
+    // Listen info for API Server
     HOSTNAME: '127.0.0.1',
     PORT: '4044',
+    // use privillage user
     USER: 'USER',
+    // Discord Bot Token
     TOKEN: 'YOUR_DISCORD_TOKEN',
+    // Forecast API Key
+    // OpenWeatherMap; see: https://openweathermap.org/
     FORECAST_KEY: 'YOUR_FORECAST_KEY'
 };
