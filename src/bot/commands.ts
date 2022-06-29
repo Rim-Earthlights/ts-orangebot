@@ -1,6 +1,5 @@
 import { Message, MessageEmbed } from 'discord.js';
 import { getRndNumber } from '../common/common';
-import axios from 'axios';
 import { Forecast, FORECAST_URI } from '../interface/forecast';
 import { Geocoding, GEOCODING_URI } from '../interface/geocoding';
 import url from 'url';
@@ -53,7 +52,12 @@ export async function help(message: Message) {
  */
 export async function dice(message: Message, args?: string[]) {
     if (args == undefined || args.length < 2) {
-        message.reply('どう振っていいのかわかんない！！\n(例: [.dice 5 6] 6面体ダイスを5回振る のように指定してね)');
+        const send = new MessageEmbed()
+            .setColor('#ff0000')
+            .setTitle('失敗')
+            .setDescription('[.dice 5 6] 6面体ダイスを5回振る のように指定してね');
+
+        message.reply({ content: `どう振っていいのかわかんない！！`, embeds: [send] });
         return;
     }
 
@@ -120,7 +124,7 @@ export async function dice(message: Message, args?: string[]) {
 /**
  * 現在の天気を返す.
  * @param message 受け取ったメッセージング情報
- * @param args 地名
+ * @param args 0: 地名 1: x日後(number | undefined)
  * @returns
  */
 export async function weather(message: Message, args?: string[]) {
@@ -216,7 +220,7 @@ export async function weather(message: Message, args?: string[]) {
         }
     } catch (e) {
         const error = <Error>e;
-        const send = new MessageEmbed().setColor('#f00').setTitle('エラー').setDescription(error.message);
+        const send = new MessageEmbed().setColor('#ff0000').setTitle('エラー').setDescription(error.message);
 
         message.reply({ content: `ありゃ、エラーみたい…なんだろ？`, embeds: [send] });
     }
