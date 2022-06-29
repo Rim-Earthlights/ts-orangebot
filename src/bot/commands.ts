@@ -158,11 +158,13 @@ export async function weather(message: Message, args?: string[]) {
 
         const geoList = <Geocoding[]>geoResponse.data;
 
-        const geocoding = geoList.find((g) => g.country === 'JP');
+        // const geocoding = geoList.find((g) => g.country === 'JP');
 
-        if (geocoding == undefined) {
+        if (geoList == undefined || geoList.length <= 0) {
             throw new Error('名前から場所を検索できませんでした');
         }
+
+        const geocoding = geoList[0];
 
         console.log('> return geocoding API');
         console.log(`  * lat: ${geocoding.lat.toString()}, lon: ${geocoding.lon.toString()}`);
@@ -250,8 +252,30 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
     const windDeg = findDeg(forecast.wind.deg);
     const windSpeed = forecast.wind.speed.toFixed(0);
 
-    // 情報の整形
     const description = [];
+
+    if (forecast.sys.country === 'JP') {
+        const geores = await getAsync(
+            'http://geoapi.heartrails.com/api/json?method=searchByGeoLocation',
+            new URLSearchParams({
+                x: forecast.coord.lon.toString(),
+                y: forecast.coord.lat.toString()
+            })
+        );
+        const data = geores.data;
+
+        // 情報の整形
+        description.push(`緯度: ${forecast.coord.lat} / 経度: ${forecast.coord.lon}`);
+        description.push(`実際の場所: ${data.response.location[0].prefecture}${data.response.location[0].city}`);
+        description.push('');
+    } else {
+        description.push(`緯度: ${forecast.coord.lat} / 経度: ${forecast.coord.lon}`);
+        description.push(
+            `実際の場所: https://www.google.co.jp/maps/search/${forecast.coord.lat},${forecast.coord.lon}/`
+        );
+        description.push('');
+    }
+
     description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
     description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
     description.push(`体感: ${feelLike} ℃`);
