@@ -235,6 +235,7 @@ export async function weather(message: Message, args?: string[]) {
 export async function weatherToday(forecast: Forecast, onecall: Onecall) {
     // 気温や気象情報
     const weather = forecast.weather[0].description;
+    const cloud = forecast.clouds.all;
     const temp = forecast.main.temp.toFixed(1);
     const feelLike = forecast.main.feels_like.toFixed(1);
     const tempMin = onecall.daily[0].temp.min.toFixed(1);
@@ -251,7 +252,7 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
 
     // 情報の整形
     const description = [];
-    description.push(`天候: ${weather}`);
+    description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
     description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
     description.push(`体感: ${feelLike} ℃`);
     description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
@@ -270,6 +271,7 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
 async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
     // 気温や気象情報
     const weather = onecall.daily[index].weather[0].description;
+    const cloud = onecall.daily[index].clouds;
     const temp = onecall.daily[index].temp.day.toFixed(1);
     const feelLike = onecall.daily[index].feels_like.day.toFixed(1);
     const tempMin = onecall.daily[index].temp.min.toFixed(1);
@@ -286,7 +288,7 @@ async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
 
     // 情報の整形
     const description = [];
-    description.push(`天候: ${weather}`);
+    description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
     description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
     description.push(`体感: ${feelLike} ℃`);
     description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
