@@ -1,6 +1,6 @@
 export const GEOCODING_URI = 'http://api.openweathermap.org/geo/1.0/direct';
 
-export interface Geocoding {
+export interface WorldGeocoding {
     name: string;
     local_names: {
         ko: string;
@@ -21,4 +21,22 @@ export interface Geocoding {
     lat: number;
     lon: number;
     country: string;
+}
+
+export interface Geocoding {
+    response: {
+        location: Location[];
+        error: string | undefined;
+    };
+}
+
+export interface Location {
+    city: string;
+    city_kana: string;
+    town: string;
+    town_kana: string;
+    x: number;
+    y: number;
+    prefecture: string;
+    postal: number;
 }

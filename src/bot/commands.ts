@@ -1,7 +1,7 @@
 import { Message, MessageEmbed } from 'discord.js';
 import { getRndNumber } from '../common/common';
 import { Forecast, FORECAST_URI } from '../interface/forecast';
-import { Geocoding, GEOCODING_URI } from '../interface/geocoding';
+import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../interface/geocoding';
 import url from 'url';
 import { getAsync } from '../common/webWrapper';
 import { Onecall, ONECALL_URI } from '../interface/onecall';
@@ -146,36 +146,59 @@ export async function weather(message: Message, args?: string[]) {
         }
 
         const geoResponse = await getAsync(
-            GEOCODING_URI,
+            'http://geoapi.heartrails.com/api/json',
             new url.URLSearchParams({
-                q: cityName,
-                limit: '5',
-                appid: forecastKey,
-                lang: 'ja',
-                unit: 'metric'
+                method: 'suggest',
+                keyword: cityName,
+                matching: 'like'
             })
         );
 
-        const geoList = <Geocoding[]>geoResponse.data;
+        let lat: number, lon: number;
 
-        // const geocoding = geoList.find((g) => g.country === 'JP');
+        const response = (<Geocoding>geoResponse.data).response;
+        const geoList = response.location;
 
-        if (geoList == undefined || geoList.length <= 0) {
-            throw new Error('名前から場所を検索できませんでした');
+        if (response.error != undefined || geoList.length <= 0) {
+            console.log(' > geocoding(JP) not found');
+
+            const geoResponse = await getAsync(
+                GEOCODING_URI,
+                new url.URLSearchParams({
+                    q: cityName,
+                    limit: '5',
+                    appid: forecastKey,
+                    lang: 'ja',
+                    unit: 'metric'
+                })
+            );
+
+            const geoList = <WorldGeocoding[]>geoResponse.data;
+
+            if (geoList == undefined || geoList.length <= 0) {
+                throw new Error('名前から場所を検索できませんでした');
+            }
+
+            lat = geoList[0].lat;
+            lon = geoList[0].lon;
+
+            console.log('> return geocoding API');
+            console.log(`  * lat: ${lat}, lon: ${lon}`);
+            console.log(`  * name: ${geoList[0].local_names}`);
+        } else {
+            lat = geoList[0].y;
+            lon = geoList[0].x;
+
+            console.log('> return geocoding API');
+            console.log(`  * lat: ${lat}, lon: ${lon}`);
+            console.log(`  * name: ${geoList[0].prefecture}${geoList[0].city}, ${geoList[0].town}`);
         }
-
-        const geocoding = geoList[0];
-
-        console.log('> return geocoding API');
-        console.log(`  * lat: ${geocoding.lat.toString()}, lon: ${geocoding.lon.toString()}`);
-        console.log(`  * name: ${geocoding.name}`);
-        console.log('');
 
         const forecastResponse = await getAsync(
             FORECAST_URI,
             new url.URLSearchParams({
-                lat: geocoding.lat.toString(),
-                lon: geocoding.lon.toString(),
+                lat: lat.toString(),
+                lon: lon.toString(),
                 appid: forecastKey,
                 lang: 'ja',
                 units: 'metric'
@@ -185,8 +208,8 @@ export async function weather(message: Message, args?: string[]) {
         const onecallResponse = await getAsync(
             ONECALL_URI,
             new url.URLSearchParams({
-                lat: geocoding.lat.toString(),
-                lon: geocoding.lon.toString(),
+                lat: lat.toString(),
+                lon: lon.toString(),
                 exclude: 'current,minutely,hourly',
                 appid: forecastKey,
                 units: 'metric',
