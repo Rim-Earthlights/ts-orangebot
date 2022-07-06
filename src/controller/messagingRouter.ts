@@ -1,6 +1,7 @@
 import Express from 'express';
 import { TextChannel } from 'discord.js';
 import { DISCORD_CLIENT } from '../constant/constants';
+import dayjs from 'dayjs';
 
 export const messagingRouter = Express.Router();
 
@@ -12,12 +13,15 @@ export const messagingRouter = Express.Router();
  * @param req.body.message 送信メッセージ
  */
 messagingRouter.post('/message', (req: Express.Request, res: Express.Response) => {
-    console.log('> Send Chat');
-    console.log(`  * channel: ${req.body.channel}`);
-    console.log(`  * message: ${req.body.message}`);
-    console.log();
+    console.log('==================================================');
+    console.log(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}] POST | /message`);
 
     const channel = DISCORD_CLIENT.channels.cache.get(req.body.channel) as TextChannel | undefined;
+    console.log(` * ip     : ${req.ip}`);
+    console.log(` * channel: ${channel?.guild.name}/${channel?.name} (${channel?.id})`);
+    console.log(` * message: ${req.body.message}`);
+    console.log('==================================================');
+
     if (channel == undefined) {
         res.status(500).send({ result: false, message: 'can not get channel.' });
         return;
