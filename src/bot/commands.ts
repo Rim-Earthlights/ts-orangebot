@@ -395,7 +395,83 @@ function findDeg(deg: number): string {
  * @param message 受け取ったメッセージング情報
  * @returns
  */
-export async function luck(message: Message) {
+export async function luck(message: Message, args?: string[]) {
+    const omikujis: { luck: string; luckDescription: string }[] = [];
+
+    if (args != undefined && args.length > 0) {
+        do {
+            const o = getOmikuji();
+            omikujis.push(o);
+            if (o.luck === args[0]) {
+                break;
+            }
+            if (omikujis.length > 500) {
+                const send = new MessageEmbed()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`500回引いても該当のおみくじが出なかった`);
+
+                message.reply({ content: `おみくじ、出なかったみたい・・・`, embeds: [send] });
+                return;
+            }
+            // eslint-disable-next-line no-constant-condition
+        } while (true);
+
+        const send = new MessageEmbed()
+            .setColor('#ff9900')
+            .setTitle(`${omikujis.length}回目で出たよ！`)
+            .setDescription(`${omikujis.map((o) => o.luck).join(', ')}`)
+            .addFields({
+                name: '大吉',
+                value: omikujis.filter((o) => o.luck === '大吉').length.toString()
+            })
+            .addFields({
+                name: '吉',
+                value: omikujis.filter((o) => o.luck === '吉').length.toString()
+            })
+            .addFields({
+                name: '中吉',
+                value: omikujis.filter((o) => o.luck === '中吉').length.toString()
+            })
+            .addFields({
+                name: '小吉',
+                value: omikujis.filter((o) => o.luck === '小吉').length.toString()
+            })
+            .addFields({
+                name: '末吉',
+                value: omikujis.filter((o) => o.luck === '末吉').length.toString()
+            })
+            .addFields({
+                name: '凶',
+                value: omikujis.filter((o) => o.luck === '凶').length.toString()
+            })
+            .addFields({
+                name: '大凶',
+                value: omikujis.filter((o) => o.luck === '大凶').length.toString()
+            })
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
+
+        message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
+        return;
+    } else {
+        const omikuji = getOmikuji();
+
+        const send = new MessageEmbed()
+            .setColor('#ff9900')
+            .setTitle(omikuji.luck)
+            .setDescription(omikuji.luckDescription)
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
+
+        message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
+        return;
+    }
+}
+
+/**
+ * ランダムにおみくじを一度引く
+ * @returns
+ */
+function getOmikuji() {
     const rnd = Math.random();
     let luck = '';
     let luckDescription = '';
@@ -422,13 +498,8 @@ export async function luck(message: Message) {
         luck = '大凶';
         luckDescription = '逆にレアだしポジティブに考えてこ';
     }
-
-    const send = new MessageEmbed()
-        .setColor('#ff9900')
-        .setTitle(luck)
-        .setDescription(luckDescription)
-        .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
-
-    message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
-    return;
+    return {
+        luck,
+        luckDescription
+    };
 }

@@ -187,7 +187,7 @@ function commandSelector(message: Message) {
             break;
         }
         case 'luck': {
-            SendCommand.luck(message);
+            SendCommand.luck(message, content);
             break;
         }
     }
