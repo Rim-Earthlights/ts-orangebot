@@ -6,6 +6,8 @@ import url from 'url';
 import { getAsync } from '../common/webWrapper';
 import { Onecall, ONECALL_URI } from '../interface/onecall';
 import { CONFIG } from '../config/config';
+import { Gacha, getGacha, getOmikuji, Omikuji } from './function/gacha';
+import { weatherDay, weatherToday } from './function/forecast';
 
 /**
  * Ping-Pong
@@ -32,15 +34,25 @@ export async function debug(message: Message, args?: string[]) {
  * @param message
  */
 export async function help(message: Message) {
-    let res = `今動いている言語は[TypeScript]版だよ！\n`;
-    res += 'コマンドはここだよ～！\n';
-    res += '```\n';
-    res += '.dice [ダイスの振る数] [ダイスの面の数]\n';
-    res += ' > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))\n';
-    res += '.luck\n';
-    res += ' > おみくじを引く\n';
-    res += '```\n';
-    message.reply(res);
+    const res: string[] = [];
+    res.push(`今動いている言語は[TypeScript]版だよ！\n`);
+    res.push('コマンドはここだよ～！');
+    res.push('```');
+    res.push(' * .tenki [地域]');
+    res.push('   > 天気予報を取得する');
+    res.push('   > 指定した地域の天気予報を取得します');
+    res.push(' * .dice [ダイスの振る数] [ダイスの面の数]');
+    res.push('   > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))');
+    res.push(' * .luck [?運勢]');
+    res.push('   > おみくじを引く');
+    res.push('     運勢を指定するとその運勢が出るまで引きます');
+    res.push(' * .gacha [?回数or等級]');
+    res.push('   > 10連ガチャを引く');
+    res.push('     回数を指定するとその回数回します');
+    res.push('     等級を指定するとその等級が出るまで回します');
+    res.push('     等級か回数を指定した場合はプレゼントの対象外です');
+    res.push('```');
+    message.reply(res.join('\n'));
     return;
 }
 
@@ -252,141 +264,161 @@ export async function weather(message: Message, args?: string[]) {
 }
 
 /**
- * 今日の天気を返す.
- * @param forecast
- * @param onecall
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function weatherToday(forecast: Forecast, onecall: Onecall) {
-    // 気温や気象情報
-    const weather = forecast.weather[0].description;
-    const cloud = forecast.clouds.all;
-    const temp = forecast.main.temp.toFixed(1);
-    const feelLike = forecast.main.feels_like.toFixed(1);
-    const tempMin = onecall.daily[0].temp.min.toFixed(1);
-    const tempMax = onecall.daily[0].temp.max.toFixed(1);
-
-    // 降水確率
-    const popDay = (onecall.daily[0].pop * 100).toFixed(0);
-    const humidityDay = onecall.daily[0].humidity;
-    // UVインデックス
-    const uvi = uvstr(onecall.daily[0].uvi);
-    // 風
-    const windDeg = findDeg(forecast.wind.deg);
-    const windSpeed = forecast.wind.speed.toFixed(0);
-
-    const description = [];
-
-    if (forecast.sys.country === 'JP') {
-        const geores = await getAsync(
-            'http://geoapi.heartrails.com/api/json?method=searchByGeoLocation',
-            new URLSearchParams({
-                x: forecast.coord.lon.toString(),
-                y: forecast.coord.lat.toString()
-            })
-        );
-        const data = geores.data;
-
-        // 情報の整形
-        description.push(`緯度: ${forecast.coord.lat} / 経度: ${forecast.coord.lon}`);
-        description.push(`実際の場所: ${data.response.location[0].prefecture}${data.response.location[0].city}`);
-        description.push('');
-    } else {
-        description.push(`緯度: ${forecast.coord.lat} / 経度: ${forecast.coord.lon}`);
-        description.push(
-            `実際の場所: https://www.google.co.jp/maps/search/${forecast.coord.lat},${forecast.coord.lon}/`
-        );
-        description.push('');
-    }
-
-    description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
-    description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
-    description.push(`体感: ${feelLike} ℃`);
-    description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
-
-    description.push(`風速: ${windDeg} ${windSpeed}m/s`);
-    description.push(`UV指数: ${uvi}`);
-    return description;
-}
-
-/**
- * 指定日の天気を返す
- * @param onecall
- * @param index
+ * ガチャを引く
+ * @param message 受け取ったメッセージング情報
+ * @param args 0: 指定回数 or 等級 (出るまで引く)
  * @returns
  */
-async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
-    // 気温や気象情報
-    const weather = onecall.daily[index].weather[0].description;
-    const cloud = onecall.daily[index].clouds;
-    const temp = onecall.daily[index].temp.day.toFixed(1);
-    const feelLike = onecall.daily[index].feels_like.day.toFixed(1);
-    const tempMin = onecall.daily[index].temp.min.toFixed(1);
-    const tempMax = onecall.daily[index].temp.max.toFixed(1);
+export async function gacha(message: Message, args?: string[]) {
+    const gachaList: Gacha[] = [];
 
-    // 降水確率
-    const popDay = (onecall.daily[index].pop * 100).toFixed(0);
-    const humidityDay = onecall.daily[index].humidity;
-    // UVインデックス
-    const uvi = uvstr(onecall.daily[index].uvi);
-    // 風
-    const windDeg = findDeg(onecall.daily[index].wind_deg);
-    const windSpeed = onecall.daily[index].wind_speed.toFixed(0);
+    if (args != undefined && args.length > 0) {
+        const num = Number(args[0]);
+        if (num) {
+            if (num > 100_000) {
+                const send = new MessageEmbed()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`100,000回以上の指定不可`);
 
-    // 情報の整形
-    const description = [];
-    description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
-    description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
-    description.push(`体感: ${feelLike} ℃`);
-    description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
+                message.reply({ content: `ガチャひきすぎ！`, embeds: [send] });
 
-    description.push(`風速: ${windDeg} ${windSpeed}m/s`);
-    description.push(`UV指数: ${uvi}`);
+                return;
+            }
+            for (let i = 0; i < num; i++) {
+                const gacha = getGacha();
+                gachaList.push(gacha);
+            }
+        } else {
+            do {
+                const gacha = getGacha();
+                gachaList.push(gacha);
+                if (gacha.rare === args[0].toUpperCase()) {
+                    if (!gacha.description.includes('連チケット')) {
+                        break;
+                    }
+                }
+                if (gacha.description.includes(args[0])) {
+                    break;
+                }
+                if (gachaList.length > 100_000) {
+                    const send = new MessageEmbed()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`100,000回引いても該当の等級が出なかった`);
 
-    return description;
-}
+                    message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
+                    return;
+                }
+                // eslint-disable-next-line no-constant-condition
+            } while (true);
+        }
 
-/**
- * UV指数に強さを入れて返す
- * @param uvi
- * @returns
- */
-function uvstr(uvi: number): string {
-    if (uvi >= 11) {
-        return `${uvi} (極端に強い)`;
-    } else if (uvi >= 8) {
-        return `${uvi} (非常に強い)`;
-    } else if (uvi >= 6) {
-        return `${uvi} (強い)`;
-    } else if (uvi >= 3) {
-        return `${uvi} (中程度)`;
+        const rareList = [...new Set(gachaList.map((g) => g.rare))];
+
+        // 等級と総数
+        const fields = rareList.map((r) => {
+            return {
+                name: r,
+                value: gachaList.filter((l) => l.rare === r).length.toString()
+            };
+        });
+        fields.push({ name: '総数', value: gachaList.length.toString() });
+
+        // 等級の高い順に並び替える
+        const t = gachaList.sort((a, b) => {
+            return a.rank - b.rank;
+        });
+
+        const highTier = t.filter((h) => h.rank <= t[0].rank + 1);
+        highTier.reverse();
+
+        console.log(highTier);
+        const desc = highTier.map((g) => `[${g.rare}] ` + g.description).join('\n');
+        if (desc.length > 4096) {
+            const ht = highTier.filter((h) => h.rank <= 1);
+            const send = new MessageEmbed()
+                .setColor('#ff9900')
+                .setTitle(`${gachaList.length}連の結果: UR以上のみ表示しています`)
+                .setDescription(`${ht.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
+                .setFields(fields)
+                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+
+            message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
+            return;
+        }
+
+        console.log(highTier);
+        const send = new MessageEmbed()
+            .setColor('#ff9900')
+            .setTitle(`${gachaList.length}連の結果: レア品のみ表示しています`)
+            .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
+            .setFields(fields)
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+
+        message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
     } else {
-        return `${uvi} (弱い)`;
-    }
-}
+        for (let i = 0; i < 10; i++) {
+            const gacha = getGacha();
+            gachaList.push(gacha);
+        }
 
-/**
- * 風向を返す
- * @param deg Forecast.wind.deg
- * @returns 方角
- */
-function findDeg(deg: number): string {
-    if (deg >= 337.5 || deg <= 22.5) {
-        return '北';
-    } else if (deg > 292.5) {
-        return '北西';
-    } else if (deg > 247.5) {
-        return '西';
-    } else if (deg > 202.5) {
-        return '南西';
-    } else if (deg > 157.5) {
-        return '南';
-    } else if (deg > 112.5) {
-        return '南東';
-    } else if (deg > 67.5) {
-        return '東';
-    } else {
-        return '北東';
+        // 10連チケットを引いた分だけ加算する
+        let ticket_10 = gachaList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
+        let ticket_20 = gachaList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
+        do {
+            const tempList = [];
+
+            if (ticket_10 > 0) {
+                for (let i = 0; i < 10; i++) {
+                    const gacha = getGacha();
+                    tempList.push(gacha);
+                    gachaList.push(gacha);
+                }
+                ticket_10--;
+            } else if (ticket_20 > 0) {
+                for (let i = 0; i < 20; i++) {
+                    const gacha = getGacha();
+                    tempList.push(gacha);
+                    gachaList.push(gacha);
+                }
+                ticket_20--;
+            }
+
+            ticket_10 += tempList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
+            ticket_20 += tempList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
+
+            if (ticket_10 <= 0 && ticket_20 <= 0) {
+                break;
+            }
+            // eslint-disable-next-line no-constant-condition
+        } while (true);
+        console.log(gachaList);
+
+        const t = gachaList.sort((a, b) => {
+            return a.rank - b.rank;
+        });
+
+        const highTier = t.filter((g) => g.rank <= 2);
+        t.reverse();
+
+        const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
+
+        if (desc.length > 4096) {
+            const send = new MessageEmbed()
+                .setColor('#ff9900')
+                .setTitle(`${gachaList.length}連の結果 (レア品のみ表示)`)
+                .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
+                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+            message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+        } else {
+            const send = new MessageEmbed()
+                .setColor('#ff9900')
+                .setTitle(`${gachaList.length}連の結果`)
+                .setDescription(`${desc}`)
+                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+            message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+        }
     }
 }
 
@@ -396,7 +428,7 @@ function findDeg(deg: number): string {
  * @returns
  */
 export async function luck(message: Message, args?: string[]) {
-    const omikujis: { luck: string; luckDescription: string }[] = [];
+    const omikujis: Omikuji[] = [];
 
     if (args != undefined && args.length > 0) {
         do {
@@ -459,47 +491,10 @@ export async function luck(message: Message, args?: string[]) {
         const send = new MessageEmbed()
             .setColor('#ff9900')
             .setTitle(omikuji.luck)
-            .setDescription(omikuji.luckDescription)
+            .setDescription(omikuji.description)
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
 
         message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
         return;
     }
-}
-
-/**
- * ランダムにおみくじを一度引く
- * @returns
- */
-function getOmikuji() {
-    const rnd = Math.random();
-    let luck = '';
-    let luckDescription = '';
-
-    if (rnd < 0.141) {
-        luck = '大吉';
-        luckDescription = 'おめでとういいことあるよ！！！';
-    } else if (rnd < 0.426) {
-        luck = '吉';
-        luckDescription = '結構よき！誇っていいよ！';
-    } else if (rnd < 0.56) {
-        luck = '中吉';
-        luckDescription = 'それなりにいいことありそう。';
-    } else if (rnd < 0.692) {
-        luck = '小吉';
-        luckDescription = 'ふつうがいちばんだよね。';
-    } else if (rnd < 0.831) {
-        luck = '末吉';
-        luckDescription = 'まあこういうときもあるよね。';
-    } else if (rnd < 0.975) {
-        luck = '凶';
-        luckDescription = '気をつけようね。';
-    } else {
-        luck = '大凶';
-        luckDescription = '逆にレアだしポジティブに考えてこ';
-    }
-    return {
-        luck,
-        luckDescription
-    };
 }

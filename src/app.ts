@@ -92,7 +92,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
  * @returns
  */
 function wordSelector(message: Message) {
-    if (message.content.match('(言語は|ヘルプ)')) {
+    if (message.content.match('(言語は|ヘルプ|help)')) {
         SendCommand.help(message);
         return;
     }
@@ -188,6 +188,10 @@ function commandSelector(message: Message) {
         }
         case 'luck': {
             SendCommand.luck(message, content);
+            break;
+        }
+        case 'gacha': {
+            SendCommand.gacha(message, content);
             break;
         }
     }
