@@ -275,16 +275,6 @@ export async function gacha(message: Message, args?: string[]) {
     if (args != undefined && args.length > 0) {
         const num = Number(args[0]);
         if (num) {
-            if (num > 100_000) {
-                const send = new MessageEmbed()
-                    .setColor('#ff0000')
-                    .setTitle(`エラー`)
-                    .setDescription(`100,000回以上の指定不可`);
-
-                message.reply({ content: `ガチャひきすぎ！`, embeds: [send] });
-
-                return;
-            }
             for (let i = 0; i < num; i++) {
                 const gacha = getGacha();
                 gachaList.push(gacha);
@@ -298,14 +288,17 @@ export async function gacha(message: Message, args?: string[]) {
                         break;
                     }
                 }
-                if (gacha.description.includes(args[0])) {
+                if (
+                    gacha.description.includes(args[0]) &&
+                    !['N', 'C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[0].toUpperCase())
+                ) {
                     break;
                 }
-                if (gachaList.length > 100_000) {
+                if (gachaList.length > 1_000_000) {
                     const send = new MessageEmbed()
                         .setColor('#ff0000')
                         .setTitle(`エラー`)
-                        .setDescription(`100,000回引いても該当の等級が出なかった`);
+                        .setDescription(`1,000,000回引いても該当の等級が出なかった`);
 
                     message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
                     return;
@@ -330,28 +323,15 @@ export async function gacha(message: Message, args?: string[]) {
             return a.rank - b.rank;
         });
 
-        const highTier = t.filter((h) => h.rank <= t[0].rank + 1);
+        const highTier = t.slice(0, 30);
         highTier.reverse();
 
-        console.log(highTier);
         const desc = highTier.map((g) => `[${g.rare}] ` + g.description).join('\n');
-        if (desc.length > 4096) {
-            const ht = highTier.filter((h) => h.rank <= 1);
-            const send = new MessageEmbed()
-                .setColor('#ff9900')
-                .setTitle(`${gachaList.length}連の結果: UR以上のみ表示しています`)
-                .setDescription(`${ht.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
-                .setFields(fields)
-                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
-
-            message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
-            return;
-        }
 
         console.log(highTier);
         const send = new MessageEmbed()
             .setColor('#ff9900')
-            .setTitle(`${gachaList.length}連の結果: レア品のみ表示しています`)
+            .setTitle(`${gachaList.length}連の結果: 高い順から30個まで表示しています`)
             .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
             .setFields(fields)
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
@@ -399,7 +379,7 @@ export async function gacha(message: Message, args?: string[]) {
             return a.rank - b.rank;
         });
 
-        const highTier = t.filter((g) => g.rank <= 2);
+        const highTier = t.slice(0, 30);
         t.reverse();
 
         const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
@@ -407,7 +387,7 @@ export async function gacha(message: Message, args?: string[]) {
         if (desc.length > 4096) {
             const send = new MessageEmbed()
                 .setColor('#ff9900')
-                .setTitle(`${gachaList.length}連の結果 (レア品のみ表示)`)
+                .setTitle(`${gachaList.length}連の結果: 高い順に30要素のみ抜き出しています`)
                 .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
                 .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
             message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
