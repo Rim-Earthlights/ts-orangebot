@@ -157,7 +157,7 @@ export async function celo(message: Message) {
 export async function celovs(message: Message) {
     const celoYou = getCelo(3);
     const celoEnemy = getCelo(3);
-    let title;
+    let title, content;
     const description = [];
 
     const roleYou = celoYou[celoYou.length - 1];
@@ -177,10 +177,13 @@ export async function celovs(message: Message) {
     const result = judge(roleYou, roleEnemy);
     if (result > 0) {
         title = '勝ち';
+        content = 'あなたの勝ち！つよいすっごーい！';
     } else if (result < 0) {
         title = '負け';
+        content = 'わたしの勝ち！えへへやった～！';
     } else {
         title = '引き分け';
+        content = '引き分けだ～！';
     }
     const send = new MessageEmbed()
         .setColor('#0099ff')
@@ -188,7 +191,7 @@ export async function celovs(message: Message) {
         .setDescription(description.join('\n'))
         .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/dice.jpg');
 
-    message.reply({ content: `サイコロあそび！ちんちろりーん！`, embeds: [send] });
+    message.reply({ content: `サイコロあそび！ちんちろりーん！\n${content}`, embeds: [send] });
 }
 
 /**
