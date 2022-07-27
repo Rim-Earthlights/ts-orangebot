@@ -39,7 +39,9 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall) {
 
         // 情報の整形
         description.push(`緯度: ${forecast.coord.lat} / 経度: ${forecast.coord.lon}`);
-        description.push(`実際の場所: ${data.response.location[0].prefecture}${data.response.location[0].city}`);
+        description.push(
+            `実際の場所: ${data.response.location[0].prefecture}${data.response.location[0].city}${data.response.location[0].town}`
+        );
         description.push('');
     } else {
         description.push(`緯度: ${forecast.coord.lat} / 経度: ${forecast.coord.lon}`);
@@ -85,6 +87,29 @@ export async function weatherDay(onecall: Onecall, index: number): Promise<strin
 
     // 情報の整形
     const description = [];
+
+    const geores = await getAsync(
+        'http://geoapi.heartrails.com/api/json?method=searchByGeoLocation',
+        new URLSearchParams({
+            x: onecall.lon.toString(),
+            y: onecall.lat.toString()
+        })
+    );
+    const data = geores.data;
+
+    if (!data.response.error) {
+        // 情報の整形
+        description.push(`緯度: ${onecall.lat} / 経度: ${onecall.lon}`);
+        description.push(
+            `実際の場所: ${data.response.location[0].prefecture}${data.response.location[0].city}${data.response.location[0].town}`
+        );
+        description.push('');
+    } else {
+        description.push(`緯度: ${onecall.lat} / 経度: ${onecall.lon}`);
+        description.push(`実際の場所: https://www.google.co.jp/maps/search/${onecall.lat},${onecall.lon}/`);
+        description.push('');
+    }
+
     description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
     description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
     description.push(`体感: ${feelLike} ℃`);
