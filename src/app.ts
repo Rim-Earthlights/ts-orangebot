@@ -194,6 +194,14 @@ function commandSelector(message: Message) {
             SendCommand.gacha(message, content);
             break;
         }
+        case 'celo': {
+            SendCommand.celo(message);
+            break;
+        }
+        case 'celovs': {
+            SendCommand.celovs(message);
+            break;
+        }
     }
 }
 

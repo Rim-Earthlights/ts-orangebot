@@ -8,6 +8,7 @@ import { Onecall, ONECALL_URI } from '../interface/onecall';
 import { CONFIG } from '../config/config';
 import { Gacha, getGacha, getOmikuji, Omikuji } from './function/gacha';
 import { weatherDay, weatherToday } from './function/forecast';
+import { getCelo, judge } from './function/dice';
 
 /**
  * Ping-Pong
@@ -26,7 +27,8 @@ export async function ping(message: Message) {
  * @param args 引数
  */
 export async function debug(message: Message, args?: string[]) {
-    message.reply(`args: ${args}`);
+    const celo = getCelo(3);
+    message.reply(`${JSON.stringify(celo, null, '\t')}`);
 }
 
 /**
@@ -131,6 +133,62 @@ export async function dice(message: Message, args?: string[]) {
         });
 
     message.reply({ content: `${diceMax}面ダイスを${diceNum}個ね！まかせて！`, embeds: [send] });
+}
+
+export async function celo(message: Message) {
+    const celo = getCelo(3);
+    const description = [];
+
+    const role = celo[celo.length - 1];
+
+    for (let i = 0; i < celo.length; i++) {
+        description.push(`${i + 1}: ${celo[i].role} / ${celo[i].dice.join(', ')}`);
+    }
+
+    const send = new MessageEmbed()
+        .setColor('#0099ff')
+        .setTitle(`結果: ${role.role}`)
+        .setDescription(description.join('\n'))
+        .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/dice.jpg');
+
+    message.reply({ content: `サイコロあそび！ちんちろりーん！`, embeds: [send] });
+}
+
+export async function celovs(message: Message) {
+    const celoYou = getCelo(3);
+    const celoEnemy = getCelo(3);
+    let title;
+    const description = [];
+
+    const roleYou = celoYou[celoYou.length - 1];
+
+    description.push('＊あなたの出目');
+    for (let i = 0; i < celoYou.length; i++) {
+        description.push(`${i + 1}: ${celoYou[i].role} / ${celoYou[i].dice.join(', ')}`);
+    }
+
+    const roleEnemy = celoEnemy[celoEnemy.length - 1];
+
+    description.push('');
+    description.push('＊みかんの出目');
+    for (let i = 0; i < celoEnemy.length; i++) {
+        description.push(`${i + 1}: ${celoEnemy[i].role} / ${celoEnemy[i].dice.join(', ')}`);
+    }
+    const result = judge(roleYou, roleEnemy);
+    if (result > 0) {
+        title = '勝ち';
+    } else if (result < 0) {
+        title = '負け';
+    } else {
+        title = '引き分け';
+    }
+    const send = new MessageEmbed()
+        .setColor('#0099ff')
+        .setTitle(`結果: ${title}`)
+        .setDescription(description.join('\n'))
+        .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/dice.jpg');
+
+    message.reply({ content: `サイコロあそび！ちんちろりーん！`, embeds: [send] });
 }
 
 /**
