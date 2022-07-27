@@ -28,6 +28,11 @@ export function getCelo(n: number): DiceRole[] {
 export function getRole(): DiceRole {
     const dice: number[] = [];
     for (let i = 0; i < 3; i++) {
+        // ションベン
+        const r = Math.random();
+        if (r < 0.025) {
+            return { ...DICE_ROLE.DICE_SHONBEN, dice: [-1, -1, -1] };
+        }
         dice.push(getRndNumber(1, 6));
     }
 
