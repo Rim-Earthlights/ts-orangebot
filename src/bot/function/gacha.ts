@@ -24,12 +24,16 @@ export function getGacha(): Gacha {
     } else if (rnd < 0.028) {
         rare = 'SSR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.SSR.length) - 1;
-        description = `${index <= 1 ? ':tickets:' : ':star:'} ${GACHA_MONEY_LIST.SSR[index]}`;
+        description = `${GACHA_MONEY_LIST.SSR[index].includes('ガチャ+') ? ':tickets:' : ':star:'} ${
+            GACHA_MONEY_LIST.SSR[index]
+        }`;
         rank = 2;
     } else if (rnd < 0.168) {
         rare = 'SR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.SR.length) - 1;
-        description = `${index === 0 ? ':tickets:' : ''} ${GACHA_MONEY_LIST.SR[index]}`;
+        description = `${GACHA_MONEY_LIST.SR[index].includes('ガチャ+') ? ':tickets:' : ''} ${
+            GACHA_MONEY_LIST.SR[index]
+        }`;
         rank = 3;
     } else if (rnd < 0.678) {
         rare = 'R';
