@@ -53,6 +53,10 @@ export async function help(message: Message) {
     res.push('     回数を指定するとその回数回します');
     res.push('     等級を指定するとその等級が出るまで回します');
     res.push('     等級か回数を指定した場合はプレゼントの対象外です');
+    res.push(' * .celovs');
+    res.push('   > チンチロリンで遊ぶ');
+    res.push('     みかんちゃんとチンチロリンで遊べます');
+    res.push('     3回まで投げて出た目で勝負します');
     res.push('```');
     message.reply(res.join('\n'));
     return;
