@@ -8,5 +8,12 @@ export const CONFIG = {
     TOKEN: 'YOUR_DISCORD_TOKEN',
     // Forecast API Key
     // OpenWeatherMap; see: https://openweathermap.org/
-    FORECAST_KEY: 'YOUR_FORECAST_KEY'
+    FORECAST_KEY: 'YOUR_FORECAST_KEY',
+        DB: {
+        HOSTNAME: 'HOSTNAME',
+        USERNAME: 'orange',
+        DATABASE: 'orangebot',
+        PASSWORD: 'PASSWORD',
+        FLUSH: false,
+    },
 };

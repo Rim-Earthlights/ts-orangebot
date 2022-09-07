@@ -10,6 +10,7 @@ import 'dayjs/locale/ja';
 import { routers } from './routers';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
 import { CONFIG } from './config/config';
+import { DbConnector, flush } from './db/dbconnector';
 
 dotenv.config();
 
@@ -53,7 +54,15 @@ app.listen(port, hostName);
  * =======================
  */
 
-DISCORD_CLIENT.once('ready', () => {
+DISCORD_CLIENT.once('ready', async () => {
+    try {
+        await DbConnector.connection.authenticate();
+        flush(CONFIG.DB.FLUSH);
+        console.log(await DbConnector.connection.models.User.findAll());
+    } catch (e) {
+        console.error('unable to connect to db:', e);
+    }
+
     console.log('Ready!');
     console.log(`Logged In: ${DISCORD_CLIENT?.user?.tag}`);
 });
