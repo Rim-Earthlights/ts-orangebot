@@ -12,6 +12,7 @@ import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
 import { CONFIG } from './config/config';
 import { DbConnector, flush } from './db/dbconnector';
 import { ChannelTypes } from 'discord.js/typings/enums';
+import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
 
 dotenv.config();
 
@@ -109,65 +110,29 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
  * JOIN, LEFT, MUTE, UNMUTE
  */
 DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
+    // get guild
     const gid = newState.guild.id ? newState.guild.id : oldState.guild.id;
     const guild = DISCORD_CLIENT.guilds.cache.get(gid);
     if (!guild) {
         return;
     }
+
     if (newState.channelId === null) {
-        if (!oldState) {
-            return;
-        }
         //left
-        if (oldState.channel?.name !== 'ロビー') {
-            if ((oldState.channel as VoiceChannel).members.size <= 0) {
-                guild?.channels.delete(oldState.channel as VoiceChannel);
-            }
-        }
+        await leftVoiceChannel(guild, oldState);
         console.log('user left channel', oldState.channelId);
     } else if (oldState.channelId === null) {
         // joined
-        if (newState.channel?.name === 'ロビー') {
-            // lobby login
-            const parent = guild.channels.cache.find((c) => c.parentId != null && c.isVoice())
-                ?.parent as CategoryChannel;
-            const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
-            if (parent) {
-                const vc = await guild.channels.create(`お部屋: #00${channelLength}号室`, {
-                    type: ChannelTypes.GUILD_VOICE,
-                    parent: parent
-                });
-                (newState.channel as VoiceChannel).members.map((m) => {
-                    m.voice.setChannel(vc.id);
-                });
-            }
-        }
+        await joinVoiceChannel(guild, newState);
         console.log('user joined channel', newState.channelId);
     }
     // moved
     else {
         //left
-        if (oldState.channel?.name !== 'ロビー') {
-            if ((oldState.channel as VoiceChannel).members.size <= 0) {
-                guild?.channels.delete(oldState.channel as VoiceChannel);
-            }
-        }
+        await leftVoiceChannel(guild, oldState);
         // joined
-        if (newState.channel?.name === 'ロビー') {
-            // lobby login
-            const parent = guild.channels.cache.find((c) => c.parentId != null && c.isVoice())
-                ?.parent as CategoryChannel;
-            const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
-            if (parent) {
-                const vc = await guild.channels.create(`お部屋: #00${channelLength}`, {
-                    type: ChannelTypes.GUILD_VOICE,
-                    parent: parent
-                });
-                (newState.channel as VoiceChannel).members.map((m) => {
-                    m.voice.setChannel(vc.id);
-                });
-            }
-        }
+        await joinVoiceChannel(guild, newState);
+        console.log('user moved channel', oldState.channelId, newState.channelId);
     }
 });
 
