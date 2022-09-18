@@ -55,6 +55,9 @@ app.listen(port, hostName);
  * =======================
  */
 
+/**
+ * bot初回読み込み
+ */
 DISCORD_CLIENT.once('ready', async () => {
     try {
         await DbConnector.connection.authenticate();
@@ -70,6 +73,9 @@ DISCORD_CLIENT.once('ready', async () => {
     console.log(`Logged In: ${DISCORD_CLIENT?.user?.tag}`);
 });
 
+/**
+ * メッセージの受信イベント
+ */
 DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     const coordinationId = COORDINATION_ID.find((id) => id === message.author.id);
     if (coordinationId) {
@@ -99,7 +105,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
 });
 
 /**
- * ボイスステータスのアップデート時呼ばれる
+ * ボイスステータスのアップデート時に呼ばれる
  * JOIN, LEFT, MUTE, UNMUTE
  */
 DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
@@ -127,7 +133,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
                 ?.parent as CategoryChannel;
             const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
             if (parent) {
-                const vc = await guild.channels.create(`お部屋: #00${channelLength}`, {
+                const vc = await guild.channels.create(`お部屋: #00${channelLength}号室`, {
                     type: ChannelTypes.GUILD_VOICE,
                     parent: parent
                 });
@@ -144,6 +150,22 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
         if (oldState.channel?.name !== 'ロビー') {
             if ((oldState.channel as VoiceChannel).members.size <= 0) {
                 guild?.channels.delete(oldState.channel as VoiceChannel);
+            }
+        }
+        // joined
+        if (newState.channel?.name === 'ロビー') {
+            // lobby login
+            const parent = guild.channels.cache.find((c) => c.parentId != null && c.isVoice())
+                ?.parent as CategoryChannel;
+            const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
+            if (parent) {
+                const vc = await guild.channels.create(`お部屋: #00${channelLength}`, {
+                    type: ChannelTypes.GUILD_VOICE,
+                    parent: parent
+                });
+                (newState.channel as VoiceChannel).members.map((m) => {
+                    m.voice.setChannel(vc.id);
+                });
             }
         }
     }
