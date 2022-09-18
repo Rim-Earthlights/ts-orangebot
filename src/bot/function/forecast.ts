@@ -7,7 +7,7 @@ import { Onecall } from '../../interface/onecall';
  * @param forecast
  * @param onecall
  */
-export async function weatherToday(forecast: Forecast, onecall: Onecall) {
+export async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<string[]> {
     // 気温や気象情報
     const weather = forecast.weather[0].description;
     const cloud = forecast.clouds.all;
