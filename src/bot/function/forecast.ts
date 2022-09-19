@@ -1,4 +1,6 @@
 import { getAsync } from '../../common/webWrapper';
+import { TypeOrm } from '../../db/dbconnector';
+import { Users } from '../../db/models/users';
 import { Forecast } from '../../interface/forecast';
 import { Onecall } from '../../interface/onecall';
 
@@ -119,6 +121,21 @@ export async function weatherDay(onecall: Onecall, index: number): Promise<strin
     description.push(`UV指数: ${uvi}`);
 
     return description;
+}
+
+/**
+ * 居住地を取得する
+ */
+export async function getPref(uid: string): Promise<string | null> {
+    const users = TypeOrm.dataSource.getRepository(Users);
+    const user = await users.findOne({ where: { userId: uid } });
+    console.log(user);
+    if (user) {
+        if (user.pref) {
+            return user.pref;
+        }
+    }
+    return null;
 }
 
 /**

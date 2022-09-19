@@ -1,5 +1,6 @@
 import { CategoryChannel, Guild, VoiceChannel, VoiceState } from 'discord.js';
 import { ChannelTypes } from 'discord.js/typings/enums';
+import { EXCLUDE_ROOM } from '../../constant/constants';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -8,11 +9,11 @@ import { ChannelTypes } from 'discord.js/typings/enums';
  * @returns void
  */
 export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Promise<void> {
-    if (voiceState.channel?.name !== 'ロビー') {
+    if (EXCLUDE_ROOM.every((r) => r !== voiceState.channel?.name)) {
         if ((voiceState.channel as VoiceChannel).members.size <= 0) {
             guild?.channels.delete(voiceState.channel as VoiceChannel);
+            console.log(`delete voice channel: ${voiceState.channel?.id}`);
         }
-        console.log(`delete voice channel: ${voiceState.channel?.id}`);
     }
 }
 

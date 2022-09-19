@@ -9,6 +9,9 @@ import { CONFIG } from '../config/config';
 import { Gacha, getGacha, getOmikuji, Omikuji } from './function/gacha';
 import { weatherDay, weatherToday } from './function/forecast';
 import { getCelo, judge } from './function/dice';
+import { TypeOrm } from '../db/dbconnector';
+import { Users } from '../db/models/users';
+import dayjs from 'dayjs';
 
 /**
  * Ping-Pong
@@ -541,5 +544,35 @@ export async function luck(message: Message, args?: string[]) {
 
         message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
         return;
+    }
+}
+
+export async function reg(message: Message, args?: string[]): Promise<void> {
+    if (!args || args.length <= 1) {
+        return;
+    }
+
+    const regType = args[0];
+    const regName = args[1];
+
+    switch (regType) {
+        case 'pref': {
+            const userId = message.author.id;
+            const users = TypeOrm.dataSource.getRepository(Users);
+            const user = await users.findOne({ where: { userId: userId } });
+            const regUser = users.create({
+                userId: userId,
+                pref: regName,
+                createdAt: user?.createdAt ? user.createdAt : dayjs().format()
+            });
+            await users.save(regUser);
+
+            const send = new MessageEmbed().setColor('#ff9900').setTitle(`登録`).setDescription(`居住地: ${regName}`);
+
+            message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
+            break;
+        }
+        default:
+            break;
     }
 }

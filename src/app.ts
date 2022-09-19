@@ -10,9 +10,10 @@ import 'dayjs/locale/ja';
 import { routers } from './routers';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
 import { CONFIG } from './config/config';
-import { DbConnector, flush } from './db/dbconnector';
 import { ChannelTypes } from 'discord.js/typings/enums';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
+import { TypeOrm } from './db/dbconnector';
+import { getPref } from './bot/function/forecast';
 
 dotenv.config();
 
@@ -60,15 +61,14 @@ app.listen(port, hostName);
  * bot初回読み込み
  */
 DISCORD_CLIENT.once('ready', async () => {
-    try {
-        await DbConnector.connection.authenticate();
-        if (CONFIG.DEV) {
-            flush(CONFIG.DB.FLUSH);
-        }
-        console.log(await DbConnector.connection.models.User.findAll());
-    } catch (e) {
-        console.error('unable to connect to db:', e);
-    }
+    TypeOrm.dataSource
+        .initialize()
+        .then(async (ds) => {
+            console.log('db initialized.');
+        })
+        .catch((e) => {
+            console.log(e);
+        });
 
     console.log('Ready!');
     console.log(`Logged In: ${DISCORD_CLIENT?.user?.tag}`);
@@ -91,17 +91,22 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
 
     console.log('> Received Message');
     console.log('  * Author:  ', message.author.tag);
-    console.log('  * Content: ', message.cleanContent);
+    console.log('  * Content: ', message.content);
     console.log('');
+
+    console.log(message.mentions.users);
+    console.log(DISCORD_CLIENT.user?.id);
 
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
-        wordSelector(message);
+        await wordSelector(message);
+        return;
     }
 
     // command
     if (message.content.startsWith('.')) {
-        commandSelector(message);
+        await commandSelector(message);
+        return;
     }
 });
 
@@ -114,6 +119,10 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
     const gid = newState.guild.id ? newState.guild.id : oldState.guild.id;
     const guild = DISCORD_CLIENT.guilds.cache.get(gid);
     if (!guild) {
+        return;
+    }
+
+    if (oldState.channelId === newState.channelId) {
         return;
     }
 
@@ -141,7 +150,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
  * @param message 渡されたメッセージ
  * @returns
  */
-function wordSelector(message: Message) {
+async function wordSelector(message: Message) {
     if (message.content.match('(言語は|ヘルプ|help)')) {
         SendCommand.help(message);
         return;
@@ -175,8 +184,9 @@ function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('(天気|てんき)')) {
-        const cityName = message.content.match(/ .+(区|市|村)/);
-        if (cityName == null) {
+        const cityName = await getPref(message.author.id);
+        if (!cityName) {
+            message.reply('地域が登録されてないよ！\n@みかんちゃん 地域覚えて [地域]  で登録して！');
             return;
         }
         const when = message.content.match(/今日|明日|\d日後/);
@@ -190,7 +200,12 @@ function wordSelector(message: Message) {
                 day = Number(d);
             }
         }
-        SendCommand.weather(message, [cityName[0].trimStart(), day.toString()]);
+        SendCommand.weather(message, [cityName, day.toString()]);
+        return;
+    }
+    if (message.content.match('地域(覚|憶|おぼ)えて')) {
+        const name = message.content.split(' ')[2];
+        SendCommand.reg(message, ['pref', name]);
         return;
     }
     if (message.content.match(/\d+d\d+/)) {
@@ -210,46 +225,50 @@ function wordSelector(message: Message) {
  *
  * @param command 渡されたメッセージ
  */
-function commandSelector(message: Message) {
+async function commandSelector(message: Message) {
     const content = message.content.replace('.', '').trimEnd().split(' ');
     const command = content[0];
     content.shift();
 
     switch (command) {
         case 'help': {
-            SendCommand.help(message);
+            await SendCommand.help(message);
             break;
         }
         case 'ping': {
-            SendCommand.ping(message);
+            await SendCommand.ping(message);
             break;
         }
         case 'debug': {
-            SendCommand.debug(message, content);
+            await SendCommand.debug(message, content);
             break;
         }
         case 'dice': {
-            SendCommand.dice(message, content);
+            await SendCommand.dice(message, content);
             break;
         }
         case 'tenki': {
-            SendCommand.weather(message, content);
+            await SendCommand.weather(message, content);
             break;
         }
         case 'luck': {
-            SendCommand.luck(message, content);
+            await SendCommand.luck(message, content);
             break;
         }
         case 'gacha': {
-            SendCommand.gacha(message, content);
+            await SendCommand.gacha(message, content);
             break;
         }
         case 'celo': {
-            SendCommand.celo(message);
+            await SendCommand.celo(message);
             break;
         }
         case 'celovs': {
-            SendCommand.celovs(message);
+            await SendCommand.celovs(message);
+            break;
+        }
+        case 'reg': {
+            await SendCommand.reg(message, content);
             break;
         }
     }
