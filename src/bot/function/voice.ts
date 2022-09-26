@@ -30,7 +30,7 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
         const parent = guild.channels.cache.find((c) => c.parentId != null && c.isVoice())?.parent as CategoryChannel;
         const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
         if (parent) {
-            const vc = await guild.channels.create(`お部屋: #00${channelLength}号室`, {
+            const vc = await guild.channels.create(`お部屋: #${('000' + channelLength).slice(-3)}`, {
                 type: ChannelTypes.GUILD_VOICE,
                 parent: parent
             });
