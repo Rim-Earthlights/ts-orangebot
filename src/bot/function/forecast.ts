@@ -128,8 +128,7 @@ export async function weatherDay(onecall: Onecall, index: number): Promise<strin
  */
 export async function getPref(uid: string): Promise<string | null> {
     const users = TypeOrm.dataSource.getRepository(Users);
-    const user = await users.findOne({ where: { userId: uid } });
-    console.log(user);
+    const user = await users.findOne({ where: { id: uid } });
     if (user) {
         if (user.pref) {
             return user.pref;

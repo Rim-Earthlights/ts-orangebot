@@ -12,6 +12,7 @@ import { getCelo, judge } from './function/dice';
 import { TypeOrm } from '../db/dbconnector';
 import { Users } from '../db/models/users';
 import dayjs from 'dayjs';
+import { GachaTable } from '../db/models/gacha';
 
 /**
  * Ping-Pong
@@ -30,8 +31,7 @@ export async function ping(message: Message) {
  * @param args 引数
  */
 export async function debug(message: Message, args?: string[]) {
-    const celo = getCelo(3);
-    message.reply(`${JSON.stringify(celo, null, '\t')}`);
+    message.reply(`debug: ${args}`);
 }
 
 /**
@@ -394,8 +394,6 @@ export async function gacha(message: Message, args?: string[]) {
         const highTier = t.slice(0, 30);
         highTier.reverse();
 
-        const desc = highTier.map((g) => `[${g.rare}] ` + g.description).join('\n');
-
         console.log(highTier);
         const send = new MessageEmbed()
             .setColor('#ff9900')
@@ -406,6 +404,33 @@ export async function gacha(message: Message, args?: string[]) {
 
         message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
     } else {
+        const users = TypeOrm.dataSource.getRepository(Users);
+        const user = await users.findOne({ where: { id: message.author.id } });
+
+        if (!user) {
+            const regUser = users.create({
+                id: message.author.id,
+                pref: null,
+                createdAt: dayjs().toDate()
+            });
+            await users.save(regUser);
+        } else {
+            const gachaTable = TypeOrm.dataSource.getRepository(GachaTable);
+            const time = (await gachaTable
+                .createQueryBuilder('gt')
+                .select('Max(gt.gachaTime) as time')
+                .where('gt.user_id = :id', { id: user.id })
+                .getRawOne()) as Record<string, Date>;
+            const gacha = await gachaTable.find({ where: { user_id: user.id, gachaTime: time.time } });
+
+            if (gacha.length !== 0 && gacha[0].gachaTime >= dayjs().hour(0).minute(0).second(0).toDate()) {
+                const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`ガチャ抽選済`);
+
+                message.reply({ content: `もう抽選してるみたい！2回目はだめだよ！`, embeds: [send] });
+                return;
+            }
+        }
+
         for (let i = 0; i < 10; i++) {
             const gacha = getGacha();
             gachaList.push(gacha);
@@ -449,6 +474,19 @@ export async function gacha(message: Message, args?: string[]) {
 
         const highTier = t.slice(0, 30);
         t.reverse();
+
+        const gachaTable = TypeOrm.dataSource.getRepository(GachaTable);
+        const nowTime = dayjs().toDate();
+        const createTables = t.map((g) => {
+            return gachaTable.create({
+                user_id: message.author.id,
+                gachaTime: nowTime,
+                rare: g.rare,
+                rank: g.rank,
+                description: g.description
+            });
+        });
+        await gachaTable.save(createTables);
 
         const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
 
@@ -559,11 +597,9 @@ export async function reg(message: Message, args?: string[]): Promise<void> {
         case 'pref': {
             const userId = message.author.id;
             const users = TypeOrm.dataSource.getRepository(Users);
-            const user = await users.findOne({ where: { userId: userId } });
             const regUser = users.create({
-                userId: userId,
-                pref: regName,
-                createdAt: user?.createdAt ? user.createdAt : dayjs().format()
+                id: userId,
+                pref: regName
             });
             await users.save(regUser);
 

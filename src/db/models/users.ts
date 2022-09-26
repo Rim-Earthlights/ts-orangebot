@@ -1,19 +1,32 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import {
+    BaseEntity,
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    OneToMany,
+    PrimaryColumn,
+    UpdateDateColumn
+} from 'typeorm';
+import { GachaTable } from './gacha';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
-export class Users {
+export class Users extends BaseEntity {
     @PrimaryColumn({ type: 'bigint', width: 20 })
-    userId!: string;
+    id!: string;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
     pref?: string | null;
 
-    @Column({ type: 'datetime', nullable: true })
+    @DeleteDateColumn({ type: 'datetime', nullable: true })
     deletedAt?: Date;
 
-    @Column({ type: 'datetime', nullable: true })
+    @UpdateDateColumn({ type: 'datetime', nullable: true })
     updatedAt?: Date;
 
-    @Column({ type: 'datetime', nullable: true })
+    @CreateDateColumn({ type: 'datetime', nullable: false })
     createdAt!: Date;
+
+    @OneToMany(() => GachaTable, (g) => g.user_id)
+    gacha?: GachaTable[];
 }

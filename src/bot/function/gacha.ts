@@ -45,16 +45,11 @@ export function getGacha(): Gacha {
         const index = getRndNumber(1, GACHA_MONEY_LIST.UC.length) - 1;
         description = `${GACHA_MONEY_LIST.UC[index]}`;
         rank = 5;
-    } else if (rnd < 0.9999) {
+    } else {
         rare = 'C';
         const index = getRndNumber(1, GACHA_MONEY_LIST.C.length) - 1;
         description = `${GACHA_MONEY_LIST.C[index]}`;
         rank = 6;
-    } else {
-        rare = 'N';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.N.length) - 1;
-        description = `:skull_crossbones: ${GACHA_MONEY_LIST.N[index]}`;
-        rank = 0.5;
     }
     return {
         rare,
