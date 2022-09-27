@@ -10,8 +10,8 @@ import { Gacha, getGacha, getOmikuji, Omikuji } from './function/gacha';
 import { weatherDay, weatherToday } from './function/forecast';
 import { getCelo, judge } from './function/dice';
 import { TypeOrm } from '../db/dbconnector';
-import { Users } from '../db/models/users';
 import dayjs from 'dayjs';
+import { Users } from '../db/models/users';
 import { GachaTable } from '../db/models/gacha';
 
 /**
@@ -358,7 +358,7 @@ export async function gacha(message: Message, args?: string[]) {
                 }
                 if (
                     gacha.description.includes(args[0]) &&
-                    !['N', 'C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[0].toUpperCase())
+                    !['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[0].toUpperCase())
                 ) {
                     break;
                 }

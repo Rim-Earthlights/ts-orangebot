@@ -1,4 +1,3 @@
-import { Sequelize } from '@sequelize/core';
 import { DataSource } from 'typeorm';
 import { CONFIG } from '../config/config';
 import { GachaTable } from './models/gacha';

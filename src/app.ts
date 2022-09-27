@@ -62,7 +62,7 @@ app.listen(port, hostName);
 DISCORD_CLIENT.once('ready', async () => {
     TypeOrm.dataSource
         .initialize()
-        .then(async (ds) => {
+        .then(async () => {
             console.log('db initialized.');
         })
         .catch((e) => {
