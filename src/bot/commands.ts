@@ -421,9 +421,8 @@ export async function gacha(message: Message, args?: string[]) {
                 .select('Max(gt.gachaTime) as time')
                 .where('gt.user_id = :id', { id: user.id })
                 .getRawOne()) as Record<string, Date>;
-            const gacha = await gachaTable.find({ where: { user_id: user.id, gachaTime: time.time } });
 
-            if (gacha.length !== 0 && gacha[0].gachaTime >= dayjs().hour(0).minute(0).second(0).toDate()) {
+            if (gacha.length !== 0 && time.time >= dayjs().hour(0).minute(0).second(0).toDate()) {
                 const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`ガチャ抽選済`);
 
                 message.reply({ content: `もう抽選してるみたい！2回目はだめだよ！`, embeds: [send] });
