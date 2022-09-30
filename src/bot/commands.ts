@@ -355,6 +355,9 @@ export async function gacha(message: Message, args?: string[]) {
                 const users = new UsersRepository();
                 const user = await users.get(args[1]);
                 if (!user) {
+                    message.reply({
+                        content: `リセットしようとするユーザが登録されてないみたい…？`
+                    });
                     return;
                 }
                 await users.resetGacha(args[1]);
