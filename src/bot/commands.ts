@@ -9,11 +9,9 @@ import { CONFIG } from '../config/config';
 import { Gacha, getGacha, getOmikuji, Omikuji } from './function/gacha';
 import { weatherDay, weatherToday } from './function/forecast';
 import { getCelo, judge } from './function/dice';
-import { TypeOrm } from '../model/typeorm/typeorm';
 import dayjs from 'dayjs';
-import { Users } from '../model/models/users';
-import { GachaTable } from '../model/models/gacha';
 import { UsersRepository } from '../model/repository/usersRepository';
+import { GachaRepository } from '../model/repository/gachaRepository';
 
 /**
  * Ping-Pong
@@ -31,9 +29,10 @@ export async function ping(message: Message) {
  * @param message 受け取ったメッセージング情報
  * @param args 引数
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
     const repository = new UsersRepository();
-    const user = await repository.getById('246007305156558848');
+    const user = await repository.get('246007305156558848');
 
     console.log(user);
 }
@@ -345,6 +344,21 @@ export async function gacha(message: Message, args?: string[]) {
     const gachaList: Gacha[] = [];
 
     if (args != undefined && args.length > 0) {
+        if (args[0] === 'reset') {
+            if (args[1]) {
+                const users = new UsersRepository();
+                const user = await users.get(args[1]);
+                if (!user) {
+                    return;
+                }
+                await users.resetGacha(args[1]);
+                message.reply({
+                    content: `${user?.userName ? user.userName : user.id} さんのガチャフラグをリセットしたよ～！`
+                });
+            }
+            return;
+        }
+
         const num = Number(args[0]);
         if (num) {
             for (let i = 0; i < num; i++) {
@@ -408,29 +422,20 @@ export async function gacha(message: Message, args?: string[]) {
 
         message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
     } else {
-        const users = TypeOrm.dataSource.getRepository(Users);
-        const user = await users.findOne({ where: { id: message.author.id } });
+        const users = new UsersRepository();
+        const user = await users.get(message.author.id);
 
-        if (!user) {
-            const regUser = users.create({
-                id: message.author.id,
-                pref: null,
-                createdAt: dayjs().toDate()
-            });
-            await users.save(regUser);
-        } else {
-            const gachaTable = TypeOrm.dataSource.getRepository(GachaTable);
-            const time = (await gachaTable
-                .createQueryBuilder('gt')
-                .select('Max(gt.gachaTime) as time')
-                .where('gt.user_id = :id', { id: user.id })
-                .getRawOne()) as Record<string, Date>;
+        if (user) {
+            if (user.gachaDate) {
+                if (user.gachaDate >= dayjs().hour(0).minute(0).second(0).toDate()) {
+                    const send = new MessageEmbed()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`ガチャ抽選済`);
 
-            if (gacha.length !== 0 && time.time >= dayjs().hour(0).minute(0).second(0).toDate()) {
-                const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`ガチャ抽選済`);
-
-                message.reply({ content: `もう抽選してるみたい！2回目はだめだよ！`, embeds: [send] });
-                return;
+                    message.reply({ content: `もう抽選してるみたい！2回目はだめだよ！`, embeds: [send] });
+                    return;
+                }
             }
         }
 
@@ -478,18 +483,26 @@ export async function gacha(message: Message, args?: string[]) {
         const highTier = t.slice(0, 30);
         t.reverse();
 
-        const gachaTable = TypeOrm.dataSource.getRepository(GachaTable);
+        const gachaTable = new GachaRepository();
         const nowTime = dayjs().toDate();
         const createTables = t.map((g) => {
-            return gachaTable.create({
+            return {
                 user_id: message.author.id,
                 gachaTime: nowTime,
                 rare: g.rare,
                 rank: g.rank,
                 description: g.description
-            });
+            };
         });
+
         await gachaTable.save(createTables);
+
+        await users.save({
+            id: message.author.id,
+            userName: message.author.tag,
+            pref: null,
+            gachaDate: dayjs().toDate()
+        });
 
         const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
 
@@ -599,12 +612,13 @@ export async function reg(message: Message, args?: string[]): Promise<void> {
     switch (regType) {
         case 'pref': {
             const userId = message.author.id;
-            const users = TypeOrm.dataSource.getRepository(Users);
-            const regUser = users.create({
+
+            const users = new UsersRepository();
+            await users.save({
                 id: userId,
+                userName: message.author.tag,
                 pref: regName
             });
-            await users.save(regUser);
 
             const send = new MessageEmbed().setColor('#ff9900').setTitle(`登録`).setDescription(`居住地: ${regName}`);
 

@@ -3,6 +3,7 @@ import { TypeOrm } from '../../model/typeorm/typeorm';
 import { Users } from '../../model/models/users';
 import { Forecast } from '../../interface/forecast';
 import { Onecall } from '../../interface/onecall';
+import { UsersRepository } from '../../model/repository/usersRepository';
 
 /**
  * 今日の天気を返す.
@@ -127,8 +128,8 @@ export async function weatherDay(onecall: Onecall, index: number): Promise<strin
  * 居住地を取得する
  */
 export async function getPref(uid: string): Promise<string | null> {
-    const users = TypeOrm.dataSource.getRepository(Users);
-    const user = await users.findOne({ where: { id: uid } });
+    const users = new UsersRepository();
+    const user = await users.get(uid);
     if (user) {
         if (user.pref) {
             return user.pref;

@@ -16,13 +16,19 @@ export class Users extends BaseEntity {
     id!: string;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
-    pref?: string | null;
+    userName!: string | null;
+
+    @Column({ type: 'varchar', width: 255, nullable: true })
+    pref!: string | null;
+
+    @Column({ type: 'datetime', nullable: true })
+    gachaDate!: Date | null;
 
     @DeleteDateColumn({ type: 'datetime', nullable: true })
-    deletedAt?: Date;
+    deletedAt!: Date | null;
 
     @UpdateDateColumn({ type: 'datetime', nullable: true })
-    updatedAt?: Date;
+    updatedAt!: Date | null;
 
     @CreateDateColumn({ type: 'datetime', nullable: false })
     createdAt!: Date;
