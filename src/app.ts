@@ -11,7 +11,7 @@ import { routers } from './routers';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
 import { CONFIG } from './config/config';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
-import { TypeOrm } from './db/dbconnector';
+import { TypeOrm } from './model/typeorm/typeorm';
 import { getPref } from './bot/function/forecast';
 
 dotenv.config();

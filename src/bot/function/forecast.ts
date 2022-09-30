@@ -1,6 +1,6 @@
 import { getAsync } from '../../common/webWrapper';
-import { TypeOrm } from '../../db/dbconnector';
-import { Users } from '../../db/models/users';
+import { TypeOrm } from '../../model/typeorm/typeorm';
+import { Users } from '../../model/models/users';
 import { Forecast } from '../../interface/forecast';
 import { Onecall } from '../../interface/onecall';
 

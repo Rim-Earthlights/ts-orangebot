@@ -9,10 +9,11 @@ import { CONFIG } from '../config/config';
 import { Gacha, getGacha, getOmikuji, Omikuji } from './function/gacha';
 import { weatherDay, weatherToday } from './function/forecast';
 import { getCelo, judge } from './function/dice';
-import { TypeOrm } from '../db/dbconnector';
+import { TypeOrm } from '../model/typeorm/typeorm';
 import dayjs from 'dayjs';
-import { Users } from '../db/models/users';
-import { GachaTable } from '../db/models/gacha';
+import { Users } from '../model/models/users';
+import { GachaTable } from '../model/models/gacha';
+import { UsersRepository } from '../model/repository/usersRepository';
 
 /**
  * Ping-Pong
@@ -31,7 +32,10 @@ export async function ping(message: Message) {
  * @param args 引数
  */
 export async function debug(message: Message, args?: string[]) {
-    message.reply(`debug: ${args}`);
+    const repository = new UsersRepository();
+    const user = await repository.getById('246007305156558848');
+
+    console.log(user);
 }
 
 /**

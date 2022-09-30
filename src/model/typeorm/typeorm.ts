@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
-import { CONFIG } from '../config/config';
-import { GachaTable } from './models/gacha';
-import { Users } from './models/users';
+import { CONFIG } from '../../config/config';
+import { GachaTable } from '../models/gacha';
+import { Users } from '../models/users';
 
 export class TypeOrm {
     static dataSource = new DataSource({
