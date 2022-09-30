@@ -345,6 +345,12 @@ export async function gacha(message: Message, args?: string[]) {
 
     if (args != undefined && args.length > 0) {
         if (args[0] === 'reset') {
+            if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+                message.reply({
+                    content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
+                });
+                return;
+            }
             if (args[1]) {
                 const users = new UsersRepository();
                 const user = await users.get(args[1]);

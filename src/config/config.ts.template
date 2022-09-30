@@ -4,6 +4,8 @@ export const CONFIG = {
     PORT: '4044',
     // use privillage user
     USER: 'USER',
+    // discord guild administrator user id
+    ADMIN_USER_ID: ['DISCORD_ID'],
     // Discord Bot Token
     TOKEN: 'YOUR_DISCORD_TOKEN',
     // Forecast API Key
