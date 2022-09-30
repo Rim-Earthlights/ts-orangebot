@@ -159,16 +159,19 @@ async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('(こんにちは|こんにちわ)')) {
-        message.reply('こんにちは～！');
+        mention.hello(message);
         return;
     }
     if (message.content.match('(こんばんは|こんばんわ)')) {
-        message.reply('こんばんは～！');
+        mention.evening(message);
         return;
     }
     if (message.content.match('(おやすみ|寝るね|ねるね)')) {
         mention.goodNight(message);
         return;
+    }
+    if (message.content.match('ガチャ')) {
+        await SendCommand.gacha(message);
     }
     if (message.content.match('(かわい|かわよ|可愛い)')) {
         message.reply('えへへ～！ありがと嬉しい～！');
