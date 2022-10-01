@@ -578,46 +578,13 @@ export async function play(message: Message, args?: string[]) {
         return;
     }
 
-    await addQueue(message.guild.id, url, loop);
+    await addQueue(channel, url, loop);
     if (
         queue.player.state.status === AudioPlayerStatus.Idle ||
         queue.player.state.status === AudioPlayerStatus.AutoPaused
     ) {
         playMusic(channel);
     }
-
-    const send = new MessageEmbed()
-        .setColor('#cc66cc')
-        .setTitle(`音楽キュー: `)
-        .setDescription(queue.movie.map((m) => m.title).join('\n'));
-
-    message.reply({ content: `listen: ${queue.movie[0].title}`, embeds: [send] });
-
-    // const connection = joinVoiceChannel({
-    //     adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
-    //     channelId: channel.id,
-    //     guildId: channel.guild.id,
-    //     selfDeaf: true,
-    //     selfMute: false
-    // });
-
-    // connection.subscribe(queue.player);
-
-    // const stream = ytdl(ytdl.getURLVideoID(url), {
-    //     filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
-    //     quality: 'highest',
-    //     highWaterMark: 32 * 1024 * 1024 // https://github.com/fent/node-ytdl-core/issues/902
-    // });
-
-    // const resource = createAudioResource(stream, {
-    //     inputType: StreamType.WebmOpus
-    // });
-
-    // queue.player.play(resource);
-
-    // await entersState(queue.player, AudioPlayerStatus.Playing, 10 * 1000);
-    // await entersState(queue.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
-    // connection.destroy();
 }
 
 /**

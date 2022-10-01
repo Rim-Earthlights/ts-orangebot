@@ -9,7 +9,7 @@ import {
     joinVoiceChannel,
     StreamType
 } from '@discordjs/voice';
-import { VoiceBasedChannel } from 'discord.js';
+import { MessageEmbed, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
 
 interface Queue {
@@ -36,12 +36,12 @@ export async function initAudioPlayer(gid: string): Promise<void> {
     }
 }
 
-export async function addQueue(gid: string, url: string, loop?: boolean): Promise<boolean> {
+export async function addQueue(channel: VoiceBasedChannel, url: string, loop?: boolean): Promise<boolean> {
     if (!ytdl.validateURL(url)) {
         return false;
     }
 
-    const queue = Music.queue.find((q) => q.gid === gid);
+    const queue = Music.queue.find((q) => q.gid === channel.guild.id);
 
     const info = await ytdl.getInfo(url);
 
@@ -54,9 +54,17 @@ export async function addQueue(gid: string, url: string, loop?: boolean): Promis
         if (loop) {
             queue.loop = true;
         }
+        if (queue.movie.length > 1) {
+            const send = new MessageEmbed()
+                .setColor('#cc66cc')
+                .setTitle(`キュー: `)
+                .setDescription(queue.movie.map((m) => m.title).join('\n'));
+
+            (channel as VoiceChannel).send({ content: `追加: ${info.videoDetails.title}`, embeds: [send] });
+        }
     } else {
         Music.queue.push({
-            gid,
+            gid: channel.guild.id,
             player: createAudioPlayer(),
             movie: [
                 {
@@ -68,8 +76,6 @@ export async function addQueue(gid: string, url: string, loop?: boolean): Promis
             loop: false
         });
     }
-
-    console.log(`add queue: ${gid}/${url}`);
     return true;
 }
 
@@ -122,6 +128,13 @@ export async function playMusic(channel: VoiceBasedChannel) {
         inputType: StreamType.WebmOpus
     });
 
+    const send = new MessageEmbed()
+        .setColor('#cc66cc')
+        .setTitle('キュー: ')
+        .setDescription(queue.movie.map((m) => m.title).join('\n'));
+
+    (channel as VoiceChannel).send({ content: `再生中: ${queue.movie[0].title}`, embeds: [send] });
+
     queue.player.play(resource);
 
     await entersState(queue.player, AudioPlayerStatus.Playing, 10 * 1000);
@@ -140,6 +153,7 @@ export async function stopMusic(channel: VoiceBasedChannel) {
             await remove(channel.guild.id, queue.movie[0]);
             playMusic(channel);
         } else {
+            (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
             const connection = getVoiceConnection(channel.guild.id);
             connection?.destroy();
         }

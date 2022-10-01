@@ -282,6 +282,10 @@ async function commandSelector(message: Message) {
             await SendCommand.stop(message);
             break;
         }
+        case 'exterm': {
+            await SendCommand.exterm(message);
+            break;
+        }
         case 'reg': {
             await SendCommand.reg(message, content);
             break;
