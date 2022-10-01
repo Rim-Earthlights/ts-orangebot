@@ -13,6 +13,7 @@ import { CONFIG } from './config/config';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
 import { TypeOrm } from './model/typeorm/typeorm';
 import { getPref } from './bot/function/forecast';
+import { Music } from './bot/function/music';
 
 dotenv.config();
 
@@ -68,6 +69,8 @@ DISCORD_CLIENT.once('ready', async () => {
         .catch((e) => {
             console.log(e);
         });
+
+    Music.queue = [];
 
     console.log('Ready!');
     console.log(`Logged In: ${DISCORD_CLIENT?.user?.tag}`);

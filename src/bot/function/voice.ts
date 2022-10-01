@@ -1,6 +1,7 @@
 import { CategoryChannel, Guild, VoiceChannel, VoiceState } from 'discord.js';
 import { ChannelTypes } from 'discord.js/typings/enums';
-import { EXCLUDE_ROOM } from '../../constant/constants';
+import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants';
+import { extermAudioPlayer, initAudioPlayer } from './music';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -10,9 +11,13 @@ import { EXCLUDE_ROOM } from '../../constant/constants';
  */
 export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Promise<void> {
     if (EXCLUDE_ROOM.every((r) => r !== voiceState.channel?.name)) {
-        if ((voiceState.channel as VoiceChannel).members.size <= 0) {
-            guild?.channels.delete(voiceState.channel as VoiceChannel);
+        const vc = voiceState.channel as VoiceChannel;
+
+        if (vc.members.size <= 0) {
+            await guild?.channels.delete(vc);
             console.log(`delete voice channel: ${voiceState.channel?.id}`);
+        } else if (vc.members.size === 1 && vc.members.find((m) => m.id === DISCORD_CLIENT?.user?.id)) {
+            await extermAudioPlayer(guild.id);
         }
     }
 }
@@ -37,6 +42,7 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
             (voiceState.channel as VoiceChannel).members.map((m) => {
                 m.voice.setChannel(vc.id);
             });
+            await initAudioPlayer(guild.id);
         }
     }
 }

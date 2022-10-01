@@ -23,6 +23,7 @@ import {
     joinVoiceChannel,
     StreamType
 } from '@discordjs/voice';
+import { addQueue, extermAudioPlayer, Music, playMusic, stopMusic } from './function/music';
 
 /**
  * Ping-Pong
@@ -552,66 +553,98 @@ export async function gacha(message: Message, args?: string[]) {
  * @returns
  */
 export async function play(message: Message, args?: string[]) {
+    const queue = Music.queue.find((q) => q.gid === message.guild?.id);
+    if (!queue || !message.guild?.id) {
+        return;
+    }
+
     if (!args || args.length === 0 || !ytdl.validateURL(args[0])) {
         const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
         message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
         return;
     }
-    const url = args[0];
 
+    const url = args[0];
+    const loop = Boolean(args[1]);
     const channel = message.member?.voice.channel;
     if (!channel) {
         const send = new MessageEmbed()
             .setColor('#ff0000')
             .setTitle(`エラー`)
-            .setDescription(`userのボイスチャンネルが見つからない`);
+            .setDescription(`userのボイスチャンネルが見つからなかった`);
 
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
 
-    const connection = joinVoiceChannel({
-        adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
-        channelId: channel.id,
-        guildId: channel.guild.id,
-        selfDeaf: true,
-        selfMute: false
-    });
+    await addQueue(message.guild.id, url, loop);
+    if (
+        queue.player.state.status === AudioPlayerStatus.Idle ||
+        queue.player.state.status === AudioPlayerStatus.AutoPaused
+    ) {
+        playMusic(channel);
+    }
 
-    const player = createAudioPlayer();
-    connection.subscribe(player);
+    const send = new MessageEmbed()
+        .setColor('#cc66cc')
+        .setTitle(`音楽キュー: `)
+        .setDescription(queue.movie.map((m) => m.title).join('\n'));
 
-    const stream = ytdl(ytdl.getURLVideoID(url), {
-        filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
-        quality: 'highest',
-        highWaterMark: 32 * 1024 * 1024 // https://github.com/fent/node-ytdl-core/issues/902
-    });
+    message.reply({ content: `listen: ${queue.movie[0].title}`, embeds: [send] });
 
-    const resource = createAudioResource(stream, {
-        inputType: StreamType.WebmOpus
-    });
+    // const connection = joinVoiceChannel({
+    //     adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
+    //     channelId: channel.id,
+    //     guildId: channel.guild.id,
+    //     selfDeaf: true,
+    //     selfMute: false
+    // });
 
-    player.play(resource);
+    // connection.subscribe(queue.player);
 
-    await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
-    await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
-    connection.destroy();
+    // const stream = ytdl(ytdl.getURLVideoID(url), {
+    //     filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
+    //     quality: 'highest',
+    //     highWaterMark: 32 * 1024 * 1024 // https://github.com/fent/node-ytdl-core/issues/902
+    // });
+
+    // const resource = createAudioResource(stream, {
+    //     inputType: StreamType.WebmOpus
+    // });
+
+    // queue.player.play(resource);
+
+    // await entersState(queue.player, AudioPlayerStatus.Playing, 10 * 1000);
+    // await entersState(queue.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    // connection.destroy();
 }
 
 /**
- * 音楽を即時停止する.
+ * 音楽を停止する.
  * @param message
  * @returns
  */
 export async function stop(message: Message) {
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+        const send = new MessageEmbed()
+            .setColor('#ff0000')
+            .setTitle(`エラー`)
+            .setDescription(`userのボイスチャンネルが見つからなかった`);
+
+        message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+        return;
+    }
+    await stopMusic(channel);
+}
+
+export async function exterm(message: Message) {
     if (!message.guild?.id) {
         return;
     }
 
-    const connection = getVoiceConnection(message.guild.id);
-
-    connection?.destroy();
+    await extermAudioPlayer(message.guild.id);
 }
 
 /**
