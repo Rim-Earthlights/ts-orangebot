@@ -10,15 +10,31 @@ export class GachaRepository {
     }
 
     /**
-     * UIDからユーザを取得する.
+     * ガチャ履歴を取得する.
      * @param uid user.id
-     * @returns Promise<Users | null>
+     * @param date datetime
+     * @param limit limit
+     * @returns Promise<GachaTable[] | null>
      */
-    public async getById(uid: string): Promise<GachaTable | null> {
-        const user = await this.repository.findOne({ where: { id: uid } });
-        return user;
+    public async get(uid: string, date?: Date, limit?: number): Promise<GachaTable[] | null> {
+        const gacha = this.repository.createQueryBuilder();
+        gacha.where('user_id = :id', { id: uid });
+
+        if (date) {
+            gacha.andWhere('gachaTime >= :date', { date: date });
+        }
+
+        gacha.orderBy('gachaTime', 'DESC');
+
+        gacha.limit(limit ? limit : 100);
+
+        return (await gacha.getMany()) as GachaTable[];
     }
 
+    /**
+     * 引いたガチャを保存する
+     * @param gacha
+     */
     public async save(gacha: DeepPartial<GachaTable>[]): Promise<void> {
         await this.repository.save(gacha);
     }
