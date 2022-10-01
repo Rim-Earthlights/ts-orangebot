@@ -22,14 +22,24 @@ export class MusicRepository {
      *
      * @returns Promise<GachaTable[] | null>
      */
-    public async add(gid: string, music: DeepPartial<Music>): Promise<boolean> {
-        const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
-        if (!getMusic) {
-            const saveMusic = await this.repository.save({ ...music, music_id: 0 });
+    public async add(gid: string, music: DeepPartial<Music>, interrupt: boolean): Promise<boolean> {
+        if (interrupt) {
+            const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
+            if (!getMusic) {
+                const saveMusic = await this.repository.save({ ...music, music_id: 0 });
+                return !!saveMusic;
+            }
+            const saveMusic = await this.repository.save({ ...music, music_id: getMusic.music_id - 1 });
+            return !!saveMusic;
+        } else {
+            const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
+            if (!getMusic) {
+                const saveMusic = await this.repository.save({ ...music, music_id: 0 });
+                return !!saveMusic;
+            }
+            const saveMusic = await this.repository.save({ ...music, music_id: getMusic.music_id + 1 });
             return !!saveMusic;
         }
-        const saveMusic = await this.repository.save({ ...music, music_id: getMusic.music_id + 1 });
-        return !!saveMusic;
     }
 
     /**

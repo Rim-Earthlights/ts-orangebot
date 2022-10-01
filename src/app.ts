@@ -275,6 +275,11 @@ async function commandSelector(message: Message) {
             await SendCommand.play(message, content);
             break;
         }
+        case 'interrupt':
+        case 'pi': {
+            await SendCommand.interrupt(message, content);
+            break;
+        }
         case 'stop':
         case 'st': {
             await SendCommand.stop(message);
@@ -283,10 +288,6 @@ async function commandSelector(message: Message) {
         case 'rem':
         case 'rm': {
             await SendCommand.rem(message, content);
-            break;
-        }
-        case 'exterm': {
-            await SendCommand.exterm(message);
             break;
         }
         case 'reg': {

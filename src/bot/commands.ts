@@ -1,4 +1,4 @@
-import { Message, MessageEmbed } from 'discord.js';
+import { Message, MessageEmbed, VoiceBasedChannel } from 'discord.js';
 import { getRndNumber } from '../common/common';
 import { Forecast, FORECAST_URI } from '../interface/forecast';
 import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../interface/geocoding';
@@ -13,7 +13,7 @@ import dayjs from 'dayjs';
 import { UsersRepository } from '../model/repository/usersRepository';
 import { GachaRepository } from '../model/repository/gachaRepository';
 import ytdl from 'ytdl-core';
-import { add, extermAudioPlayer, removeId, stopMusic } from './function/music';
+import { add, extermAudioPlayer, interruptMusic, playMusic, removeId, stopMusic } from './function/music';
 
 /**
  * Ping-Pong
@@ -33,10 +33,8 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-    if (!message.guild?.id) {
-        return;
-    }
-    return;
+    const channel = message.member?.voice.channel as VoiceBasedChannel;
+    await playMusic(channel);
 }
 
 /**
@@ -554,7 +552,6 @@ export async function play(message: Message, args?: string[]) {
     }
 
     const url = args[0];
-    const loop = Boolean(args[1]);
     const channel = message.member?.voice.channel;
     if (!channel) {
         const send = new MessageEmbed()
@@ -566,7 +563,7 @@ export async function play(message: Message, args?: string[]) {
         return;
     }
 
-    await add(channel, url, loop);
+    await add(channel, url);
 }
 
 /**
@@ -592,6 +589,10 @@ export async function rem(message: Message, args?: string[]) {
     if (!args) {
         return;
     }
+    if (args[0] === 'all') {
+        await exterm(message);
+        return;
+    }
     const num = Number(args[0]);
     if (num === undefined) {
         return;
@@ -608,6 +609,27 @@ export async function rem(message: Message, args?: string[]) {
         return;
     }
     await removeId(channel, channel.guild.id, num);
+}
+export async function interrupt(message: Message, args?: string[]) {
+    if (!args || args.length === 0 || !ytdl.validateURL(args[0])) {
+        const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+        message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
+        return;
+    }
+
+    const url = args[0];
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+        const send = new MessageEmbed()
+            .setColor('#ff0000')
+            .setTitle(`エラー`)
+            .setDescription(`userのボイスチャンネルが見つからなかった`);
+
+        message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+        return;
+    }
+    await interruptMusic(channel, url);
 }
 
 export async function exterm(message: Message) {

@@ -21,18 +21,23 @@ export async function initAudioPlayer(): Promise<void> {
     Music.player = createAudioPlayer();
 }
 
-export async function add(channel: VoiceBasedChannel, url: string, loop?: boolean): Promise<boolean> {
+export async function add(channel: VoiceBasedChannel, url: string): Promise<boolean> {
     if (!ytdl.validateURL(url)) {
         return false;
     }
     const info = await ytdl.getInfo(url);
     const repository = new MusicRepository();
 
-    const result = await repository.add(channel.guild.id, {
-        guild_id: channel.guild.id,
-        title: info.videoDetails.title,
-        url: info.videoDetails.video_url
-    });
+    const result = await repository.add(
+        channel.guild.id,
+        {
+            guild_id: channel.guild.id,
+            title: info.videoDetails.title,
+            url: info.videoDetails.video_url
+        },
+        false
+    );
+
     const musics = await repository.getAll(channel.guild.id);
 
     if (musics.length > 1) {
@@ -45,6 +50,41 @@ export async function add(channel: VoiceBasedChannel, url: string, loop?: boolea
     } else {
         await playMusic(channel);
     }
+
+    return result;
+}
+
+export async function interruptMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
+    if (!ytdl.validateURL(url)) {
+        return false;
+    }
+    const info = await ytdl.getInfo(url);
+    const repository = new MusicRepository();
+
+    const result = await repository.add(
+        channel.guild.id,
+        {
+            guild_id: channel.guild.id,
+            title: info.videoDetails.title,
+            url: info.videoDetails.video_url
+        },
+        true
+    );
+
+    const musics = await repository.getAll(channel.guild.id);
+    await repository.remove(channel.guild.id, musics[1].music_id);
+
+    const send = new MessageEmbed()
+        .setColor('#cc66cc')
+        .setTitle('キュー: ')
+        .setDescription(
+            musics
+                .filter((m) => m.music_id !== musics[1].music_id)
+                .map((m) => m.music_id + ': ' + m.title)
+                .join('\n')
+        );
+
+    (channel as VoiceChannel).send({ content: `追加: ${info.videoDetails.title}`, embeds: [send] });
 
     return result;
 }
