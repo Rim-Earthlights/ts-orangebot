@@ -12,6 +12,17 @@ import { getCelo, judge } from './function/dice';
 import dayjs from 'dayjs';
 import { UsersRepository } from '../model/repository/usersRepository';
 import { GachaRepository } from '../model/repository/gachaRepository';
+import ytdl from 'ytdl-core';
+import {
+    AudioPlayerStatus,
+    createAudioPlayer,
+    createAudioResource,
+    DiscordGatewayAdapterCreator,
+    entersState,
+    getVoiceConnection,
+    joinVoiceChannel,
+    StreamType
+} from '@discordjs/voice';
 
 /**
  * Ping-Pong
@@ -31,10 +42,7 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-    const repository = new UsersRepository();
-    const user = await repository.get('246007305156558848');
-
-    console.log(user);
+    return;
 }
 
 /**
@@ -59,6 +67,10 @@ export async function help(message: Message) {
     res.push('     回数を指定するとその回数回します');
     res.push('     等級を指定するとその等級が出るまで回します');
     res.push('     等級か回数を指定した場合はプレゼントの対象外です');
+    res.push(' * .play [URL] / .pl [URL]');
+    res.push('   > Youtube の音楽を再生する');
+    res.push(' * .stop / .st');
+    res.push('   > 音楽の再生を停止する');
     res.push(' * .celovs');
     res.push('   > チンチロリンで遊ぶ');
     res.push('     みかんちゃんとチンチロリンで遊べます');
@@ -531,6 +543,75 @@ export async function gacha(message: Message, args?: string[]) {
             message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
         }
     }
+}
+
+/**
+ * 音楽を再生する.
+ * @param message
+ * @param args
+ * @returns
+ */
+export async function play(message: Message, args?: string[]) {
+    if (!args || args.length === 0 || !ytdl.validateURL(args[0])) {
+        const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+        message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
+        return;
+    }
+    const url = args[0];
+
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+        const send = new MessageEmbed()
+            .setColor('#ff0000')
+            .setTitle(`エラー`)
+            .setDescription(`userのボイスチャンネルが見つからない`);
+
+        message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+        return;
+    }
+
+    const connection = joinVoiceChannel({
+        adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
+        channelId: channel.id,
+        guildId: channel.guild.id,
+        selfDeaf: true,
+        selfMute: false
+    });
+
+    const player = createAudioPlayer();
+    connection.subscribe(player);
+
+    const stream = ytdl(ytdl.getURLVideoID(url), {
+        filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
+        quality: 'highest',
+        highWaterMark: 32 * 1024 * 1024 // https://github.com/fent/node-ytdl-core/issues/902
+    });
+
+    const resource = createAudioResource(stream, {
+        inputType: StreamType.WebmOpus
+    });
+
+    player.play(resource);
+
+    await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
+    await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    connection.destroy();
+}
+
+/**
+ * 音楽を即時停止する.
+ * @param message
+ * @returns
+ */
+export async function stop(message: Message) {
+    if (!message.guild?.id) {
+        return;
+    }
+
+    const connection = getVoiceConnection(message.guild.id);
+
+    connection?.destroy();
 }
 
 /**

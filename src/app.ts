@@ -269,6 +269,16 @@ async function commandSelector(message: Message) {
             await SendCommand.celovs(message);
             break;
         }
+        case 'play':
+        case 'pl': {
+            await SendCommand.play(message, content);
+            break;
+        }
+        case 'stop':
+        case 'st': {
+            await SendCommand.stop(message);
+            break;
+        }
         case 'reg': {
             await SendCommand.reg(message, content);
             break;
