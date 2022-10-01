@@ -11,98 +11,80 @@ import {
 } from '@discordjs/voice';
 import { MessageEmbed, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
-
-interface Queue {
-    gid: string;
-    player: AudioPlayer;
-    movie: Movie[];
-    loop: boolean;
-}
-interface Movie {
-    title: string;
-    url: string;
-    length: string;
-}
+import { MusicRepository } from '../../model/repository/musicRepository';
 
 export class Music {
-    static queue: Queue[];
+    static player: AudioPlayer;
 }
 
-export async function initAudioPlayer(gid: string): Promise<void> {
-    const queue = Music.queue.find((q) => q.gid === gid);
-
-    if (!queue) {
-        Music.queue.push({ gid, player: createAudioPlayer(), movie: [], loop: false });
-    }
+export async function initAudioPlayer(): Promise<void> {
+    Music.player = createAudioPlayer();
 }
 
-export async function addQueue(channel: VoiceBasedChannel, url: string, loop?: boolean): Promise<boolean> {
+export async function add(channel: VoiceBasedChannel, url: string, loop?: boolean): Promise<boolean> {
     if (!ytdl.validateURL(url)) {
         return false;
     }
-
-    const queue = Music.queue.find((q) => q.gid === channel.guild.id);
-
     const info = await ytdl.getInfo(url);
+    const repository = new MusicRepository();
 
-    if (queue) {
-        queue.movie.push({
-            title: info.videoDetails.title,
-            url: info.videoDetails.video_url,
-            length: info.videoDetails.lengthSeconds
-        });
-        if (loop) {
-            queue.loop = true;
-        }
-        if (queue.movie.length > 1) {
-            const send = new MessageEmbed()
-                .setColor('#cc66cc')
-                .setTitle(`キュー: `)
-                .setDescription(queue.movie.map((m) => m.title).join('\n'));
+    const result = await repository.add(channel.guild.id, {
+        guild_id: channel.guild.id,
+        title: info.videoDetails.title,
+        url: info.videoDetails.video_url
+    });
+    const musics = await repository.getAll(channel.guild.id);
 
-            (channel as VoiceChannel).send({ content: `追加: ${info.videoDetails.title}`, embeds: [send] });
-        }
+    if (musics.length > 1) {
+        const send = new MessageEmbed()
+            .setColor('#cc66cc')
+            .setTitle('キュー: ')
+            .setDescription(musics.map((m) => m.music_id + ': ' + m.title).join('\n'));
+
+        (channel as VoiceChannel).send({ content: `追加: ${info.videoDetails.title}`, embeds: [send] });
     } else {
-        Music.queue.push({
-            gid: channel.guild.id,
-            player: createAudioPlayer(),
-            movie: [
-                {
-                    title: info.videoDetails.title,
-                    url: info.videoDetails.video_url,
-                    length: info.videoDetails.lengthSeconds
-                }
-            ],
-            loop: false
-        });
+        await playMusic(channel);
     }
-    return true;
+
+    return result;
 }
 
-export async function remove(gid: string, movie: Movie): Promise<boolean> {
-    const queue = Music.queue.find((q) => q.gid === gid);
+export async function remove(gid: string, musicId?: number): Promise<boolean> {
+    const repository = new MusicRepository();
+    return await repository.remove(gid, musicId);
+}
 
-    if (queue) {
-        Music.queue.map((q) => {
-            if (q.gid === gid) {
-                q.movie = q.movie.filter((m) => m.url !== movie.url);
-            }
-        });
-    } else {
-        return false;
-    }
+export async function removeId(channel: VoiceBasedChannel, gid: string, musicId?: number): Promise<void> {
+    const repository = new MusicRepository();
+    const musics = await repository.getAll(gid);
+    await repository.remove(gid, musicId);
 
-    console.log(`remove queue: ${gid}/${movie.title}`);
-    return true;
+    const send = new MessageEmbed()
+        .setColor('#cc66cc')
+        .setTitle('キュー: ')
+        .setDescription(
+            musics
+                .filter((m) => m.music_id !== musicId)
+                .map((m) => m.music_id + ': ' + m.title)
+                .join('\n')
+        );
+
+    (channel as VoiceChannel).send({
+        content: `削除: ${musics.find((m) => m.music_id === musicId)?.title}`,
+        embeds: [send]
+    });
 }
 
 export async function playMusic(channel: VoiceBasedChannel) {
-    const queue = Music.queue.find((q) => q.gid === channel.guild.id);
+    const repository = new MusicRepository();
+    const musics = await repository.getAll(channel.guild.id);
 
-    if (!queue || queue.movie.length === 0) {
+    if (musics.length <= 0) {
         await stopMusic(channel);
         return;
     }
+
+    const startMusic = musics[0];
 
     const vc = getVoiceConnection(channel.guild.id);
 
@@ -116,9 +98,10 @@ export async function playMusic(channel: VoiceBasedChannel) {
               selfMute: false
           });
 
-    connection.subscribe(queue.player);
+    Music.player = createAudioPlayer();
+    connection.subscribe(Music.player);
 
-    const stream = ytdl(ytdl.getURLVideoID(queue.movie[0].url), {
+    const stream = ytdl(ytdl.getURLVideoID(startMusic.url), {
         filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
         quality: 'highest',
         highWaterMark: 32 * 1024 * 1024 // https://github.com/fent/node-ytdl-core/issues/902
@@ -131,46 +114,39 @@ export async function playMusic(channel: VoiceBasedChannel) {
     const send = new MessageEmbed()
         .setColor('#cc66cc')
         .setTitle('キュー: ')
-        .setDescription(queue.movie.map((m) => m.title).join('\n'));
+        .setDescription(musics.map((m) => m.music_id + ': ' + m.title).join('\n'));
 
-    (channel as VoiceChannel).send({ content: `再生中: ${queue.movie[0].title}`, embeds: [send] });
+    (channel as VoiceChannel).send({ content: `再生中: ${startMusic.title}`, embeds: [send] });
 
-    queue.player.play(resource);
+    Music.player.play(resource);
 
-    await entersState(queue.player, AudioPlayerStatus.Playing, 10 * 1000);
-    await entersState(queue.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    await entersState(Music.player, AudioPlayerStatus.Playing, 10 * 1000);
+    await entersState(Music.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
 
-    await remove(channel.guild.id, queue.movie[0]);
+    await remove(startMusic.guild_id, startMusic.music_id);
     await playMusic(channel);
-    // connection.destroy();
 }
 
 export async function stopMusic(channel: VoiceBasedChannel) {
-    const queue = Music.queue.find((q) => q.gid === channel.guild.id);
+    const repository = new MusicRepository();
+    const musics = await repository.getAll(channel.guild.id);
 
-    if (queue) {
-        if (queue.movie.length > 0) {
-            await remove(channel.guild.id, queue.movie[0]);
-            playMusic(channel);
-        } else {
-            (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
-            const connection = getVoiceConnection(channel.guild.id);
-            connection?.destroy();
-        }
+    if (musics.length > 0) {
+        Music.player.stop();
+    } else {
+        (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
+        const connection = getVoiceConnection(channel.guild.id);
+        connection?.destroy();
     }
 }
 
-export async function extermAudioPlayer(gid: string) {
-    const queue = Music.queue.find((q) => q.gid === gid);
-
-    if (queue) {
-        Music.queue.map((q) => {
-            if (q.gid === gid) {
-                q.movie = [];
-            }
-        });
-    }
+export async function extermAudioPlayer(gid: string): Promise<boolean> {
+    await remove(gid);
 
     const connection = getVoiceConnection(gid);
-    connection?.destroy();
+    if (connection) {
+        connection.destroy();
+        return true;
+    }
+    return false;
 }

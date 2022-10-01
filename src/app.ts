@@ -70,8 +70,6 @@ DISCORD_CLIENT.once('ready', async () => {
             console.log(e);
         });
 
-    Music.queue = [];
-
     console.log('Ready!');
     console.log(`Logged In: ${DISCORD_CLIENT?.user?.tag}`);
 });
@@ -280,6 +278,11 @@ async function commandSelector(message: Message) {
         case 'stop':
         case 'st': {
             await SendCommand.stop(message);
+            break;
+        }
+        case 'rem':
+        case 'rm': {
+            await SendCommand.rem(message, content);
             break;
         }
         case 'exterm': {

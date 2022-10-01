@@ -14,10 +14,10 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
         const vc = voiceState.channel as VoiceChannel;
 
         if (vc.members.size <= 0) {
-            await guild?.channels.delete(vc);
-            console.log(`delete voice channel: ${voiceState.channel?.id}`);
+            await vc.delete();
+            console.log(`delete voice channel: ${vc.id}`);
         } else if (vc.members.size === 1 && vc.members.find((m) => m.id === DISCORD_CLIENT?.user?.id)) {
-            await extermAudioPlayer(guild.id);
+            await extermAudioPlayer(vc.guild.id);
         }
     }
 }
@@ -42,7 +42,7 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
             (voiceState.channel as VoiceChannel).members.map((m) => {
                 m.voice.setChannel(vc.id);
             });
-            await initAudioPlayer(guild.id);
+            await initAudioPlayer();
         }
     }
 }

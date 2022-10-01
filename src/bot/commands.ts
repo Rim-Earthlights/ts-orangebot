@@ -13,17 +13,7 @@ import dayjs from 'dayjs';
 import { UsersRepository } from '../model/repository/usersRepository';
 import { GachaRepository } from '../model/repository/gachaRepository';
 import ytdl from 'ytdl-core';
-import {
-    AudioPlayerStatus,
-    createAudioPlayer,
-    createAudioResource,
-    DiscordGatewayAdapterCreator,
-    entersState,
-    getVoiceConnection,
-    joinVoiceChannel,
-    StreamType
-} from '@discordjs/voice';
-import { addQueue, extermAudioPlayer, Music, playMusic, stopMusic } from './function/music';
+import { add, extermAudioPlayer, removeId, stopMusic } from './function/music';
 
 /**
  * Ping-Pong
@@ -43,6 +33,9 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
+    if (!message.guild?.id) {
+        return;
+    }
     return;
 }
 
@@ -553,11 +546,6 @@ export async function gacha(message: Message, args?: string[]) {
  * @returns
  */
 export async function play(message: Message, args?: string[]) {
-    const queue = Music.queue.find((q) => q.gid === message.guild?.id);
-    if (!queue || !message.guild?.id) {
-        return;
-    }
-
     if (!args || args.length === 0 || !ytdl.validateURL(args[0])) {
         const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
@@ -578,13 +566,7 @@ export async function play(message: Message, args?: string[]) {
         return;
     }
 
-    await addQueue(channel, url, loop);
-    if (
-        queue.player.state.status === AudioPlayerStatus.Idle ||
-        queue.player.state.status === AudioPlayerStatus.AutoPaused
-    ) {
-        playMusic(channel);
-    }
+    await add(channel, url, loop);
 }
 
 /**
@@ -604,6 +586,28 @@ export async function stop(message: Message) {
         return;
     }
     await stopMusic(channel);
+}
+
+export async function rem(message: Message, args?: string[]) {
+    if (!args) {
+        return;
+    }
+    const num = Number(args[0]);
+    if (num === undefined) {
+        return;
+    }
+
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+        const send = new MessageEmbed()
+            .setColor('#ff0000')
+            .setTitle(`エラー`)
+            .setDescription(`userのボイスチャンネルが見つからなかった`);
+
+        message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+        return;
+    }
+    await removeId(channel, channel.guild.id, num);
 }
 
 export async function exterm(message: Message) {
