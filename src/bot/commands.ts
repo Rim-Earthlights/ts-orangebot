@@ -13,7 +13,15 @@ import dayjs from 'dayjs';
 import { UsersRepository } from '../model/repository/usersRepository';
 import { GachaRepository } from '../model/repository/gachaRepository';
 import ytdl from 'ytdl-core';
-import { add, extermAudioPlayer, interruptMusic, playMusic, removeId, stopMusic } from './function/music';
+import {
+    add,
+    extermAudioPlayer,
+    interruptIndex,
+    interruptMusic,
+    playMusic,
+    removeId,
+    stopMusic
+} from './function/music';
 
 /**
  * Ping-Pong
@@ -611,15 +619,17 @@ export async function rem(message: Message, args?: string[]) {
     await removeId(channel, channel.guild.id, num);
 }
 export async function interrupt(message: Message, args?: string[]) {
-    if (!args || args.length === 0 || !ytdl.validateURL(args[0])) {
+    if (!args || args.length === 0) {
         const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
         message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
         return;
     }
 
-    const url = args[0];
     const channel = message.member?.voice.channel;
+    const url = args[0];
+    const num = Number(url);
+
     if (!channel) {
         const send = new MessageEmbed()
             .setColor('#ff0000')
@@ -629,6 +639,19 @@ export async function interrupt(message: Message, args?: string[]) {
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
+
+    if (num) {
+        await interruptIndex(channel, num);
+        return;
+    }
+
+    if (!ytdl.validateURL(args[0])) {
+        const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+        message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
+        return;
+    }
+
     await interruptMusic(channel, url);
 }
 

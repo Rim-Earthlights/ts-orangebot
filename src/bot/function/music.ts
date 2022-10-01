@@ -84,7 +84,41 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
                 .join('\n')
         );
 
-    (channel as VoiceChannel).send({ content: `追加: ${info.videoDetails.title}`, embeds: [send] });
+    (channel as VoiceChannel).send({ content: `割込: ${info.videoDetails.title}`, embeds: [send] });
+
+    return result;
+}
+
+export async function interruptIndex(channel: VoiceBasedChannel, index: number): Promise<boolean> {
+    const repository = new MusicRepository();
+    const musics = await repository.getAll(channel.guild.id);
+    const music = musics.find((m) => m.music_id === index);
+
+    if (!music) {
+        return false;
+    }
+
+    const result = await repository.add(
+        channel.guild.id,
+        {
+            guild_id: channel.guild.id,
+            title: music?.title,
+            url: music?.url
+        },
+        true
+    );
+
+    await repository.remove(channel.guild.id, music.music_id);
+    await repository.remove(channel.guild.id, musics[0].music_id);
+
+    const newMusics = await repository.getAll(channel.guild.id);
+
+    const send = new MessageEmbed()
+        .setColor('#cc66cc')
+        .setTitle('キュー: ')
+        .setDescription(newMusics.map((m) => m.music_id + ': ' + m.title).join('\n'));
+
+    (channel as VoiceChannel).send({ content: `割込: ${music.title}`, embeds: [send] });
 
     return result;
 }
