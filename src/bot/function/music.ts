@@ -12,6 +12,7 @@ import {
 import { MessageEmbed, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
 import { MusicRepository } from '../../model/repository/musicRepository';
+import { Music as MusicEntity } from '../../model/models/music';
 
 export class Music {
     static player: AudioPlayer;
@@ -40,7 +41,7 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
 
     const musics = await repository.getAll(channel.guild.id);
 
-    if (musics.length > 1) {
+    if (Music.player?.state?.status === AudioPlayerStatus.Playing) {
         const send = new MessageEmbed()
             .setColor('#cc66cc')
             .setTitle('キュー: ')
@@ -72,7 +73,6 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
     );
 
     const musics = await repository.getAll(channel.guild.id);
-    await repository.remove(channel.guild.id, musics[1].music_id);
 
     const send = new MessageEmbed()
         .setColor('#cc66cc')
@@ -109,7 +109,6 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
     );
 
     await repository.remove(channel.guild.id, music.music_id);
-    await repository.remove(channel.guild.id, musics[0].music_id);
 
     const newMusics = await repository.getAll(channel.guild.id);
 
@@ -158,7 +157,8 @@ export async function playMusic(channel: VoiceBasedChannel) {
         return;
     }
 
-    const startMusic = musics[0];
+    const playing = musics[0];
+    musics.shift();
 
     const vc = getVoiceConnection(channel.guild.id);
 
@@ -175,7 +175,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
     Music.player = createAudioPlayer();
     connection.subscribe(Music.player);
 
-    const stream = ytdl(ytdl.getURLVideoID(startMusic.url), {
+    const stream = ytdl(ytdl.getURLVideoID(playing.url), {
         filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
         quality: 'highest',
         highWaterMark: 32 * 1024 * 1024 // https://github.com/fent/node-ytdl-core/issues/902
@@ -190,14 +190,14 @@ export async function playMusic(channel: VoiceBasedChannel) {
         .setTitle('キュー: ')
         .setDescription(musics.map((m) => m.music_id + ': ' + m.title).join('\n'));
 
-    (channel as VoiceChannel).send({ content: `再生中: ${startMusic.title}`, embeds: [send] });
+    (channel as VoiceChannel).send({ content: `再生中: ${playing.title}`, embeds: [send] });
 
     Music.player.play(resource);
+    await remove(playing.guild_id, playing.music_id);
 
     await entersState(Music.player, AudioPlayerStatus.Playing, 10 * 1000);
     await entersState(Music.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
 
-    await remove(startMusic.guild_id, startMusic.music_id);
     await playMusic(channel);
 }
 
