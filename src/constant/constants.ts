@@ -1,12 +1,19 @@
-import { Client } from 'discord.js';
+import { Client, GatewayIntentBits, Partials } from 'discord.js';
 
 // 連携できるbot
 export const COORDINATION_ID = ['985704725016105000'];
 
 // Client
 export const DISCORD_CLIENT = new Client({
-    partials: ['CHANNEL'],
-    intents: ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'GUILD_VOICE_STATES']
+    partials: [Partials.Channel],
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.MessageContent
+    ]
 });
 
 export const EXCLUDE_ROOM = ['ロビー', '墓'];
