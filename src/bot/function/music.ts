@@ -189,6 +189,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
 
     const playing = musics[0];
     musics.shift();
+    await remove(playing.guild_id, playing.music_id);
 
     const vc = getVoiceConnection(channel.guild.id);
 
@@ -224,7 +225,6 @@ export async function playMusic(channel: VoiceBasedChannel) {
     (channel as VoiceChannel).send({ content: `再生中: ${playing.title}`, embeds: [send] });
 
     Music.player.play(resource);
-    await remove(playing.guild_id, playing.music_id);
 
     await entersState(Music.player, AudioPlayerStatus.Playing, 10 * 1000);
     await entersState(Music.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
