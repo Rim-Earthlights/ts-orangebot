@@ -306,6 +306,15 @@ async function commandSelector(message: Message) {
             await SendCommand.rem(message, content);
             break;
         }
+        case 'q': {
+            await SendCommand.queue(message);
+            break;
+        }
+        case 'shuffle':
+        case 'sf': {
+            await SendCommand.shuffle(message);
+            break;
+        }
         case 'reg': {
             await SendCommand.reg(message, content);
             break;

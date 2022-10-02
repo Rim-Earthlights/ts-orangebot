@@ -21,6 +21,8 @@ import {
     interruptMusic,
     playMusic,
     removeId,
+    showQueue,
+    shuffleMusic,
     stopMusic
 } from './function/music';
 
@@ -552,7 +554,7 @@ export async function gacha(message: Message, args?: string[]) {
  * @param args
  * @returns
  */
-export async function play(message: Message, args?: string[]) {
+export async function play(message: Message, args?: string[], loop?: boolean) {
     if (!args || args.length === 0) {
         const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
@@ -655,6 +657,23 @@ export async function interrupt(message: Message, args?: string[]) {
     }
 
     await interruptMusic(channel, url);
+}
+
+export async function queue(message: Message) {
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+        return;
+    }
+    await showQueue(channel);
+    return;
+}
+
+export async function shuffle(message: Message) {
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+        return;
+    }
+    shuffleMusic(channel);
 }
 
 export async function exterm(message: Message) {

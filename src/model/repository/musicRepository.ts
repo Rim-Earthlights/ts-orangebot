@@ -10,11 +10,27 @@ export class MusicRepository {
     }
 
     /**
-     * キューの先頭の音楽を取得する
+     * キューの音楽を取得する
      * @param gid
      */
     public async getAll(gid: string): Promise<Music[]> {
-        return await this.repository.find({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
+        return await this.repository.find({
+            where: { guild_id: gid },
+            order: { music_id: 'ASC' }
+        });
+    }
+
+    /**
+     * 音楽を保存する
+     */
+    public async saveAll(gid: string, musics: Music[]): Promise<Music[]> {
+        await this.remove(gid);
+        return await this.repository.save(musics);
+    }
+
+    public async save(music: Music): Promise<boolean> {
+        const result = await this.repository.save(music);
+        return Boolean(result);
     }
 
     /**
