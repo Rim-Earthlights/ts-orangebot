@@ -1,6 +1,4 @@
 import Express from 'express';
-import { TextChannel } from 'discord.js';
-import { DISCORD_CLIENT } from '../constant/constants';
 import dayjs from 'dayjs';
 import { GachaRepository } from '../model/repository/gachaRepository';
 

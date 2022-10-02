@@ -12,7 +12,6 @@ import {
 import { MessageEmbed, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
 import { MusicRepository } from '../../model/repository/musicRepository';
-import { Music as MusicEntity } from '../../model/models/music';
 
 export class Music {
     static player: AudioPlayer;

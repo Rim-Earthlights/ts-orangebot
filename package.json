@@ -59,7 +59,8 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "lint": "yarn run eslint src/**/*.ts",
         "dev": "yarn run nodemon",
-        "compile": "yarn run tsc -p ."
+        "compile": "yarn run tsc",
+        "dist": "node dist/app.js"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.28.0",
