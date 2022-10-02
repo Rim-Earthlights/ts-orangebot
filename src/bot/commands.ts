@@ -1,4 +1,4 @@
-import { Message, MessageEmbed, VoiceBasedChannel } from 'discord.js';
+import { Message, EmbedBuilder, VoiceBasedChannel } from 'discord.js';
 import { getRndNumber } from '../common/common';
 import { Forecast, FORECAST_URI } from '../interface/forecast';
 import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../interface/geocoding';
@@ -88,7 +88,7 @@ export async function help(message: Message) {
  */
 export async function dice(message: Message, args?: string[]) {
     if (args == undefined || args.length < 2) {
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setTitle('失敗')
             .setDescription('[.dice 5 6] 6面体ダイスを5回振る のように指定してね');
@@ -101,14 +101,14 @@ export async function dice(message: Message, args?: string[]) {
     const diceMax = Number(args[1]);
 
     if (diceNum <= 0 || diceMax <= 0) {
-        const send = new MessageEmbed().setColor('#ff0000').setTitle('失敗').setDescription('ダイスの数が0以下です');
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle('失敗').setDescription('ダイスの数が0以下です');
 
         message.reply({ content: `いじわる！きらい！`, embeds: [send] });
         return;
     }
 
     if (diceNum >= 1000) {
-        const send = new MessageEmbed().setColor('#ff0000').setTitle('失敗').setDescription('ダイスの数が多すぎます');
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle('失敗').setDescription('ダイスの数が多すぎます');
 
         message.reply({ content: `一度にそんなに振れないよ～……`, embeds: [send] });
         return;
@@ -121,7 +121,7 @@ export async function dice(message: Message, args?: string[]) {
 
     const diceResult = result.join(', ');
     if (diceResult.length >= 4096) {
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#0099ff')
             .setTitle('失敗')
             .setDescription('4096文字以上の文字の送信に失敗');
@@ -130,7 +130,7 @@ export async function dice(message: Message, args?: string[]) {
         return;
     }
 
-    const send = new MessageEmbed()
+    const send = new EmbedBuilder()
         .setColor('#0099ff')
         .setTitle('サイコロ振ったよ～！')
         .setDescription(diceResult)
@@ -167,7 +167,7 @@ export async function celo(message: Message) {
         description.push(`${i + 1}: ${celo[i].role} / ${celo[i].dice.join(', ')}`);
     }
 
-    const send = new MessageEmbed()
+    const send = new EmbedBuilder()
         .setColor('#0099ff')
         .setTitle(`結果: ${role.role}`)
         .setDescription(description.join('\n'))
@@ -207,7 +207,7 @@ export async function celovs(message: Message) {
         title = '引き分け';
         content = '引き分けだ～！';
     }
-    const send = new MessageEmbed()
+    const send = new EmbedBuilder()
         .setColor('#0099ff')
         .setTitle(`結果: ${title}`)
         .setDescription(description.join('\n'))
@@ -325,7 +325,7 @@ export async function weather(message: Message, args?: string[]) {
             icon = onecall.daily[day].weather[0].icon;
         }
 
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#0099ff')
             .setTitle(`${cityName} の天気`)
             .setDescription(description.join('\n'))
@@ -340,7 +340,7 @@ export async function weather(message: Message, args?: string[]) {
         }
     } catch (e) {
         const error = <Error>e;
-        const send = new MessageEmbed().setColor('#ff0000').setTitle('エラー').setDescription(error.message);
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle('エラー').setDescription(error.message);
 
         message.reply({ content: `ありゃ、エラーみたい…なんだろ？`, embeds: [send] });
     }
@@ -402,7 +402,7 @@ export async function gacha(message: Message, args?: string[]) {
                     break;
                 }
                 if (gachaList.length > 1_000_000) {
-                    const send = new MessageEmbed()
+                    const send = new EmbedBuilder()
                         .setColor('#ff0000')
                         .setTitle(`エラー`)
                         .setDescription(`1,000,000回引いても該当の等級が出なかった`);
@@ -434,7 +434,7 @@ export async function gacha(message: Message, args?: string[]) {
         highTier.reverse();
 
         console.log(highTier);
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle(`${gachaList.length}連の結果: 高い順から30個まで表示しています`)
             .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
@@ -449,7 +449,7 @@ export async function gacha(message: Message, args?: string[]) {
         if (user) {
             if (user.gachaDate) {
                 if (user.gachaDate >= dayjs().hour(0).minute(0).second(0).toDate()) {
-                    const send = new MessageEmbed()
+                    const send = new EmbedBuilder()
                         .setColor('#ff0000')
                         .setTitle(`エラー`)
                         .setDescription(`ガチャ抽選済`);
@@ -528,14 +528,14 @@ export async function gacha(message: Message, args?: string[]) {
         const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
 
         if (desc.length > 4096) {
-            const send = new MessageEmbed()
+            const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle(`${gachaList.length}連の結果: 高い順に30要素のみ抜き出しています`)
                 .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
                 .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
             message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
         } else {
-            const send = new MessageEmbed()
+            const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle(`${gachaList.length}連の結果`)
                 .setDescription(`${desc}`)
@@ -553,7 +553,7 @@ export async function gacha(message: Message, args?: string[]) {
  */
 export async function play(message: Message, args?: string[]) {
     if (!args || args.length === 0 || !ytdl.validateURL(args[0])) {
-        const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
         message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
         return;
@@ -562,7 +562,7 @@ export async function play(message: Message, args?: string[]) {
     const url = args[0];
     const channel = message.member?.voice.channel;
     if (!channel) {
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setTitle(`エラー`)
             .setDescription(`userのボイスチャンネルが見つからなかった`);
@@ -582,7 +582,7 @@ export async function play(message: Message, args?: string[]) {
 export async function stop(message: Message) {
     const channel = message.member?.voice.channel;
     if (!channel) {
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setTitle(`エラー`)
             .setDescription(`userのボイスチャンネルが見つからなかった`);
@@ -608,7 +608,7 @@ export async function rem(message: Message, args?: string[]) {
 
     const channel = message.member?.voice.channel;
     if (!channel) {
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setTitle(`エラー`)
             .setDescription(`userのボイスチャンネルが見つからなかった`);
@@ -620,7 +620,7 @@ export async function rem(message: Message, args?: string[]) {
 }
 export async function interrupt(message: Message, args?: string[]) {
     if (!args || args.length === 0) {
-        const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
         message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
         return;
@@ -631,7 +631,7 @@ export async function interrupt(message: Message, args?: string[]) {
     const num = Number(url);
 
     if (!channel) {
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setTitle(`エラー`)
             .setDescription(`userのボイスチャンネルが見つからなかった`);
@@ -646,7 +646,7 @@ export async function interrupt(message: Message, args?: string[]) {
     }
 
     if (!ytdl.validateURL(args[0])) {
-        const send = new MessageEmbed().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
         message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
         return;
@@ -679,7 +679,7 @@ export async function luck(message: Message, args?: string[]) {
                 break;
             }
             if (omikujis.length > 500) {
-                const send = new MessageEmbed()
+                const send = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle(`エラー`)
                     .setDescription(`500回引いても該当のおみくじが出なかった`);
@@ -690,7 +690,7 @@ export async function luck(message: Message, args?: string[]) {
             // eslint-disable-next-line no-constant-condition
         } while (true);
 
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle(`${omikujis.length}回目で出たよ！`)
             .setDescription(`${omikujis.map((o) => o.luck).join(', ')}`)
@@ -729,7 +729,7 @@ export async function luck(message: Message, args?: string[]) {
     } else {
         const omikuji = getOmikuji();
 
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle(omikuji.luck)
             .setDescription(omikuji.description)
@@ -759,7 +759,7 @@ export async function reg(message: Message, args?: string[]): Promise<void> {
                 pref: regName
             });
 
-            const send = new MessageEmbed().setColor('#ff9900').setTitle(`登録`).setDescription(`居住地: ${regName}`);
+            const send = new EmbedBuilder().setColor('#ff9900').setTitle(`登録`).setDescription(`居住地: ${regName}`);
 
             message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
             break;

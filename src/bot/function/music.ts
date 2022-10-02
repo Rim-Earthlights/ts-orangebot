@@ -9,7 +9,7 @@ import {
     joinVoiceChannel,
     StreamType
 } from '@discordjs/voice';
-import { MessageEmbed, VoiceBasedChannel, VoiceChannel } from 'discord.js';
+import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
 import { MusicRepository } from '../../model/repository/musicRepository';
 
@@ -17,10 +17,12 @@ export class Music {
     static player: AudioPlayer;
 }
 
-export async function initAudioPlayer(): Promise<void> {
-    Music.player = createAudioPlayer();
-}
-
+/**
+ * キューに音楽を追加する
+ * @param channel 送信するchannel
+ * @param url 動画url
+ * @returns
+ */
 export async function add(channel: VoiceBasedChannel, url: string): Promise<boolean> {
     if (!ytdl.validateURL(url)) {
         return false;
@@ -41,7 +43,7 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
     const musics = await repository.getAll(channel.guild.id);
 
     if (Music.player?.state?.status === AudioPlayerStatus.Playing) {
-        const send = new MessageEmbed()
+        const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle('キュー: ')
             .setDescription(musics.map((m) => m.music_id + ': ' + m.title).join('\n'));
@@ -54,6 +56,12 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
     return result;
 }
 
+/**
+ * 割込予約を行う
+ * @param channel 送信するchannel
+ * @param url 動画url
+ * @returns
+ */
 export async function interruptMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
     if (!ytdl.validateURL(url)) {
         return false;
@@ -73,7 +81,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
 
     const musics = await repository.getAll(channel.guild.id);
 
-    const send = new MessageEmbed()
+    const send = new EmbedBuilder()
         .setColor('#cc66cc')
         .setTitle('キュー: ')
         .setDescription(
@@ -88,6 +96,12 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
     return result;
 }
 
+/**
+ * 指定した予約番号を一番上に持ち上げる
+ * @param channel 送信するchannel
+ * @param index music_id
+ * @returns
+ */
 export async function interruptIndex(channel: VoiceBasedChannel, index: number): Promise<boolean> {
     const repository = new MusicRepository();
     const musics = await repository.getAll(channel.guild.id);
@@ -111,7 +125,7 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
 
     const newMusics = await repository.getAll(channel.guild.id);
 
-    const send = new MessageEmbed()
+    const send = new EmbedBuilder()
         .setColor('#cc66cc')
         .setTitle('キュー: ')
         .setDescription(newMusics.map((m) => m.music_id + ': ' + m.title).join('\n'));
@@ -121,17 +135,29 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
     return result;
 }
 
+/**
+ * キューから除外する
+ * @param gid guild.id
+ * @param musicId music_id
+ * @returns
+ */
 export async function remove(gid: string, musicId?: number): Promise<boolean> {
     const repository = new MusicRepository();
     return await repository.remove(gid, musicId);
 }
 
-export async function removeId(channel: VoiceBasedChannel, gid: string, musicId?: number): Promise<void> {
+/**
+ * キューから指定予約番号を除外する
+ * @param channel 送信するchannel
+ * @param gid guild.id
+ * @param musicId music_id
+ */
+export async function removeId(channel: VoiceBasedChannel, gid: string, musicId: number): Promise<void> {
     const repository = new MusicRepository();
     const musics = await repository.getAll(gid);
     await repository.remove(gid, musicId);
 
-    const send = new MessageEmbed()
+    const send = new EmbedBuilder()
         .setColor('#cc66cc')
         .setTitle('キュー: ')
         .setDescription(
@@ -147,6 +173,11 @@ export async function removeId(channel: VoiceBasedChannel, gid: string, musicId?
     });
 }
 
+/**
+ * 音楽をキューから取り出して再生する
+ * @param channel 送信するchannel
+ * @returns
+ */
 export async function playMusic(channel: VoiceBasedChannel) {
     const repository = new MusicRepository();
     const musics = await repository.getAll(channel.guild.id);
@@ -184,10 +215,11 @@ export async function playMusic(channel: VoiceBasedChannel) {
         inputType: StreamType.WebmOpus
     });
 
-    const send = new MessageEmbed()
+    const queue = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+    const send = new EmbedBuilder()
         .setColor('#cc66cc')
         .setTitle('キュー: ')
-        .setDescription(musics.map((m) => m.music_id + ': ' + m.title).join('\n'));
+        .setDescription(queue ? queue : 'none');
 
     (channel as VoiceChannel).send({ content: `再生中: ${playing.title}`, embeds: [send] });
 
@@ -200,6 +232,10 @@ export async function playMusic(channel: VoiceBasedChannel) {
     await playMusic(channel);
 }
 
+/**
+ * 音楽を停止する
+ * @param channel 送信するchannel
+ */
 export async function stopMusic(channel: VoiceBasedChannel) {
     const repository = new MusicRepository();
     const musics = await repository.getAll(channel.guild.id);
@@ -213,6 +249,11 @@ export async function stopMusic(channel: VoiceBasedChannel) {
     }
 }
 
+/**
+ * 音楽を強制停止し、キューを全て削除する
+ * @param gid guild.id
+ * @returns
+ */
 export async function extermAudioPlayer(gid: string): Promise<boolean> {
     await remove(gid);
 

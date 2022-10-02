@@ -19,7 +19,6 @@ export class MusicRepository {
 
     /**
      * 音楽をキューに追加する.
-     *
      * @returns Promise<GachaTable[] | null>
      */
     public async add(gid: string, music: DeepPartial<Music>, interrupt: boolean): Promise<boolean> {

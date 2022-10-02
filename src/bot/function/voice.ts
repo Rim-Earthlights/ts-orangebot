@@ -1,7 +1,6 @@
-import { CategoryChannel, Guild, VoiceChannel, VoiceState } from 'discord.js';
-import { ChannelTypes } from 'discord.js/typings/enums';
+import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'discord.js';
 import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants';
-import { extermAudioPlayer, initAudioPlayer } from './music';
+import { extermAudioPlayer } from './music';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -32,17 +31,18 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
     // joined
     if (voiceState.channel?.name === 'ロビー') {
         // lobby login
-        const parent = guild.channels.cache.find((c) => c.parentId != null && c.isVoice())?.parent as CategoryChannel;
+        const parent = guild.channels.cache.find((c) => c.parentId != null && c.type === ChannelType.GuildVoice)
+            ?.parent as CategoryChannel;
         const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
         if (parent) {
-            const vc = await guild.channels.create(`お部屋: #${('000' + channelLength).slice(-3)}`, {
-                type: ChannelTypes.GUILD_VOICE,
+            const vc = await guild.channels.create({
+                name: `お部屋: #${('000' + channelLength).slice(-3)}`,
+                type: ChannelType.GuildVoice,
                 parent: parent
             });
             (voiceState.channel as VoiceChannel).members.map((m) => {
                 m.voice.setChannel(vc.id);
             });
-            await initAudioPlayer();
         }
     }
 }
