@@ -2,7 +2,7 @@ import Express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { Message } from 'discord.js';
+import { Message, REST, Routes } from 'discord.js';
 import * as SendCommand from './bot/commands';
 import * as mention from './bot/mention';
 import dotenv from 'dotenv';
@@ -57,6 +57,22 @@ app.listen(port, hostName);
  * =======================
  */
 
+const commands = [
+    {
+        name: 'play',
+        description: '音楽を再生する / 音楽をキューに追加する',
+        options: [
+            {
+                type: 'string',
+                name: 'url',
+                description: 'youtube url',
+                required: true
+            }
+        ]
+    }
+];
+
+DISCORD_CLIENT.login(CONFIG.TOKEN);
 /**
  * bot初回読み込み
  */

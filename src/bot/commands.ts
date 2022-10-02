@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import { UsersRepository } from '../model/repository/usersRepository';
 import { GachaRepository } from '../model/repository/gachaRepository';
 import ytdl from 'ytdl-core';
+import ytpl from 'ytpl';
 import {
     add,
     extermAudioPlayer,
@@ -552,7 +553,7 @@ export async function gacha(message: Message, args?: string[]) {
  * @returns
  */
 export async function play(message: Message, args?: string[]) {
-    if (!args || args.length === 0 || !ytdl.validateURL(args[0])) {
+    if (!args || args.length === 0) {
         const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
         message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
@@ -561,6 +562,7 @@ export async function play(message: Message, args?: string[]) {
 
     const url = args[0];
     const channel = message.member?.voice.channel;
+
     if (!channel) {
         const send = new EmbedBuilder()
             .setColor('#ff0000')

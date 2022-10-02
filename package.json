@@ -1,7 +1,6 @@
 {
     "dependencies": {
         "@discordjs/opus": "^0.8.0",
-        "@discordjs/rest": "^0.5.0",
         "@discordjs/voice": "^0.11.0",
         "@sequelize/core": "^7.0.0-alpha.10",
         "@types/axios": "^0.14.0",
@@ -46,7 +45,9 @@
         "tweetnacl": "^1.0.3",
         "typeorm": "^0.3.9",
         "typescript": "^4.7.3",
-        "ytdl-core": "^4.11.2"
+        "ytdl-core": "^4.11.2",
+        "ytpl": "^2.3.0",
+        "ytsr": "^3.8.0"
     },
     "name": "ts-orangebot",
     "version": "1.0.0",
