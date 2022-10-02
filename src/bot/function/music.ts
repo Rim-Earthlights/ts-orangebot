@@ -11,6 +11,7 @@ import {
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
+import ytpl from 'ytpl';
 import { MusicRepository } from '../../model/repository/musicRepository';
 
 export class Music {
@@ -24,11 +25,19 @@ export class Music {
  * @returns
  */
 export async function add(channel: VoiceBasedChannel, url: string): Promise<boolean> {
-    if (!ytdl.validateURL(url)) {
+    const playlistFlag = ytpl.validateID(url);
+    const movieFlag = ytdl.validateURL(url);
+
+    if (!playlistFlag && !movieFlag) {
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+        (channel as VoiceChannel).send({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
         return false;
     }
+
     const info = await ytdl.getInfo(url);
     const repository = new MusicRepository();
+    const status = Music.player?.state?.status;
 
     const result = await repository.add(
         channel.guild.id,
@@ -42,7 +51,7 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
 
     const musics = await repository.getAll(channel.guild.id);
 
-    if (Music.player?.state?.status === AudioPlayerStatus.Playing) {
+    if (status === AudioPlayerStatus.Playing) {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle('キュー: ')
