@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { MusicInfo } from '../models/musicInfo';
+import * as Models from '../models';
 import { TypeOrm } from '../typeorm/typeorm';
 import { MusicRepository } from './musicRepository';
 
@@ -9,13 +9,13 @@ const PLAYED_STATUS = {
 };
 
 export class MusicInfoRepository {
-    private repository: Repository<MusicInfo>;
+    private repository: Repository<Models.MusicInfo>;
 
     constructor() {
-        this.repository = TypeOrm.dataSource.getRepository(MusicInfo);
+        this.repository = TypeOrm.dataSource.getRepository(Models.MusicInfo);
     }
 
-    public async get(gid: string): Promise<MusicInfo | null> {
+    public async get(gid: string): Promise<Models.MusicInfo | null> {
         return await this.repository.findOne({ where: { guild_id: gid } });
     }
 

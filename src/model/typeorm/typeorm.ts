@@ -1,8 +1,6 @@
 import { DataSource } from 'typeorm';
 import { CONFIG } from '../../config/config';
-import { GachaTable } from '../models/gacha';
-import { Music } from '../models/music';
-import { Users } from '../models/users';
+import * as Models from '../models';
 
 export class TypeOrm {
     static dataSource = new DataSource({
@@ -16,6 +14,6 @@ export class TypeOrm {
         synchronize: true, // DBとのスキーマ同期(開発用)
         dropSchema: false, // スキーマ削除(開発用)
         charset: 'utf8mb4',
-        entities: [Users, GachaTable, Music] // 利用するエンティティ。パスでの指定も可能
+        entities: [Models.Users, Models.GachaTable, Models.Music, Models.MusicInfo] // 利用するエンティティ。パスでの指定も可能
     });
 }

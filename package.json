@@ -19,7 +19,7 @@
         "cors": "^2.8.5",
         "dayjs": "^1.11.3",
         "discord-api-types": "^0.35.0",
-        "discord-player": "^5.3.2",
+        "discord-player-plus": "^1.4.1",
         "discord.js": "^14.5.0",
         "dotenv": "^16.0.1",
         "ejs": "^3.1.8",

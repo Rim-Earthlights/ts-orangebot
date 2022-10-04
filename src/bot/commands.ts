@@ -13,18 +13,125 @@ import dayjs from 'dayjs';
 import { UsersRepository } from '../model/repository/usersRepository';
 import { GachaRepository } from '../model/repository/gachaRepository';
 import ytdl from 'ytdl-core';
-import ytpl from 'ytpl';
-import {
-    add,
-    extermAudioPlayer,
-    interruptIndex,
-    interruptMusic,
-    playMusic,
-    removeId,
-    showQueue,
-    shuffleMusic,
-    stopMusic
-} from './function/music';
+import * as Music from './function/music';
+import * as BotFunctions from './function';
+
+/**
+ * 渡されたコマンドから処理を実行する
+ *
+ * @param command 渡されたメッセージ
+ */
+export async function commandSelector(message: Message) {
+    const content = message.content.replace('.', '').trimEnd().split(' ');
+    const command = content[0];
+    content.shift();
+
+    switch (command) {
+        case 'help': {
+            await help(message);
+            break;
+        }
+        case 'ping': {
+            await ping(message);
+            break;
+        }
+        case 'debug': {
+            await debug(message, content);
+            break;
+        }
+        case 'dice': {
+            await dice(message, content);
+            break;
+        }
+        case 'tenki': {
+            await weather(message, content);
+            break;
+        }
+        case 'luck': {
+            await luck(message, content);
+            break;
+        }
+        case 'gacha': {
+            await gacha(message, content);
+            break;
+        }
+        case 'celo': {
+            await celo(message);
+            break;
+        }
+        case 'celovs': {
+            await celovs(message);
+            break;
+        }
+        /**
+         * 音楽をキューに追加する.
+         */
+        case 'play':
+        case 'pl': {
+            try {
+                if (!content || content.length === 0) {
+                    const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+                    message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
+                    return;
+                }
+
+                const url = content[0];
+                const channel = message.member?.voice.channel;
+
+                if (!channel) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`userのボイスチャンネルが見つからなかった`);
+
+                    message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+                    return;
+                }
+
+                await Music.add(channel, url);
+            } catch (e) {
+                const error = e as Error;
+                const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+
+                message.reply({
+                    content: `ありゃ、何かで落ちたみたい…？よかったらりむくんに送ってみてね！`,
+                    embeds: [send]
+                });
+                return;
+            }
+            break;
+        }
+        case 'interrupt':
+        case 'pi': {
+            await interrupt(message, content);
+            break;
+        }
+        case 'stop':
+        case 'st': {
+            await stop(message);
+            break;
+        }
+        case 'rem':
+        case 'rm': {
+            await rem(message, content);
+            break;
+        }
+        case 'q': {
+            await queue(message);
+            break;
+        }
+        case 'shuffle':
+        case 'sf': {
+            await shuffle(message);
+            break;
+        }
+        case 'reg': {
+            await reg(message, content);
+            break;
+        }
+    }
+}
 
 /**
  * Ping-Pong
@@ -45,7 +152,7 @@ export async function ping(message: Message) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
     const channel = message.member?.voice.channel as VoiceBasedChannel;
-    await playMusic(channel);
+    await BotFunctions.Music.playMusic(channel);
 }
 
 /**
@@ -554,7 +661,7 @@ export async function gacha(message: Message, args?: string[]) {
  * @param args
  * @returns
  */
-export async function play(message: Message, args?: string[], loop?: boolean) {
+export async function play(message: Message, args?: string[]) {
     if (!args || args.length === 0) {
         const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
@@ -575,7 +682,7 @@ export async function play(message: Message, args?: string[], loop?: boolean) {
         return;
     }
 
-    await add(channel, url);
+    await BotFunctions.Music.add(channel, url);
 }
 
 /**
@@ -594,7 +701,7 @@ export async function stop(message: Message) {
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
-    await stopMusic(channel);
+    await BotFunctions.Music.stopMusic(channel);
 }
 
 export async function rem(message: Message, args?: string[]) {
@@ -620,7 +727,7 @@ export async function rem(message: Message, args?: string[]) {
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
-    await removeId(channel, channel.guild.id, num);
+    await BotFunctions.Music.removeId(channel, channel.guild.id, num);
 }
 export async function interrupt(message: Message, args?: string[]) {
     if (!args || args.length === 0) {
@@ -645,7 +752,7 @@ export async function interrupt(message: Message, args?: string[]) {
     }
 
     if (num) {
-        await interruptIndex(channel, num);
+        await BotFunctions.Music.interruptIndex(channel, num);
         return;
     }
 
@@ -656,7 +763,7 @@ export async function interrupt(message: Message, args?: string[]) {
         return;
     }
 
-    await interruptMusic(channel, url);
+    await BotFunctions.Music.interruptMusic(channel, url);
 }
 
 export async function queue(message: Message) {
@@ -664,7 +771,7 @@ export async function queue(message: Message) {
     if (!channel) {
         return;
     }
-    await showQueue(channel);
+    await BotFunctions.Music.showQueue(channel);
     return;
 }
 
@@ -673,7 +780,7 @@ export async function shuffle(message: Message) {
     if (!channel) {
         return;
     }
-    shuffleMusic(channel);
+    BotFunctions.Music.shuffleMusic(channel);
 }
 
 export async function exterm(message: Message) {
@@ -681,7 +788,7 @@ export async function exterm(message: Message) {
         return;
     }
 
-    await extermAudioPlayer(message.guild.id);
+    await BotFunctions.Music.extermAudioPlayer(message.guild.id);
 }
 
 /**
