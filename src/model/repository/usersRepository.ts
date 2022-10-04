@@ -1,12 +1,12 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { Users } from '../models/users';
+import * as Models from '../models';
 import { TypeOrm } from '../typeorm/typeorm';
 
 export class UsersRepository {
-    private repository: Repository<Users>;
+    private repository: Repository<Models.Users>;
 
     constructor() {
-        this.repository = TypeOrm.dataSource.getRepository(Users);
+        this.repository = TypeOrm.dataSource.getRepository(Models.Users);
     }
 
     /**
@@ -14,7 +14,7 @@ export class UsersRepository {
      * @param uid user.id
      * @returns Promise<Users | null>
      */
-    public async get(uid: string): Promise<Users | null> {
+    public async get(uid: string): Promise<Models.Users | null> {
         const user = await this.repository.findOne({ where: { id: uid } });
         return user;
     }
@@ -24,7 +24,7 @@ export class UsersRepository {
      * @param user
      * @returns
      */
-    public async save(user: DeepPartial<Users>): Promise<void> {
+    public async save(user: DeepPartial<Models.Users>): Promise<void> {
         await this.repository.save(user);
     }
 

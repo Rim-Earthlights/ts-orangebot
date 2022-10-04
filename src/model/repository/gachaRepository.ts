@@ -1,12 +1,12 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { GachaTable } from '../models/gacha';
+import * as Models from '../models';
 import { TypeOrm } from '../typeorm/typeorm';
 
 export class GachaRepository {
-    private repository: Repository<GachaTable>;
+    private repository: Repository<Models.GachaTable>;
 
     constructor() {
-        this.repository = TypeOrm.dataSource.getRepository(GachaTable);
+        this.repository = TypeOrm.dataSource.getRepository(Models.GachaTable);
     }
 
     /**
@@ -16,7 +16,7 @@ export class GachaRepository {
      * @param limit limit
      * @returns Promise<GachaTable[] | null>
      */
-    public async get(uid: string, date?: Date, limit?: number): Promise<GachaTable[] | null> {
+    public async get(uid: string, date?: Date, limit?: number): Promise<Models.GachaTable[] | null> {
         const gacha = this.repository.createQueryBuilder();
         gacha.where('user_id = :id', { id: uid });
 
@@ -28,14 +28,14 @@ export class GachaRepository {
 
         gacha.limit(limit ? limit : 100);
 
-        return (await gacha.getMany()) as GachaTable[];
+        return (await gacha.getMany()) as Models.GachaTable[];
     }
 
     /**
      * 引いたガチャを保存する
      * @param gacha
      */
-    public async save(gacha: DeepPartial<GachaTable>[]): Promise<void> {
+    public async save(gacha: DeepPartial<Models.GachaTable>[]): Promise<void> {
         await this.repository.save(gacha);
     }
 }

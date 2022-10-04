@@ -1,80 +1,81 @@
-import dayjs from 'dayjs';
 import { Message } from 'discord.js';
-import { getRndNumber } from '../common/common';
-import * as GREETING from '../constant/words/greeting';
+import * as Commands from './commands';
+import * as BotFunctions from './function';
 
 /**
- * おはよう の返答
- * @param message
+ * 反応ワードから処理を実行する
+ * @param message 渡されたメッセージ
  * @returns
  */
-export async function morning(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.morning));
-}
-
-/**
- * こんにちは の返答
- * @param message
- * @returns
- */
-export async function hello(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.noon));
-}
-
-/**
- * こんばんは の返答
- * @param message
- * @returns
- */
-export async function evening(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.evening));
-}
-
-/**
- * おやすみなさい の返答
- * @param message
- * @returns
- */
-export async function goodNight(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.sleep));
-}
-
-/**
- * 時間帯によって返答を返す
- * @param hour 時間
- * @param word
- * @returns
- */
-async function getWord(word: GREETING.Word): Promise<string> {
-    const hour = getHour();
-    if (hour >= 19 || hour === 0) {
-        // 19:00 - 0:59
-        const num = getRndNumber(0, word.night.length - 1);
-        return word.night[num];
-    } else if (hour < 5) {
-        // 1:00 - 4:59
-        const num = getRndNumber(0, word.midnight.length - 1);
-        return word.midnight[num];
-    } else if (hour < 11) {
-        // 5:00 - 10:59
-        const num = getRndNumber(0, word.morning.length - 1);
-        return word.morning[num];
-    } else if (hour < 17) {
-        // 11:00 - 16:59
-        const num = getRndNumber(0, word.noon.length - 1);
-        return word.noon[num];
-    } else if (hour < 19) {
-        // 17:00 - 18:59
-        const num = getRndNumber(0, word.evening.length - 1);
-        return word.evening[num];
+export async function wordSelector(message: Message) {
+    if (message.content.match('(言語は|ヘルプ|help)')) {
+        Commands.help(message);
+        return;
     }
-    return 'ごめんなさい、わからなかった……';
-}
-
-/**
- * 現在の時間を取得する
- * @returns
- */
-function getHour(): number {
-    return Number(dayjs().format('HH'));
+    if (message.content.match('おはよ')) {
+        BotFunctions.Mention.morning(message);
+        return;
+    }
+    if (message.content.match('(こんにちは|こんにちわ)')) {
+        BotFunctions.Mention.hello(message);
+        return;
+    }
+    if (message.content.match('(こんばんは|こんばんわ)')) {
+        BotFunctions.Mention.evening(message);
+        return;
+    }
+    if (message.content.match('(おやすみ|寝るね|ねるね)')) {
+        BotFunctions.Mention.goodNight(message);
+        return;
+    }
+    if (message.content.match('ガチャ')) {
+        await Commands.gacha(message);
+    }
+    if (message.content.match('(かわい|かわよ|可愛い)')) {
+        message.reply('えへへ～！ありがと嬉しい～！');
+        return;
+    }
+    if (message.content.match('(癒して|癒やして|いやして)')) {
+        message.reply('どしたの…？よしよし……');
+        return;
+    }
+    if (message.content.match('(運勢|みくじ)')) {
+        Commands.luck(message);
+        return;
+    }
+    if (message.content.match('(天気|てんき)')) {
+        const cityName = await BotFunctions.Forecast.getPref(message.author.id);
+        if (!cityName) {
+            message.reply('地域が登録されてないよ！\n@みかんちゃん 地域覚えて [地域]  で登録して！');
+            return;
+        }
+        const when = message.content.match(/今日|明日|\d日後/);
+        let day = 0;
+        if (when != null) {
+            if (when[0] === '明日') {
+                day++;
+            }
+            if (when[0].includes('日後')) {
+                const d = when[0].replace('日後', '');
+                day = Number(d);
+            }
+        }
+        Commands.weather(message, [cityName, day.toString()]);
+        return;
+    }
+    if (message.content.match('地域(覚|憶|おぼ)えて')) {
+        const name = message.content.split(' ')[2];
+        Commands.reg(message, ['pref', name]);
+        return;
+    }
+    if (message.content.match(/\d+d\d+/)) {
+        const match = message.content.match(/\d+d\d+/);
+        if (match == null) {
+            return;
+        }
+        const dice = match[0].split('d');
+        Commands.dice(message, dice);
+        return;
+    }
+    message.reply('ごめんなさい、わからなかった……');
 }

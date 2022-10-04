@@ -9,6 +9,24 @@ export function getRndNumber(n: number, m: number) {
 }
 
 /**
+ * 0 - indexまでの重複しない乱数を生成
+ */
+export function getRndArray(max: number): number[] {
+    const rndArray: number[] = [];
+    for (let i = 0; i <= max; i++) {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const tmp = getRndNumber(0, max);
+            if (!rndArray.includes(tmp)) {
+                rndArray.push(tmp);
+                break;
+            }
+        }
+    }
+    return rndArray;
+}
+
+/**
  * 2つの配列が全て等しいかチェックする
  * @param t 配列
  * @param v 配列

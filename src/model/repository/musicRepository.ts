@@ -1,27 +1,43 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { Music } from '../models/music';
+import * as Models from '../models';
 import { TypeOrm } from '../typeorm/typeorm';
 
 export class MusicRepository {
-    private repository: Repository<Music>;
+    private repository: Repository<Models.Music>;
 
     constructor() {
-        this.repository = TypeOrm.dataSource.getRepository(Music);
+        this.repository = TypeOrm.dataSource.getRepository(Models.Music);
     }
 
     /**
-     * キューの先頭の音楽を取得する
+     * キューの音楽を取得する
      * @param gid
      */
-    public async getAll(gid: string): Promise<Music[]> {
-        return await this.repository.find({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
+    public async getAll(gid: string): Promise<Models.Music[]> {
+        return await this.repository.find({
+            where: { guild_id: gid },
+            order: { music_id: 'ASC' }
+        });
+    }
+
+    /**
+     * 音楽を保存する
+     */
+    public async saveAll(gid: string, musics: Models.Music[]): Promise<Models.Music[]> {
+        await this.remove(gid);
+        return await this.repository.save(musics);
+    }
+
+    public async save(music: Models.Music): Promise<boolean> {
+        const result = await this.repository.save(music);
+        return Boolean(result);
     }
 
     /**
      * 音楽をキューに追加する.
      * @returns Promise<GachaTable[] | null>
      */
-    public async add(gid: string, music: DeepPartial<Music>, interrupt: boolean): Promise<boolean> {
+    public async add(gid: string, music: DeepPartial<Models.Music>, interrupt: boolean): Promise<boolean> {
         if (interrupt) {
             const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
             if (!getMusic) {
