@@ -14,6 +14,9 @@ export class Music extends BaseEntity {
     @Column({ type: 'varchar', width: 255, nullable: false })
     url!: string;
 
+    @Column({ type: 'varchar', width: 255, nullable: false })
+    thumbnail!: string;
+
     @CreateDateColumn({ type: 'datetime', nullable: false })
     createdAt!: Date;
 }

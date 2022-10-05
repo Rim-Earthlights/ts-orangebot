@@ -13,11 +13,12 @@ import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
 import ytpl from 'ytpl';
 import { getRndArray } from '../../common/common';
-import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
+import { Playlist } from '../../model/models';
 import { MusicRepository } from '../../model/repository/musicRepository';
+import { PlaylistRepository } from '../../model/repository/playlistRepository';
 
 export class Music {
-    static player: AudioPlayer;
+    static player: { id: string; player: AudioPlayer }[] = [];
 }
 
 /**
@@ -26,19 +27,14 @@ export class Music {
  * @param url 動画url
  * @returns
  */
-export async function add(channel: VoiceBasedChannel, url: string): Promise<boolean> {
+export async function add(channel: VoiceBasedChannel, url: string, userId: string): Promise<boolean> {
     const repository = new MusicRepository();
-    const status = Music.player?.state?.status;
+    const player = await getAudioPlayer(channel.guild.id);
+
+    const status = player.state.status;
 
     const playlistFlag = ytpl.validateID(url);
     const movieFlag = ytdl.validateURL(url);
-
-    if (!playlistFlag && !movieFlag) {
-        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
-
-        (channel as VoiceChannel).send({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
-        return false;
-    }
 
     if (movieFlag) {
         const ytinfo = await ytdl.getInfo(url);
@@ -48,7 +44,8 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
             {
                 guild_id: channel.guild.id,
                 title: ytinfo.videoDetails.title,
-                url: ytinfo.videoDetails.video_url
+                url: ytinfo.videoDetails.video_url,
+                thumbnail: ytinfo.thumbnail_url
             },
             false
         );
@@ -73,7 +70,7 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
                 .setTitle(`キュー(全${musics.length}曲): `)
-                .setDescription(description);
+                .setDescription(description ? description : 'none');
 
             (channel as VoiceChannel).send({ content: `追加: ${ytinfo.videoDetails.title}`, embeds: [send] });
             return true;
@@ -91,7 +88,8 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
             const pm = playlist.items.map((p) => {
                 return {
                     title: p.title,
-                    url: p.url
+                    url: p.url,
+                    thumbnail: p.thumbnails[0]?.url ? p.thumbnails[0].url : ''
                 };
             });
             for (const m of pm) {
@@ -100,7 +98,8 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
                     {
                         guild_id: channel.guild.id,
                         title: m.title,
-                        url: m.url
+                        url: m.url,
+                        thumbnail: m.thumbnail
                     },
                     false
                 );
@@ -127,7 +126,7 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
                 const send = new EmbedBuilder()
                     .setColor('#cc66cc')
                     .setTitle(`キュー(全${musics.length}曲): `)
-                    .setDescription(description);
+                    .setDescription(description ? description : 'none');
 
                 (channel as VoiceChannel).send({ content: `追加: ${playlist.title}`, embeds: [send] });
                 return true;
@@ -148,6 +147,21 @@ export async function add(channel: VoiceBasedChannel, url: string): Promise<bool
             return false;
         }
     }
+
+    const playlistRepository = new PlaylistRepository();
+    const playlist = await playlistRepository.get(userId, url);
+    if (playlist) {
+        await add(channel, playlist.url, userId);
+        return true;
+    }
+
+    if (!playlistFlag && !movieFlag) {
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+        (channel as VoiceChannel).send({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
+        return false;
+    }
+
     return false;
 }
 
@@ -169,7 +183,8 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
         {
             guild_id: channel.guild.id,
             title: info.videoDetails.title,
-            url: info.videoDetails.video_url
+            url: info.videoDetails.video_url,
+            thumbnail: info.thumbnail_url
         },
         true
     );
@@ -192,7 +207,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description ? description : 'none');
         (channel as VoiceChannel).send({ content: `割込: ${info.videoDetails.title}`, embeds: [send] });
     }
 
@@ -218,8 +233,9 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
         channel.guild.id,
         {
             guild_id: channel.guild.id,
-            title: music?.title,
-            url: music?.url
+            title: music.title,
+            url: music.url,
+            thumbnail: music.thumbnail
         },
         true
     );
@@ -237,14 +253,17 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description)
+            .setThumbnail(music.thumbnail);
 
         (channel as VoiceChannel).send({ content: `割込: ${music.title}`, embeds: [send] });
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description ? description : 'none')
+            .setThumbnail(music.thumbnail);
+
         (channel as VoiceChannel).send({ content: `割込: ${music.title}`, embeds: [send] });
     }
 
@@ -298,7 +317,8 @@ export async function removeId(channel: VoiceBasedChannel, gid: string, musicId:
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description ? description : 'none');
+
         (channel as VoiceChannel).send({
             content: `削除: ${musics.find((m) => m.music_id === musicId)?.title}`,
             embeds: [send]
@@ -336,8 +356,8 @@ export async function playMusic(channel: VoiceBasedChannel) {
               selfMute: false
           });
 
-    Music.player = createAudioPlayer();
-    connection.subscribe(Music.player);
+    const player = await updateAudioPlayer(channel.guild.id);
+    connection.subscribe(player);
 
     const stream = ytdl(ytdl.getURLVideoID(playing.url), {
         filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
@@ -358,21 +378,24 @@ export async function playMusic(channel: VoiceBasedChannel) {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description)
+            .setThumbnail(playing.thumbnail);
 
         (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description ? description : 'none')
+            .setThumbnail(playing.thumbnail);
+
         (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
     }
 
-    Music.player.play(resource);
+    player.play(resource);
 
-    await entersState(Music.player, AudioPlayerStatus.Playing, 10 * 1000);
-    await entersState(Music.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
+    await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
 
     await playMusic(channel);
 }
@@ -385,10 +408,13 @@ export async function stopMusic(channel: VoiceBasedChannel) {
     const repository = new MusicRepository();
     const musics = await repository.getAll(channel.guild.id);
 
+    const player = await getAudioPlayer(channel.guild.id);
+
     if (musics.length > 0) {
-        Music.player.stop();
+        player.stop();
     } else {
         (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
+        await removeAudioPlayer(channel.guild.id);
         const connection = getVoiceConnection(channel.guild.id);
         connection?.destroy();
     }
@@ -401,6 +427,7 @@ export async function stopMusic(channel: VoiceBasedChannel) {
  */
 export async function extermAudioPlayer(gid: string): Promise<boolean> {
     await remove(gid);
+    await removeAudioPlayer(gid);
 
     const connection = getVoiceConnection(gid);
     if (connection) {
@@ -420,6 +447,14 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
     const musics = await repository.getAll(channel.guild.id);
 
     const length = musics.length;
+    if (length <= 1) {
+        const send = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle(`エラー: `)
+            .setDescription('シャッフル可能曲数を満たしていない');
+        (channel as VoiceChannel).send({ content: `シャッフルする時はキューに2曲以上追加してね！`, embeds: [send] });
+        return false;
+    }
     const rnd = getRndArray(musics.length - 1);
 
     for (let i = 0; i < length; i++) {
@@ -445,10 +480,23 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description ? description : 'none');
         (channel as VoiceChannel).send({ content: `シャッフル完了: `, embeds: [send] });
     }
     return true;
+}
+
+export async function pause(gid: string): Promise<void> {
+    const player = await getAudioPlayer(gid);
+
+    console.log(player.state.status);
+
+    if (player.state.status === AudioPlayerStatus.Paused) {
+        player.unpause();
+    }
+    if (player.state.status === AudioPlayerStatus.Playing) {
+        player.pause();
+    }
 }
 
 /**
@@ -476,8 +524,48 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description);
+            .setDescription(description ? description : 'none');
         (channel as VoiceChannel).send({ content: `現在の予約状況: `, embeds: [send] });
     }
     return;
+}
+
+export async function getPlaylist(userId: string): Promise<Playlist[]> {
+    const repository = new PlaylistRepository();
+    return await repository.getAll(userId);
+}
+
+export async function removePlaylist(userId: string, name: string): Promise<boolean> {
+    const repository = new PlaylistRepository();
+    return await repository.remove(userId, name);
+}
+
+async function getAudioPlayer(gid: string): Promise<AudioPlayer> {
+    let PlayerData = Music.player.find((p) => p.id === gid);
+
+    if (!PlayerData) {
+        PlayerData = { id: gid, player: createAudioPlayer() };
+        Music.player.push(PlayerData);
+    }
+    return PlayerData.player;
+}
+
+async function updateAudioPlayer(gid: string): Promise<AudioPlayer> {
+    const PlayerData = Music.player.find((p) => p.id === gid);
+
+    if (PlayerData) {
+        const index = Music.player.findIndex((p) => p === PlayerData);
+        Music.player[index].player = createAudioPlayer();
+        return Music.player[index].player;
+    }
+    const p = { id: gid, player: createAudioPlayer() };
+    Music.player.push(p);
+    return p.player;
+}
+
+async function removeAudioPlayer(gid: string): Promise<void> {
+    const PlayerData = Music.player.find((p) => p.id === gid);
+    if (PlayerData) {
+        Music.player = Music.player.filter((p) => p.id !== gid);
+    }
 }

@@ -13,8 +13,9 @@ import dayjs from 'dayjs';
 import { UsersRepository } from '../model/repository/usersRepository';
 import { GachaRepository } from '../model/repository/gachaRepository';
 import ytdl from 'ytdl-core';
-import * as Music from './function/music';
 import * as BotFunctions from './function';
+import { PlaylistRepository } from '../model/repository/playlistRepository';
+import ytpl from 'ytpl';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -89,10 +90,13 @@ export async function commandSelector(message: Message) {
                     return;
                 }
 
-                await Music.add(channel, url);
+                await BotFunctions.Music.add(channel, url, message.author.id);
             } catch (e) {
                 const error = e as Error;
-                const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription([error.name, error.message, error.stack].join('\n'));
 
                 message.reply({
                     content: `ありゃ、何かで落ちたみたい…？よかったらりむくんに送ってみてね！`,
@@ -115,6 +119,149 @@ export async function commandSelector(message: Message) {
         case 'rem':
         case 'rm': {
             await rem(message, content);
+            break;
+        }
+        case 'pause': {
+            const gid = message.guild?.id;
+            if (!gid) {
+                return;
+            }
+            await BotFunctions.Music.pause(gid);
+            break;
+        }
+        case 'list': {
+            if (!content || content.length === 0) {
+                const playlists = await BotFunctions.Music.getPlaylist(message.author.id);
+
+                if (playlists.length === 0) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle('エラー: ')
+                        .setDescription('プレイリストが登録されていない');
+
+                    message.reply({ content: `見つからなかった…もう一回登録してみて～！`, embeds: [send] });
+                    return;
+                }
+
+                const description = playlists.map((p) => `登録名: ${p.name} / プレイリスト名: ${p.title}`).join('\n');
+
+                const send = new EmbedBuilder()
+                    .setColor('#00ffff')
+                    .setTitle('プレイリスト:')
+                    .setDescription(description);
+
+                message.reply({ content: `プレイリストの一覧だよ！`, embeds: [send] });
+
+                return;
+            }
+
+            switch (content[0]) {
+                case 'rm':
+                case 'rem': {
+                    try {
+                        const name = content[1];
+                        const deleted = await BotFunctions.Music.removePlaylist(message.author.id, name);
+
+                        if (!deleted) {
+                            const send = new EmbedBuilder()
+                                .setColor('#ff0000')
+                                .setTitle('エラー:')
+                                .setDescription('削除するプレイリスト名を取得できなかった');
+
+                            message.reply({
+                                content: `削除できなかったみたい…もう一度名前を確認してみて！`,
+                                embeds: [send]
+                            });
+                            return;
+                        }
+
+                        const send = new EmbedBuilder()
+                            .setColor('#00ffff')
+                            .setTitle('プレイリスト: ')
+                            .setDescription('削除完了');
+
+                        message.reply({ content: `削除できたよ～！`, embeds: [send] });
+                        break;
+                    } catch (e) {
+                        const error = e as Error;
+                        const send = new EmbedBuilder()
+                            .setColor('#ff0000')
+                            .setTitle(`エラー`)
+                            .setDescription([error.name, error.message, error.stack].join('\n'));
+
+                        message.reply({
+                            content: `ありゃ、何かで落ちたみたい…？よかったら下のメッセージをりむくんに送ってみてね！`,
+                            embeds: [send]
+                        });
+                        return;
+                    }
+                }
+                case 'reg':
+                case 'add': {
+                    try {
+                        const name = content[1];
+                        const url = content[2];
+
+                        const repository = new PlaylistRepository();
+                        const p = await repository.get(message.author.id, name);
+
+                        if (p) {
+                            const send = new EmbedBuilder()
+                                .setColor('#ff0000')
+                                .setTitle(`エラー`)
+                                .setDescription(`プレイリストが存在している`);
+                            message.reply({
+                                content: `もうすでに同じ名前があるみたい……先に消すか別の名前にして！`,
+                                embeds: [send]
+                            });
+                            return;
+                        }
+
+                        const playlistFlag = ytpl.validateID(url);
+
+                        if (!playlistFlag) {
+                            const send = new EmbedBuilder()
+                                .setColor('#ff0000')
+                                .setTitle(`エラー`)
+                                .setDescription(`プレイリストなのか判定できない`);
+                            message.reply({ content: `プレイリストが非公開かも？`, embeds: [send] });
+                            return;
+                        }
+
+                        const pid = await ytpl.getPlaylistID(url);
+                        const playlist = await ytpl(pid);
+
+                        await repository.save({
+                            name: name,
+                            user_id: message.author.id,
+                            title: playlist.title,
+                            url: url
+                        });
+
+                        const send = new EmbedBuilder()
+                            .setColor('#ff9900')
+                            .setTitle(`登録`)
+                            .setDescription(`登録名: ${name}\nプレイリスト名: ${playlist.title}\nURL: ${url}`);
+                        message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
+                    } catch (e) {
+                        const error = e as Error;
+                        const send = new EmbedBuilder()
+                            .setColor('#ff0000')
+                            .setTitle(`エラー`)
+                            .setDescription([error.name, error.message, error.stack].join('\n'));
+
+                        message.reply({
+                            content: `ありゃ、何かで落ちたみたい…？よかったらりむくんに送ってみてね！`,
+                            embeds: [send]
+                        });
+                        return;
+                    }
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
         case 'q': {
@@ -183,7 +330,7 @@ export async function help(message: Message) {
     res.push('   > 曲を1番目に割り込んで予約する');
     res.push(' * .interrupt [予約番号] | .pi [予約番号]');
     res.push('   > 予約番号の曲を1番目に割り込んで予約する');
-    res.push(' * .stop / .st');
+    res.push(' * .stop | .st');
     res.push('   > 現在再生中の音楽を止める(次がある場合は次を再生する)');
     res.push(' * .shuffle | .sf');
     res.push('   > 現在のキューの音楽をシャッフルする');
@@ -191,6 +338,12 @@ export async function help(message: Message) {
     res.push('   > 予約している曲を削除する');
     res.push(' * .rem all | .rm all');
     res.push('   > 予約している曲を全て削除し、音楽再生を中止する');
+    res.push(' * .list');
+    res.push('   > 登録されているプレイリストの一覧を表示します');
+    res.push(' * .list add [名前] [URL]');
+    res.push('   > プレイリストを登録します');
+    res.push(' * .list rem [名前] | .list rm [名前]');
+    res.push('   > プレイリストを削除します');
     res.push(' * .celovs');
     res.push('   > チンチロリンで遊ぶ');
     res.push('     みかんちゃんとチンチロリンで遊べます');
@@ -692,7 +845,7 @@ export async function play(message: Message, args?: string[]) {
         return;
     }
 
-    await BotFunctions.Music.add(channel, url);
+    await BotFunctions.Music.add(channel, url, message.author.id);
 }
 
 /**
@@ -761,7 +914,7 @@ export async function interrupt(message: Message, args?: string[]) {
         return;
     }
 
-    if (num) {
+    if (num !== undefined) {
         await BotFunctions.Music.interruptIndex(channel, num);
         return;
     }
@@ -884,7 +1037,8 @@ export async function reg(message: Message, args?: string[]): Promise<void> {
     }
 
     const regType = args[0];
-    const regName = args[1];
+    args.shift();
+    const regName = args;
 
     switch (regType) {
         case 'pref': {
@@ -894,7 +1048,7 @@ export async function reg(message: Message, args?: string[]): Promise<void> {
             await users.save({
                 id: userId,
                 userName: message.author.tag,
-                pref: regName
+                pref: regName[0]
             });
 
             const send = new EmbedBuilder().setColor('#ff9900').setTitle(`登録`).setDescription(`居住地: ${regName}`);
