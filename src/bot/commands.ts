@@ -277,6 +277,9 @@ export async function commandSelector(message: Message) {
             await reg(message, content);
             break;
         }
+        case 'restart': {
+            throw new Error('再起動');
+        }
     }
 }
 
