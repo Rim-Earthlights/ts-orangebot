@@ -797,7 +797,6 @@ export async function gacha(message: Message, args?: string[]) {
         await users.save({
             id: message.author.id,
             userName: message.author.tag,
-            pref: null,
             gachaDate: dayjs().toDate()
         });
 
