@@ -45,7 +45,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
                 guild_id: channel.guild.id,
                 title: ytinfo.videoDetails.title,
                 url: ytinfo.videoDetails.video_url,
-                thumbnail: ytinfo.thumbnail_url
+                thumbnail: ytinfo.videoDetails.thumbnails[0].url
             },
             false
         );
@@ -81,11 +81,8 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
 
     if (playlistFlag) {
         const pid = await ytpl.getPlaylistID(url);
-        console.log('pid:' + pid);
         try {
-            const playlist = await ytpl(pid);
-
-            console.log('playlist:' + JSON.stringify(playlist));
+            const playlist = await ytpl(pid, { limit: 1000 });
             const pm = playlist.items.map((p) => {
                 return {
                     title: p.title,
@@ -93,20 +90,6 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
                     thumbnail: p.thumbnails[0]?.url ? p.thumbnails[0].url : ''
                 };
             });
-
-            let continues = await ytpl.continueReq(playlist.continuation);
-            while (continues) {
-                console.log('playlist:' + JSON.stringify(playlist));
-                const tempPlaylist = continues.items.map((p) => {
-                    return {
-                        title: p.title,
-                        url: p.url,
-                        thumbnail: p.thumbnails[0]?.url ? p.thumbnails[0].url : ''
-                    };
-                });
-                pm.push(tempPlaylist);
-                continues = ytpl.continueReq(playlist.continuation);
-            };
 
             for (const m of pm) {
                 await repository.add(

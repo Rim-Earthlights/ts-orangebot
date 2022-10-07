@@ -235,7 +235,7 @@ export async function commandSelector(message: Message) {
                             name: name,
                             user_id: message.author.id,
                             title: playlist.title,
-                            url: url
+                            url: playlist.url
                         });
 
                         const send = new EmbedBuilder()
