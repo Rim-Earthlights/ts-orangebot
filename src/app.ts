@@ -2,7 +2,7 @@ import Express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { Message } from 'discord.js';
+import { Message, REST, Routes, SlashCommandBuilder } from 'discord.js';
 import { commandSelector } from './bot/commands';
 import { wordSelector } from './bot/mention';
 import dotenv from 'dotenv';
@@ -13,6 +13,7 @@ import { CONFIG } from './config/config';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
 import { TypeOrm } from './model/typeorm/typeorm';
 import { PlayerManager } from 'discord-player-plus';
+import { clog } from './common/logger';
 
 dotenv.config();
 
@@ -56,6 +57,33 @@ app.listen(port, hostName);
  * =======================
  */
 
+const commands = [
+    new SlashCommandBuilder().setName('ping').setDescription('replies with pong'),
+    new SlashCommandBuilder()
+        .setName('debug')
+        .setDescription('debug command. usually not use.')
+        .addStringOption((option) => option.setName('url').setDescription('youtube url'))
+    // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
+    // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
+    // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
+    // new SlashCommandBuilder()
+    //     .setName('pl')
+    //     .setDescription('音楽を再生します')
+    //     .addStringOption((option) => option.setName('url').setDescription('youtube url').setRequired(true))
+].map((command) => command.toJSON());
+
+const rest = new REST({ version: '10' }).setToken(CONFIG.TOKEN);
+
+CONFIG.COMMAND_GUILD_ID.map((gid) => {
+    rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: [] })
+        .then(() => clog.info(gid, 'rem-command', 'successfully remove command.'))
+        .catch(console.error);
+
+    rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: commands })
+        .then((data: any) => clog.info(gid, 'reg-command', 'successfully add command.'))
+        .catch(console.error);
+});
+
 DISCORD_CLIENT.login(CONFIG.TOKEN);
 
 /**
@@ -65,10 +93,10 @@ DISCORD_CLIENT.once('ready', async () => {
     TypeOrm.dataSource
         .initialize()
         .then(async () => {
-            console.log('db initialized.');
+            clog.info('system', 'db-init', 'success');
         })
         .catch((e) => {
-            console.log(e);
+            clog.error('system', 'db-init', e);
         });
 
     console.log('Ready!');
@@ -90,13 +118,11 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         return;
     }
 
-    console.log('> Received Message');
-    console.log('  * Author:  ', message.author.tag);
-    console.log('  * Content: ', message.content);
-    console.log('');
-
-    console.log(message.mentions.users);
-    console.log(DISCORD_CLIENT.user?.id);
+    clog.info(
+        message.guild ? message.guild.id : 'dm',
+        'message-received',
+        `author: ${message.author.tag}, content: ${message.content}`
+    );
 
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
@@ -108,6 +134,30 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     if (message.content.startsWith('.')) {
         await commandSelector(message);
         return;
+    }
+});
+
+/**
+ * コマンドの受信イベント
+ */
+DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    const { commandName } = interaction;
+
+    switch (commandName) {
+        case 'ping': {
+            await interaction.reply('Pong!');
+            break;
+        }
+        case 'debug': {
+            const url = interaction.options.getString('url');
+            console.log(url);
+            await interaction.reply('test.');
+            break;
+        }
+        default: {
+            return;
+        }
     }
 });
 
