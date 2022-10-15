@@ -45,7 +45,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
                 guild_id: channel.guild.id,
                 title: ytinfo.videoDetails.title,
                 url: ytinfo.videoDetails.video_url,
-                thumbnail: ytinfo.thumbnail_url
+                thumbnail: ytinfo.videoDetails.thumbnails[0].url
             },
             false
         );
@@ -81,10 +81,8 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
 
     if (playlistFlag) {
         const pid = await ytpl.getPlaylistID(url);
-        console.log('pid:' + pid);
         try {
-            const playlist = await ytpl(pid);
-            console.log('playlist:' + JSON.stringify(playlist));
+            const playlist = await ytpl(pid, { limit: 1000 });
             const pm = playlist.items.map((p) => {
                 return {
                     title: p.title,
@@ -92,6 +90,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
                     thumbnail: p.thumbnails[0]?.url ? p.thumbnails[0].url : ''
                 };
             });
+
             for (const m of pm) {
                 await repository.add(
                     channel.guild.id,

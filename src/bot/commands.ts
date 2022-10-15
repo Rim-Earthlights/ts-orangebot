@@ -218,31 +218,54 @@ export async function commandSelector(message: Message) {
                         }
 
                         const playlistFlag = ytpl.validateID(url);
+                        const movieFlag = ytdl.validateURL(url);
 
-                        if (!playlistFlag) {
+                        if (playlistFlag) {
+                            const pid = await ytpl.getPlaylistID(url);
+                            const playlist = await ytpl(pid);
+
+                            await repository.save({
+                                name: name,
+                                user_id: message.author.id,
+                                title: playlist.title,
+                                url: playlist.url
+                            });
+
                             const send = new EmbedBuilder()
-                                .setColor('#ff0000')
-                                .setTitle(`エラー`)
-                                .setDescription(`プレイリストなのか判定できない`);
-                            message.reply({ content: `プレイリストが非公開かも？`, embeds: [send] });
+                                .setColor('#ff9900')
+                                .setTitle(`登録`)
+                                .setDescription(`登録名: ${name}\nプレイリスト名: ${playlist.title}\nURL: ${url}`);
+                            message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
+
                             return;
                         }
 
-                        const pid = await ytpl.getPlaylistID(url);
-                        const playlist = await ytpl(pid);
+                        if (movieFlag) {
+                            const movie = await ytdl.getInfo(url);
 
-                        await repository.save({
-                            name: name,
-                            user_id: message.author.id,
-                            title: playlist.title,
-                            url: url
-                        });
+                            await repository.save({
+                                name: name,
+                                user_id: message.author.id,
+                                title: movie.videoDetails.title,
+                                url: movie.videoDetails.video_url
+                            });
+
+                            const send = new EmbedBuilder()
+                                .setColor('#ff9900')
+                                .setTitle(`登録`)
+                                .setDescription(`登録名: ${name}\n動画名: ${movie.videoDetails.title}\nURL: ${url}`);
+                            message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
+
+                            return;
+                        }
 
                         const send = new EmbedBuilder()
-                            .setColor('#ff9900')
-                            .setTitle(`登録`)
-                            .setDescription(`登録名: ${name}\nプレイリスト名: ${playlist.title}\nURL: ${url}`);
-                        message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
+                            .setColor('#ff0000')
+                            .setTitle(`エラー`)
+                            .setDescription(`プレイリストor動画のURLではない`);
+                        message.reply({ content: `プレイリストが非公開かも？`, embeds: [send] });
+
+                        return false;
                     } catch (e) {
                         const error = e as Error;
                         const send = new EmbedBuilder()
