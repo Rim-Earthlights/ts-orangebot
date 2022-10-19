@@ -1,5 +1,6 @@
 import { gachaRouter } from './controller/gachaRouter';
 import { indexRouter } from './controller/indexRouter';
 import { messagingRouter } from './controller/messagingRouter';
+import { musicRouter } from './controller/musicRouter';
 
-export const routers = [indexRouter, messagingRouter, gachaRouter];
+export const routers = [indexRouter, messagingRouter, gachaRouter, musicRouter];
