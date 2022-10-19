@@ -10,12 +10,25 @@ export class MusicRepository {
     }
 
     /**
-     * キューの音楽を取得する
+     * 全ての音楽を取得する
      * @param gid
      */
     public async getAll(gid: string): Promise<Models.Music[]> {
+        console.log(`repository/music: getAll`);
         return await this.repository.find({
             where: { guild_id: gid },
+            order: { music_id: 'ASC' }
+        });
+    }
+
+    /**
+     * キューの音楽を取得する
+     * @param gid
+     */
+    public async getQueue(gid: string): Promise<Models.Music[]> {
+        console.log(`repository/music: getAll`);
+        return await this.repository.find({
+            where: { guild_id: gid, is_play: 0 },
             order: { music_id: 'ASC' }
         });
     }
@@ -24,11 +37,13 @@ export class MusicRepository {
      * 音楽を保存する
      */
     public async saveAll(gid: string, musics: Models.Music[]): Promise<Models.Music[]> {
+        console.log(`repository/music: saveAll`);
         await this.remove(gid);
         return await this.repository.save(musics);
     }
 
-    public async save(music: Models.Music): Promise<boolean> {
+    public async save(music: DeepPartial<Models.Music>): Promise<boolean> {
+        console.log(`repository/music: save`);
         const result = await this.repository.save(music);
         return Boolean(result);
     }
@@ -38,6 +53,7 @@ export class MusicRepository {
      * @returns Promise<boolean>
      */
     public async add(gid: string, music: DeepPartial<Models.Music>, interrupt: boolean): Promise<boolean> {
+        console.log(`repository/music: add`);
         if (interrupt) {
             const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
             if (!getMusic) {
@@ -62,7 +78,7 @@ export class MusicRepository {
      */
     public async remove(gid: string, musicId?: number): Promise<boolean> {
         let result;
-        console.log({ gid, musicId });
+        console.log(`remove queue: ${gid}, ${musicId ? musicId : 'all'}`);
         if (musicId !== undefined) {
             result = await this.repository
                 .createQueryBuilder()
@@ -78,5 +94,25 @@ export class MusicRepository {
                 .execute();
         }
         return Boolean(result.affected);
+    }
+
+    public async resetPlayState(gid: string): Promise<boolean> {
+        const result = await this.repository.update({ guild_id: gid }, { is_play: 0 });
+        if (result.affected) {
+            return true;
+        }
+        return false;
+    }
+
+    public async updatePlayState(gid: string, musicId: number, state: boolean): Promise<boolean> {
+        const music = await this.repository.findOne({ where: { guild_id: gid, music_id: musicId } });
+
+        if (!music) {
+            return false;
+        }
+
+        await this.save({ ...music, is_play: state ? 1 : 0 });
+        console.log(`${music.title} / played: ${state}`);
+        return true;
     }
 }

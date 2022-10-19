@@ -143,7 +143,14 @@ export async function commandSelector(message: Message) {
                     return;
                 }
 
-                const description = playlists.map((p) => `登録名: ${p.name} / プレイリスト名: ${p.title}`).join('\n');
+                const description = playlists
+                    .map(
+                        (p) =>
+                            `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${
+                                p.loop ? 'ON' : 'OFF'
+                            } | シャッフル: ${p.shuffle ? 'ON' : 'OFF'}`
+                    )
+                    .join('\n');
 
                 const send = new EmbedBuilder()
                     .setColor('#00ffff')
@@ -281,6 +288,46 @@ export async function commandSelector(message: Message) {
                     }
                     break;
                 }
+                case 'loop':
+                case 'lp': {
+                    const name = content[1];
+                    const state = content[2].toUpperCase() === 'ON';
+
+                    const repository = new PlaylistRepository();
+                    const p = await repository.get(message.author.id, name);
+
+                    if (!p) {
+                        return;
+                    }
+
+                    await repository.save({ id: p.id, loop: Number(state) });
+                    const send = new EmbedBuilder()
+                        .setColor('#ff9900')
+                        .setTitle(`更新`)
+                        .setDescription(`更新名: ${name}\nループ: ${state ? 'ON' : 'OFF'}`);
+                    message.reply({ content: `以下の内容で更新したよ～！`, embeds: [send] });
+                    break;
+                }
+                case 'shuffle':
+                case 'sf': {
+                    const name = content[1];
+                    const state = content[2].toUpperCase() === 'ON';
+
+                    const repository = new PlaylistRepository();
+                    const p = await repository.get(message.author.id, name);
+
+                    if (!p) {
+                        return;
+                    }
+
+                    await repository.save({ id: p.id, shuffle: Number(state) });
+                    const send = new EmbedBuilder()
+                        .setColor('#ff9900')
+                        .setTitle(`更新`)
+                        .setDescription(`更新名: ${name}\nシャッフル: ${state ? 'ON' : 'OFF'}`);
+                    message.reply({ content: `以下の内容で更新したよ～！`, embeds: [send] });
+                    break;
+                }
                 default: {
                     break;
                 }
@@ -289,6 +336,22 @@ export async function commandSelector(message: Message) {
         }
         case 'q': {
             await queue(message);
+            break;
+        }
+        case 'silent':
+        case 'si': {
+            const channel = message.member?.voice.channel;
+            if (!channel) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`userのボイスチャンネルが見つからなかった`);
+
+                message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+                return;
+            }
+
+            await BotFunctions.Music.changeNotify(channel);
             break;
         }
         case 'shuffle':
@@ -337,11 +400,13 @@ export async function help(message: Message) {
     res.push(`今動いている言語は[TypeScript]版だよ！\n`);
     res.push('コマンドはここだよ～！');
     res.push('```');
+    res.push('===== 便利コマンド系 =====');
     res.push(' * .tenki [地域]');
     res.push('   > 天気予報を取得する');
     res.push('   > 指定した地域の天気予報を取得します');
     res.push(' * .dice [ダイスの振る数] [ダイスの面の数]');
     res.push('   > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))');
+    res.push('===== みかんちゃんと遊ぶ系 =====');
     res.push(' * .luck [?運勢]');
     res.push('   > おみくじを引く');
     res.push('     運勢を指定するとその運勢が出るまで引きます');
@@ -350,6 +415,11 @@ export async function help(message: Message) {
     res.push('     回数を指定するとその回数回します');
     res.push('     等級を指定するとその等級が出るまで回します');
     res.push('     等級か回数を指定した場合はプレゼントの対象外です');
+    res.push(' * .celovs');
+    res.push('   > チンチロリンで遊ぶ');
+    res.push('     みかんちゃんとチンチロリンで遊べます');
+    res.push('     3回まで投げて出た目で勝負します');
+    res.push('===== 音楽再生系 =====');
     res.push(' * .play [URL] / .pl [URL]');
     res.push('   > Youtube の音楽を再生します。プレイリストも可能');
     res.push(' * .interrupt [URL] | .pi [URL]');
@@ -364,16 +434,20 @@ export async function help(message: Message) {
     res.push('   > 予約している曲を削除する');
     res.push(' * .rem all | .rm all');
     res.push('   > 予約している曲を全て削除し、音楽再生を中止する');
+    res.push(' * .silent | .sil');
+    res.push('   > 音楽再生の通知を切り替えます。');
+    res.push('   > offの場合は次の曲に変わっても通知しなくなりますが、自動シャッフル時にのみ通知されます');
+    res.push('===== プレイリスト系 =====');
     res.push(' * .list');
     res.push('   > 登録されているプレイリストの一覧を表示します');
     res.push(' * .list add [名前] [URL]');
     res.push('   > プレイリストを登録します');
     res.push(' * .list rem [名前] | .list rm [名前]');
     res.push('   > プレイリストを削除します');
-    res.push(' * .celovs');
-    res.push('   > チンチロリンで遊ぶ');
-    res.push('     みかんちゃんとチンチロリンで遊べます');
-    res.push('     3回まで投げて出た目で勝負します');
+    res.push(' * .list loop [名前] [on | off] | .list lp [名前] [on | off]');
+    res.push('   > 対象プレイリストのループ処理を書き換えます');
+    res.push(' * .list shuffle [名前] [on | off] | .list sf [名前] [on | off]');
+    res.push('   > 対象プレイリストの自動シャッフル処理を書き換えます');
     res.push('```');
     message.reply(res.join('\n'));
     return;

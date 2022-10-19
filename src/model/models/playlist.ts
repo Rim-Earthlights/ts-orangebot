@@ -17,6 +17,12 @@ export class Playlist extends BaseEntity {
     @Column({ type: 'varchar', width: 255, nullable: false })
     url!: string;
 
+    @Column({ type: 'tinyint', nullable: false, default: 1 })
+    shuffle!: number;
+
+    @Column({ type: 'tinyint', nullable: false, default: 1 })
+    loop!: number;
+
     @CreateDateColumn({ type: 'datetime', nullable: false })
     createdAt!: Date;
 }
