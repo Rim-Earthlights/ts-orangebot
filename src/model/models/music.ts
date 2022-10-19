@@ -17,8 +17,8 @@ export class Music extends BaseEntity {
     @Column({ type: 'varchar', width: 255, nullable: false })
     thumbnail!: string;
 
-    // @Column({ type: 'tinyint', nullable: false })
-    // is_play!: number;
+    @Column({ type: 'tinyint', nullable: false, default: 0 })
+    is_play!: number;
 
     @CreateDateColumn({ type: 'datetime', nullable: false })
     createdAt!: Date;

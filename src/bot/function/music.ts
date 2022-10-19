@@ -14,6 +14,7 @@ import ytdl from 'ytdl-core';
 import ytpl from 'ytpl';
 import { getRndArray } from '../../common/common';
 import { Playlist } from '../../model/models';
+import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
 import { MusicRepository } from '../../model/repository/musicRepository';
 import { PlaylistRepository } from '../../model/repository/playlistRepository';
 
@@ -27,7 +28,13 @@ export class Music {
  * @param url 動画url
  * @returns
  */
-export async function add(channel: VoiceBasedChannel, url: string, userId: string): Promise<boolean> {
+export async function add(
+    channel: VoiceBasedChannel,
+    url: string,
+    userId: string,
+    loop?: boolean,
+    shuffle?: boolean
+): Promise<boolean> {
     const repository = new MusicRepository();
     const player = await getAudioPlayer(channel.guild.id);
 
@@ -49,7 +56,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
             },
             false
         );
-        const musics = await repository.getAll(channel.guild.id);
+        const musics = await repository.getQueue(channel.guild.id);
 
         if (status === AudioPlayerStatus.Playing) {
             const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
@@ -75,6 +82,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
             (channel as VoiceChannel).send({ content: `追加: ${ytinfo.videoDetails.title}`, embeds: [send] });
             return true;
         }
+        await initPlayerInfo(channel, !!loop, !!shuffle);
         await playMusic(channel);
         return true;
     }
@@ -82,7 +90,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
     if (playlistFlag) {
         const pid = await ytpl.getPlaylistID(url);
         try {
-            const playlist = await ytpl(pid, { limit: 1000 });
+            const playlist = await ytpl(pid, { limit: 10000 });
             const pm = playlist.items.map((p) => {
                 return {
                     title: p.title,
@@ -104,7 +112,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
                 );
             }
 
-            const musics = await repository.getAll(channel.guild.id);
+            const musics = await repository.getQueue(channel.guild.id);
 
             if (status === AudioPlayerStatus.Playing) {
                 const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
@@ -130,6 +138,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
                 (channel as VoiceChannel).send({ content: `追加: ${playlist.title}`, embeds: [send] });
                 return true;
             }
+            await initPlayerInfo(channel, !!loop, !!shuffle);
             await playMusic(channel);
             return true;
         } catch (e) {
@@ -150,7 +159,7 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
     const playlistRepository = new PlaylistRepository();
     const playlist = await playlistRepository.get(userId, url);
     if (playlist) {
-        await add(channel, playlist.url, userId);
+        await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
         return true;
     }
 
@@ -162,6 +171,35 @@ export async function add(channel: VoiceBasedChannel, url: string, userId: strin
     }
 
     return false;
+}
+
+export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean, shuffle?: boolean): Promise<void> {
+    const repository = new MusicInfoRepository();
+    const info = await repository.get(channel.guild.id);
+
+    if (!info) {
+        if (loop) {
+            await repository.save({ guild_id: channel.guild.id, is_loop: 1 });
+        } else {
+            await repository.save({ guild_id: channel.guild.id, is_loop: 0 });
+        }
+
+        if (shuffle) {
+            await repository.save({ guild_id: channel.guild.id, is_shuffle: 1 });
+            await shuffleMusic(channel);
+        } else {
+            await repository.save({ guild_id: channel.guild.id, is_shuffle: 0 });
+        }
+    } else {
+        if (info.is_loop) {
+            await resetAllPlayState(channel.guild.id);
+        }
+        if (info.is_shuffle) {
+            await shuffleMusic(channel);
+        }
+    }
+
+    return;
 }
 
 /**
@@ -331,17 +369,26 @@ export async function removeId(channel: VoiceBasedChannel, gid: string, musicId:
  * @returns
  */
 export async function playMusic(channel: VoiceBasedChannel) {
-    const repository = new MusicRepository();
-    const musics = await repository.getAll(channel.guild.id);
+    const repo_music = new MusicRepository();
+    const repo_info = new MusicInfoRepository();
+
+    const musics = await repo_music.getQueue(channel.guild.id);
+    const info = await repo_info.get(channel.guild.id);
 
     if (musics.length <= 0) {
+        if (info?.is_loop === 1) {
+            await initPlayerInfo(channel);
+            await playMusic(channel);
+            return;
+        }
         await stopMusic(channel);
         return;
     }
 
     const playing = musics[0];
     musics.shift();
-    await remove(playing.guild_id, playing.music_id);
+    await updatePlayState(playing.guild_id, playing.music_id, Boolean(info?.is_loop));
+    await repo_info.save({ guild_id: playing.guild_id, title: playing.title, url: playing.url });
 
     const vc = getVoiceConnection(channel.guild.id);
 
@@ -368,27 +415,29 @@ export async function playMusic(channel: VoiceBasedChannel) {
         inputType: StreamType.WebmOpus
     });
 
-    const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+    if (info?.silent === 0) {
+        const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
 
-    if (description.length >= 4000) {
-        const sliced = musics.slice(0, 20);
-        const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
+        if (description.length >= 4000) {
+            const sliced = musics.slice(0, 20);
+            const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
 
-        const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
-            .setDescription(description)
-            .setThumbnail(playing.thumbnail);
+            const send = new EmbedBuilder()
+                .setColor('#cc66cc')
+                .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
+                .setDescription(description)
+                .setThumbnail(playing.thumbnail);
 
-        (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
-    } else {
-        const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description ? description : 'none')
-            .setThumbnail(playing.thumbnail);
+            (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
+        } else {
+            const send = new EmbedBuilder()
+                .setColor('#cc66cc')
+                .setTitle(`キュー(全${musics.length}曲): `)
+                .setDescription(description ? description : 'none')
+                .setThumbnail(playing.thumbnail);
 
-        (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
+            (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
+        }
     }
 
     player.play(resource);
@@ -404,14 +453,17 @@ export async function playMusic(channel: VoiceBasedChannel) {
  * @param channel 送信するchannel
  */
 export async function stopMusic(channel: VoiceBasedChannel) {
-    const repository = new MusicRepository();
-    const musics = await repository.getAll(channel.guild.id);
+    const musicRepository = new MusicRepository();
+    const musics = await musicRepository.getQueue(channel.guild.id);
 
     const player = await getAudioPlayer(channel.guild.id);
 
     if (musics.length > 0) {
         player.stop();
     } else {
+        const infoRepository = new MusicInfoRepository();
+        await infoRepository.remove(channel.guild.id);
+
         (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
         await removeAudioPlayer(channel.guild.id);
         const connection = getVoiceConnection(channel.guild.id);
@@ -485,6 +537,16 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
     return true;
 }
 
+export async function updatePlayState(gid: string, musicId: number, state: boolean) {
+    const repository = new MusicRepository();
+    await repository.updatePlayState(gid, musicId, state);
+}
+
+export async function resetAllPlayState(gid: string) {
+    const repository = new MusicRepository();
+    await repository.resetPlayState(gid);
+}
+
 export async function pause(gid: string): Promise<void> {
     const player = await getAudioPlayer(gid);
 
@@ -505,7 +567,9 @@ export async function pause(gid: string): Promise<void> {
  */
 export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
     const repository = new MusicRepository();
-    const musics = await repository.getAll(channel.guild.id);
+    const infoRepository = new MusicInfoRepository();
+    const musics = await repository.getQueue(channel.guild.id);
+    const info = await infoRepository.get(channel.guild.id);
 
     const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
 
@@ -518,13 +582,13 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
             .setDescription(description);
 
-        (channel as VoiceChannel).send({ content: `現在の予約状況: `, embeds: [send] });
+        (channel as VoiceChannel).send({ content: `現在再生中: ${info?.title}`, embeds: [send] });
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
             .setTitle(`キュー(全${musics.length}曲): `)
             .setDescription(description ? description : 'none');
-        (channel as VoiceChannel).send({ content: `現在の予約状況: `, embeds: [send] });
+        (channel as VoiceChannel).send({ content: `現在再生中: ${info?.title}`, embeds: [send] });
     }
     return;
 }
@@ -537,6 +601,23 @@ export async function getPlaylist(userId: string): Promise<Playlist[]> {
 export async function removePlaylist(userId: string, name: string): Promise<boolean> {
     const repository = new PlaylistRepository();
     return await repository.remove(userId, name);
+}
+
+export async function changeNotify(channel: VoiceBasedChannel): Promise<void> {
+    const infoRepository = new MusicInfoRepository();
+    const info = await infoRepository.get(channel.guild.id);
+
+    if (!info) {
+        return;
+    }
+    await infoRepository.save({ guild_id: channel.guild.id, silent: info.silent ? 0 : 1 });
+
+    const send = new EmbedBuilder()
+        .setColor('#cc66cc')
+        .setTitle(`サイレントモード設定: `)
+        .setDescription(info.silent ? '無効に設定' : '有効に設定');
+
+    (channel as VoiceChannel).send({ content: `サイレントモードを変更したよ！`, embeds: [send] });
 }
 
 async function getAudioPlayer(gid: string): Promise<AudioPlayer> {

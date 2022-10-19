@@ -27,6 +27,32 @@ export class PlaylistRepository {
         });
     }
 
+    public async changeState(
+        userId: string,
+        name: string,
+        change: 'shuffle' | 'loop',
+        state: boolean
+    ): Promise<boolean> {
+        const list = await this.repository.findOne({ where: { user_id: userId, name: name } });
+        if (!list) {
+            return false;
+        }
+
+        switch (change) {
+            case 'shuffle': {
+                await this.repository.update({ id: list.id }, { shuffle: state ? 1 : 0 });
+                return true;
+            }
+            case 'loop': {
+                await this.repository.update({ id: list.id }, { loop: state ? 1 : 0 });
+                return true;
+            }
+            default: {
+                return false;
+            }
+        }
+    }
+
     /**
      * プレイリストを複数件保存する
      */

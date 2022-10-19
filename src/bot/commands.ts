@@ -143,7 +143,14 @@ export async function commandSelector(message: Message) {
                     return;
                 }
 
-                const description = playlists.map((p) => `登録名: ${p.name} / プレイリスト名: ${p.title}`).join('\n');
+                const description = playlists
+                    .map(
+                        (p) =>
+                            `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${
+                                p.loop ? 'ON' : 'OFF'
+                            } | シャッフル: ${p.shuffle ? 'ON' : 'OFF'}`
+                    )
+                    .join('\n');
 
                 const send = new EmbedBuilder()
                     .setColor('#00ffff')
@@ -281,6 +288,46 @@ export async function commandSelector(message: Message) {
                     }
                     break;
                 }
+                case 'loop':
+                case 'lp': {
+                    const name = content[1];
+                    const state = content[2].toUpperCase() === 'ON';
+
+                    const repository = new PlaylistRepository();
+                    const p = await repository.get(message.author.id, name);
+
+                    if (!p) {
+                        return;
+                    }
+
+                    await repository.save({ id: p.id, loop: Number(state) });
+                    const send = new EmbedBuilder()
+                        .setColor('#ff9900')
+                        .setTitle(`更新`)
+                        .setDescription(`更新名: ${name}\nループ: ${state ? 'ON' : 'OFF'}`);
+                    message.reply({ content: `以下の内容で更新したよ～！`, embeds: [send] });
+                    break;
+                }
+                case 'shuffle':
+                case 'sf': {
+                    const name = content[1];
+                    const state = content[2].toUpperCase() === 'ON';
+
+                    const repository = new PlaylistRepository();
+                    const p = await repository.get(message.author.id, name);
+
+                    if (!p) {
+                        return;
+                    }
+
+                    await repository.save({ id: p.id, shuffle: Number(state) });
+                    const send = new EmbedBuilder()
+                        .setColor('#ff9900')
+                        .setTitle(`更新`)
+                        .setDescription(`更新名: ${name}\nシャッフル: ${state ? 'ON' : 'OFF'}`);
+                    message.reply({ content: `以下の内容で更新したよ～！`, embeds: [send] });
+                    break;
+                }
                 default: {
                     break;
                 }
@@ -289,6 +336,22 @@ export async function commandSelector(message: Message) {
         }
         case 'q': {
             await queue(message);
+            break;
+        }
+        case 'silent':
+        case 'si': {
+            const channel = message.member?.voice.channel;
+            if (!channel) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`userのボイスチャンネルが見つからなかった`);
+
+                message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+                return;
+            }
+
+            await BotFunctions.Music.changeNotify(channel);
             break;
         }
         case 'shuffle':
