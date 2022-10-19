@@ -593,7 +593,11 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setTitle(`キュー(全${musics.length}曲): `)
+            .setTitle(
+                `キュー(全${musics.length}曲)/全曲表示: ${
+                    CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id
+                }`
+            )
             .setDescription(description ? description : 'none');
         (channel as VoiceChannel).send({ content: `現在再生中: ${info?.title}`, embeds: [send] });
     }
