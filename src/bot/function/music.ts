@@ -13,6 +13,7 @@ import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
 import ytpl from 'ytpl';
 import { getRndArray } from '../../common/common';
+import { CONFIG } from '../../config/config';
 import { Playlist } from '../../model/models';
 import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
 import { MusicRepository } from '../../model/repository/musicRepository';
@@ -581,7 +582,11 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
 
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
+            .setTitle(
+                `キュー(20曲表示/ 全${musics.length}曲)/全曲表示: ${
+                    CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id
+                }`
+            )
             .setDescription(description);
 
         (channel as VoiceChannel).send({ content: `現在再生中: ${info?.title}`, embeds: [send] });
