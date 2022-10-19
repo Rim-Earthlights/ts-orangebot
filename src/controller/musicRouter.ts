@@ -20,8 +20,9 @@ musicRouter.get('/music', async (req: Express.Request, res: Express.Response) =>
 
     const musicRepository = new MusicRepository();
     const musics = await musicRepository.getAll(gid);
-
-    console.log(musics);
+    if (musics.length <= 0) {
+        res.status(404).send({ code: 404, message: 'not found musics.' });
+    }
 
     res.render('./music.ejs', { musics: musics });
 });
