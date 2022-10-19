@@ -479,6 +479,8 @@ export async function stopMusic(channel: VoiceBasedChannel) {
 export async function extermAudioPlayer(gid: string): Promise<boolean> {
     await remove(gid);
     await removeAudioPlayer(gid);
+    const infoRepository = new MusicInfoRepository();
+    await infoRepository.remove(gid);
 
     const connection = getVoiceConnection(gid);
     if (connection) {
