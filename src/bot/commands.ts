@@ -831,6 +831,8 @@ export async function gacha(message: Message, args?: string[]) {
                     return;
                 }
             }
+        } else {
+            await users.save({ id: message.author.id, userName: message.author.tag });
         }
 
         for (let i = 0; i < 10; i++) {
