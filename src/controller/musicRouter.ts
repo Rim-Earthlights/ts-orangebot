@@ -1,6 +1,4 @@
 import Express from 'express';
-import { TextChannel } from 'discord.js';
-import { DISCORD_CLIENT } from '../constant/constants';
 import { MusicRepository } from '../model/repository/musicRepository';
 import dayjs from 'dayjs';
 
