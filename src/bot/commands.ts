@@ -354,6 +354,21 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Music.changeNotify(channel);
             break;
         }
+        case 'mode': {
+            const name = content[0];
+            const channel = message.member?.voice.channel;
+            if (!channel) {
+                console.log('missing channel');
+                return;
+            }
+            if (!name) {
+                await BotFunctions.Music.getPlayerInfo(channel);
+                return;
+            }
+
+            await BotFunctions.Music.editPlayerInfo(channel, name);
+            break;
+        }
         case 'shuffle':
         case 'sf': {
             await shuffle(message);

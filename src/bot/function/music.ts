@@ -174,6 +174,66 @@ export async function add(
     return false;
 }
 
+export async function getPlayerInfo(channel: VoiceBasedChannel): Promise<void> {
+    const repository = new MusicInfoRepository();
+    const info = await repository.get(channel.guild.id);
+
+    if (!info) {
+        return;
+    }
+
+    const description = [
+        `サイレント: ${info.silent === 0 ? '無効' : '有効'}`,
+        `ループ: ${info.is_loop === 0 ? '無効' : '有効'}`,
+        `シャッフル: ${info.is_shuffle === 0 ? '無効' : '有効'}`
+    ].join('\n');
+
+    const send = new EmbedBuilder().setColor('#cc66cc').setTitle(`再生設定: `).setDescription(description);
+    (channel as VoiceChannel).send({
+        content: `今の設定はこんな感じだよ～！`,
+        embeds: [send]
+    });
+}
+
+export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): Promise<void> {
+    const repository = new MusicInfoRepository();
+    const info = await repository.get(channel.guild.id);
+
+    if (!info) {
+        return;
+    }
+
+    switch (name) {
+        case 'sf': {
+            await repository.save({ guild_id: channel.guild.id, is_shuffle: info.is_shuffle === 0 ? 1 : 0 });
+            const send = new EmbedBuilder()
+                .setColor('#cc66cc')
+                .setTitle(`再生設定の変更: `)
+                .setDescription(`シャッフル: ${info.is_shuffle === 0 ? '有効' : '無効'}`);
+            (channel as VoiceChannel).send({
+                content: `シャッフルを${info.is_shuffle === 0 ? '有効' : '無効'}にしたよ！`,
+                embeds: [send]
+            });
+            break;
+        }
+        case 'lp': {
+            await repository.save({ guild_id: channel.guild.id, is_loop: info.is_loop === 0 ? 1 : 0 });
+            const send = new EmbedBuilder()
+                .setColor('#cc66cc')
+                .setTitle(`再生設定の変更: `)
+                .setDescription(`ループ: ${info.is_loop === 0 ? '有効' : '無効'}`);
+            (channel as VoiceChannel).send({
+                content: `ループを${info.is_loop === 0 ? '有効' : '無効'}にしたよ！`,
+                embeds: [send]
+            });
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
+
 export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean, shuffle?: boolean): Promise<void> {
     const repository = new MusicInfoRepository();
     const info = await repository.get(channel.guild.id);
@@ -388,7 +448,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
 
     const playing = musics[0];
     musics.shift();
-    await updatePlayState(playing.guild_id, playing.music_id, Boolean(info?.is_loop));
+    await updatePlayState(playing.guild_id, playing.music_id, true);
     await repo_info.save({ guild_id: playing.guild_id, title: playing.title, url: playing.url });
 
     const vc = getVoiceConnection(channel.guild.id);
@@ -454,22 +514,22 @@ export async function playMusic(channel: VoiceBasedChannel) {
  * @param channel 送信するchannel
  */
 export async function stopMusic(channel: VoiceBasedChannel) {
-    const musicRepository = new MusicRepository();
-    const musics = await musicRepository.getQueue(channel.guild.id);
-
     const player = await getAudioPlayer(channel.guild.id);
 
-    if (musics.length > 0) {
-        player.stop();
-    } else {
-        const infoRepository = new MusicInfoRepository();
+    const infoRepository = new MusicInfoRepository();
+    const info = await infoRepository.get(channel.guild.id);
+
+    if (!info || info.is_loop === 0) {
         await infoRepository.remove(channel.guild.id);
 
         (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
         await removeAudioPlayer(channel.guild.id);
+        await remove(channel.guild.id);
         const connection = getVoiceConnection(channel.guild.id);
         connection?.destroy();
+        return;
     }
+    player.stop();
 }
 
 /**
@@ -502,12 +562,7 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
 
     const length = musics.length;
     if (length <= 1) {
-        const send = new EmbedBuilder()
-            .setColor('#ff0000')
-            .setTitle(`エラー: `)
-            .setDescription('シャッフル可能曲数を満たしていない');
-        (channel as VoiceChannel).send({ content: `シャッフルする時はキューに2曲以上追加してね！`, embeds: [send] });
-        return false;
+        return true;
     }
     const rnd = getRndArray(musics.length - 1);
 
@@ -593,7 +648,11 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setTitle(`キュー(全${musics.length}曲): `)
+            .setTitle(
+                `キュー(20曲表示/ 全${musics.length}曲)/全曲表示: ${
+                    CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id
+                }`
+            )
             .setDescription(description ? description : 'none');
         (channel as VoiceChannel).send({ content: `現在再生中: ${info?.title}`, embeds: [send] });
     }

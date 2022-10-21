@@ -26,7 +26,7 @@ export class MusicRepository {
      * @param gid
      */
     public async getQueue(gid: string): Promise<Models.Music[]> {
-        console.log(`repository/music: getAll`);
+        console.log(`repository/music: getQueue`);
         return await this.repository.find({
             where: { guild_id: gid, is_play: 0 },
             order: { music_id: 'ASC' }
