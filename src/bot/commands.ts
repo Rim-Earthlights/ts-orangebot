@@ -354,6 +354,21 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Music.changeNotify(channel);
             break;
         }
+        case 'mode': {
+            const name = content[0];
+            const channel = message.member?.voice.channel;
+            if (!channel) {
+                console.log('missing channel');
+                return;
+            }
+            if (!name) {
+                await BotFunctions.Music.getPlayerInfo(channel);
+                return;
+            }
+
+            await BotFunctions.Music.editPlayerInfo(channel, name);
+            break;
+        }
         case 'shuffle':
         case 'sf': {
             await shuffle(message);
@@ -831,6 +846,8 @@ export async function gacha(message: Message, args?: string[]) {
                     return;
                 }
             }
+        } else {
+            await users.save({ id: message.author.id, userName: message.author.tag });
         }
 
         for (let i = 0; i < 10; i++) {
