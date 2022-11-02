@@ -18,6 +18,7 @@ import { Playlist } from '../../model/models';
 import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
 import { MusicRepository } from '../../model/repository/musicRepository';
 import { PlaylistRepository } from '../../model/repository/playlistRepository';
+import { getPlaylistItems } from '../request/youtubeAPI';
 
 export class Music {
     static player: { id: string; player: AudioPlayer }[] = [];
@@ -91,14 +92,7 @@ export async function add(
     if (playlistFlag) {
         const pid = await ytpl.getPlaylistID(url);
         try {
-            const playlist = await ytpl(pid, { limit: 10000 });
-            const pm = playlist.items.map((p) => {
-                return {
-                    title: p.title,
-                    url: p.url,
-                    thumbnail: p.thumbnails[0]?.url ? p.thumbnails[0].url : ''
-                };
-            });
+            const pm = await getPlaylistItems(pid);
 
             for (const m of pm) {
                 await repository.add(
@@ -106,7 +100,7 @@ export async function add(
                     {
                         guild_id: channel.guild.id,
                         title: m.title,
-                        url: m.url,
+                        url: `https://youtube.com/watch?v={$m.videoId}`,
                         thumbnail: m.thumbnail
                     },
                     false
