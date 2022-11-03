@@ -1,4 +1,5 @@
 import { DeepPartial, Repository } from 'typeorm';
+import { YoutubePlaylists } from '../../bot/request/youtubeAPI';
 import * as Models from '../models';
 import { TypeOrm } from '../typeorm/typeorm';
 
@@ -46,6 +47,26 @@ export class MusicRepository {
         console.log(`repository/music: save`);
         const result = await this.repository.save(music);
         return Boolean(result);
+    }
+
+    public async addRange(gid: string, musics: YoutubePlaylists[]): Promise<boolean> {
+        console.log(`repository/music: addAll`);
+        let mid = 0;
+        const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
+        if (getMusic) {
+            mid = getMusic.music_id;
+        }
+        const list = musics.map((m) => {
+            return {
+                guild_id: gid,
+                music_id: mid++,
+                title: m.title,
+                url: `https://youtube.com/watch?v=${m.videoId}`,
+                thumbnail: m.thumbnail
+            };
+        });
+        await this.repository.save(list);
+        return true;
     }
 
     /**

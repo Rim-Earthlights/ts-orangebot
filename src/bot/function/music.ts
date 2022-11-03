@@ -94,18 +94,7 @@ export async function add(
         try {
             const pm = await getPlaylistItems(pid);
 
-            for (const m of pm) {
-                await repository.add(
-                    channel.guild.id,
-                    {
-                        guild_id: channel.guild.id,
-                        title: m.title,
-                        url: `https://youtube.com/watch?v={$m.videoId}`,
-                        thumbnail: m.thumbnail
-                    },
-                    false
-                );
-            }
+            await repository.addRange(channel.guild.id, pm.playlists);
 
             const musics = await repository.getQueue(channel.guild.id);
 
@@ -121,7 +110,7 @@ export async function add(
                         .setTitle('キュー(先頭の20曲のみ表示しています): ')
                         .setDescription(description);
 
-                    (channel as VoiceChannel).send({ content: `追加: ${playlist.title}`, embeds: [send] });
+                    (channel as VoiceChannel).send({ content: `追加: ${pm.title}`, embeds: [send] });
                     return true;
                 }
 
@@ -130,7 +119,7 @@ export async function add(
                     .setTitle(`キュー(全${musics.length}曲): `)
                     .setDescription(description ? description : 'none');
 
-                (channel as VoiceChannel).send({ content: `追加: ${playlist.title}`, embeds: [send] });
+                (channel as VoiceChannel).send({ content: `追加: ${pm.title}`, embeds: [send] });
                 return true;
             }
             await initPlayerInfo(channel, !!loop, !!shuffle);
@@ -708,4 +697,12 @@ async function removeAudioPlayer(gid: string): Promise<void> {
     if (PlayerData) {
         Music.player = Music.player.filter((p) => p.id !== gid);
     }
+}
+
+function createPlayStateEmbed(): EmbedBuilder {
+    return createEmbed('', '');
+}
+
+function createEmbed(title: string, desctiption: string): EmbedBuilder {
+    return new EmbedBuilder().setColor('#cc66cc').setTitle(title).setDescription(desctiption);
 }

@@ -7,9 +7,9 @@ import { CONFIG } from '../../config/config';
  * @param playlistId
  * @returns
  */
-export async function getPlaylistItems(playlistId: string): Promise<Playlists[]> {
+export async function getPlaylistItems(playlistId: string): Promise<{ title: string; playlists: YoutubePlaylists[] }> {
     let p = await getPlaylistItemsResponse(playlistId);
-
+    const title = p.items[0].snippet.channelTitle;
     let result = await convertPlaylist(p);
 
     while (p.nextPageToken) {
@@ -17,7 +17,10 @@ export async function getPlaylistItems(playlistId: string): Promise<Playlists[]>
         const playlists = await convertPlaylist(p);
         result = result.concat(playlists);
     }
-    return result;
+    return {
+        title: title,
+        playlists: result
+    };
 }
 
 /**
@@ -25,16 +28,21 @@ export async function getPlaylistItems(playlistId: string): Promise<Playlists[]>
  * @param itemresponse
  * @returns
  */
-async function convertPlaylist(itemresponse: playlistItemsResponse): Promise<Playlists[]> {
-    return itemresponse.items.map((i) => {
-        return {
-            videoId: i.snippet.resourceId.videoId,
-            title: i.snippet.title,
-            thumbnail: i.snippet.thumbnails.medium?.url
-                ? i.snippet.thumbnails.medium.url
-                : i.snippet.thumbnails.default.url
-        };
-    });
+async function convertPlaylist(itemresponse: playlistItemsResponse): Promise<YoutubePlaylists[]> {
+    return itemresponse.items
+        .map((i) => {
+            if (i.snippet.title === 'Private video') {
+                return;
+            }
+            return {
+                videoId: i.snippet.resourceId.videoId,
+                title: i.snippet.title,
+                thumbnail: i.snippet.thumbnails.medium?.url
+                    ? i.snippet.thumbnails.medium.url
+                    : i.snippet.thumbnails.default.url
+            };
+        })
+        .filter((e) => typeof e !== 'undefined') as YoutubePlaylists[];
 }
 
 /**
@@ -56,10 +64,10 @@ async function getPlaylistItemsResponse(playlistId: string, pageToken?: string):
         params.set('pageToken', pageToken);
     }
 
-    return await axios.get(uri, { params });
+    return (await axios.get(uri, { params })).data;
 }
 
-interface Playlists {
+export interface YoutubePlaylists {
     videoId: string;
     title: string;
     thumbnail: string;
