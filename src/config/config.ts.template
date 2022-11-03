@@ -3,15 +3,18 @@ export const CONFIG = {
     HOSTNAME: '127.0.0.1',
     PORT: '4044',
     // use privillage user
+    HOST_URL: 'http://exsample.com',
     USER: 'USER',
     // discord guild administrator user id
     ADMIN_USER_ID: ['DISCORD_ID'],
+    COMMAND_GUILD_ID: ['COMMAND_GUILD_ID'],
     // Discord Bot Token
     TOKEN: 'YOUR_DISCORD_TOKEN',
     // Forecast API Key
     // OpenWeatherMap; see: https://openweathermap.org/
     FORECAST_KEY: 'YOUR_FORECAST_KEY',
-        DB: {
+    YOUTUBE_API_KEY: 'YOUTUBE_API_KEY',
+    DB: {
         HOSTNAME: 'HOSTNAME',
         USERNAME: 'orange',
         DATABASE: 'orangebot',

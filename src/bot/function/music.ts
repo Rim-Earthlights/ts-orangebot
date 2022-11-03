@@ -18,6 +18,7 @@ import { Playlist } from '../../model/models';
 import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
 import { MusicRepository } from '../../model/repository/musicRepository';
 import { PlaylistRepository } from '../../model/repository/playlistRepository';
+import { getPlaylistItems } from '../request/youtubeAPI';
 
 export class Music {
     static player: { id: string; player: AudioPlayer }[] = [];
@@ -91,27 +92,9 @@ export async function add(
     if (playlistFlag) {
         const pid = await ytpl.getPlaylistID(url);
         try {
-            const playlist = await ytpl(pid, { limit: 10000 });
-            const pm = playlist.items.map((p) => {
-                return {
-                    title: p.title,
-                    url: p.url,
-                    thumbnail: p.thumbnails[0]?.url ? p.thumbnails[0].url : ''
-                };
-            });
+            const pm = await getPlaylistItems(pid);
 
-            for (const m of pm) {
-                await repository.add(
-                    channel.guild.id,
-                    {
-                        guild_id: channel.guild.id,
-                        title: m.title,
-                        url: m.url,
-                        thumbnail: m.thumbnail
-                    },
-                    false
-                );
-            }
+            await repository.addRange(channel.guild.id, pm.playlists);
 
             const musics = await repository.getQueue(channel.guild.id);
 
@@ -127,7 +110,7 @@ export async function add(
                         .setTitle('キュー(先頭の20曲のみ表示しています): ')
                         .setDescription(description);
 
-                    (channel as VoiceChannel).send({ content: `追加: ${playlist.title}`, embeds: [send] });
+                    (channel as VoiceChannel).send({ content: `追加: ${pm.title}`, embeds: [send] });
                     return true;
                 }
 
@@ -136,7 +119,7 @@ export async function add(
                     .setTitle(`キュー(全${musics.length}曲): `)
                     .setDescription(description ? description : 'none');
 
-                (channel as VoiceChannel).send({ content: `追加: ${playlist.title}`, embeds: [send] });
+                (channel as VoiceChannel).send({ content: `追加: ${pm.title}`, embeds: [send] });
                 return true;
             }
             await initPlayerInfo(channel, !!loop, !!shuffle);
@@ -714,4 +697,12 @@ async function removeAudioPlayer(gid: string): Promise<void> {
     if (PlayerData) {
         Music.player = Music.player.filter((p) => p.id !== gid);
     }
+}
+
+function createPlayStateEmbed(): EmbedBuilder {
+    return createEmbed('', '');
+}
+
+function createEmbed(title: string, desctiption: string): EmbedBuilder {
+    return new EmbedBuilder().setColor('#cc66cc').setTitle(title).setDescription(desctiption);
 }
