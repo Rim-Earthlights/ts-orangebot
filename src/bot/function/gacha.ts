@@ -1,11 +1,21 @@
+/**
+ * ガチャ関連処理
+ * おみくじもここで処理している
+ */
+
+import dayjs from 'dayjs';
+import { EmbedBuilder, Message } from 'discord.js';
 import { getRndNumber } from '../../common/common';
+import { CONFIG } from '../../config/config';
 import { GACHA_MONEY_LIST } from '../../constant/gacha/gachaList';
+import { GachaRepository } from '../../model/repository/gachaRepository';
+import { UsersRepository } from '../../model/repository/usersRepository';
 
 /**
- * ランダムにおみくじを一度引く
+ * ランダムにガチャを一度引く
  * @returns
  */
-export function getGacha(): Gacha {
+function getGachaOnce(): Gacha {
     const rnd = Math.random();
     let rare;
     let description;
@@ -59,10 +69,287 @@ export function getGacha(): Gacha {
 }
 
 /**
+ * ガチャを引く
+ * @param message 受け取ったメッセージング情報
+ * @param args 0: 指定回数 or 等級 (出るまで引く)
+ * @returns
+ */
+export async function pickGacha(message: Message, args?: string[]) {
+    const gachaList: Gacha[] = [];
+
+    if (args != undefined && args.length > 0) {
+        if (args[0] === 'reset') {
+            if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+                message.reply({
+                    content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
+                });
+                return;
+            }
+            if (args[1]) {
+                const users = new UsersRepository();
+                const user = await users.get(args[1]);
+                if (!user) {
+                    message.reply({
+                        content: `リセットしようとするユーザが登録されてないみたい…？`
+                    });
+                    return;
+                }
+                await users.resetGacha(args[1]);
+                message.reply({
+                    content: `${user?.userName ? user.userName : user.id} さんのガチャフラグをリセットしたよ～！`
+                });
+            }
+            return;
+        }
+
+        const num = Number(args[0]);
+        if (num) {
+            for (let i = 0; i < num; i++) {
+                const gacha = getGachaOnce();
+                gachaList.push(gacha);
+            }
+        } else {
+            do {
+                const gacha = getGachaOnce();
+                gachaList.push(gacha);
+                if (gacha.rare === args[0].toUpperCase()) {
+                    if (!gacha.description.includes('連チケット')) {
+                        break;
+                    }
+                }
+                if (
+                    gacha.description.includes(args[0]) &&
+                    !['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[0].toUpperCase())
+                ) {
+                    break;
+                }
+                if (gachaList.length > 1_000_000) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`1,000,000回引いても該当の等級が出なかった`);
+
+                    message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
+                    return;
+                }
+                // eslint-disable-next-line no-constant-condition
+            } while (true);
+        }
+
+        const rareList = [...new Set(gachaList.map((g) => g.rare))];
+
+        // 等級と総数
+        const fields = rareList.map((r) => {
+            return {
+                name: r,
+                value: gachaList.filter((l) => l.rare === r).length.toString()
+            };
+        });
+        fields.push({ name: '総数', value: gachaList.length.toString() });
+
+        // 等級の高い順に並び替える
+        const t = gachaList.sort((a, b) => {
+            return a.rank - b.rank;
+        });
+
+        const highTier = t.slice(0, 30);
+        highTier.reverse();
+
+        console.log(highTier);
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle(`${gachaList.length}連の結果: 高い順から30個まで表示しています`)
+            .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
+            .setFields(fields)
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+
+        message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
+    } else {
+        const users = new UsersRepository();
+        const user = await users.get(message.author.id);
+
+        if (user) {
+            if (user.gachaDate) {
+                if (user.gachaDate >= dayjs().hour(0).minute(0).second(0).toDate()) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`ガチャ抽選済`);
+
+                    message.reply({ content: `もう抽選してるみたい！2回目はだめだよ！`, embeds: [send] });
+                    return;
+                }
+            }
+        } else {
+            await users.save({ id: message.author.id, userName: message.author.tag });
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const gacha = getGachaOnce();
+            gachaList.push(gacha);
+        }
+
+        // 10連チケットを引いた分だけ加算する
+        let ticket_10 = gachaList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
+        let ticket_20 = gachaList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
+        do {
+            const tempList = [];
+
+            if (ticket_10 > 0) {
+                for (let i = 0; i < 10; i++) {
+                    const gacha = getGachaOnce();
+                    tempList.push(gacha);
+                    gachaList.push(gacha);
+                }
+                ticket_10--;
+            } else if (ticket_20 > 0) {
+                for (let i = 0; i < 20; i++) {
+                    const gacha = getGachaOnce();
+                    tempList.push(gacha);
+                    gachaList.push(gacha);
+                }
+                ticket_20--;
+            }
+
+            ticket_10 += tempList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
+            ticket_20 += tempList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
+
+            if (ticket_10 <= 0 && ticket_20 <= 0) {
+                break;
+            }
+            // eslint-disable-next-line no-constant-condition
+        } while (true);
+        console.log(gachaList);
+
+        const t = gachaList.sort((a, b) => {
+            return a.rank - b.rank;
+        });
+
+        const highTier = t.slice(0, 30);
+        t.reverse();
+
+        const gachaTable = new GachaRepository();
+        const nowTime = dayjs().toDate();
+        const createTables = t.map((g) => {
+            return {
+                user_id: message.author.id,
+                gachaTime: nowTime,
+                rare: g.rare,
+                rank: g.rank,
+                description: g.description
+            };
+        });
+
+        await gachaTable.save(createTables);
+
+        await users.save({
+            id: message.author.id,
+            userName: message.author.tag,
+            gachaDate: dayjs().toDate()
+        });
+
+        const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
+
+        if (desc.length > 4096) {
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle(`${gachaList.length}連の結果: 高い順に30要素のみ抜き出しています`)
+                .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
+                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+            message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+        } else {
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle(`${gachaList.length}連の結果`)
+                .setDescription(`${desc}`)
+                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+            message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+        }
+    }
+}
+
+/**
+ * おみくじを引く
+ * @param message 受け取ったメッセージング情報
+ * @returns
+ */
+export async function pickOmikuji(message: Message, args?: string[]) {
+    const omikujis: Omikuji[] = [];
+
+    if (args != undefined && args.length > 0) {
+        do {
+            const o = getOmikujiOnce();
+            omikujis.push(o);
+            if (o.luck === args[0]) {
+                break;
+            }
+            if (omikujis.length > 500) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`500回引いても該当のおみくじが出なかった`);
+
+                message.reply({ content: `おみくじ、出なかったみたい・・・`, embeds: [send] });
+                return;
+            }
+            // eslint-disable-next-line no-constant-condition
+        } while (true);
+
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle(`${omikujis.length}回目で出たよ！`)
+            .setDescription(`${omikujis.map((o) => o.luck).join(', ')}`)
+            .addFields({
+                name: '大吉',
+                value: omikujis.filter((o) => o.luck === '大吉').length.toString()
+            })
+            .addFields({
+                name: '吉',
+                value: omikujis.filter((o) => o.luck === '吉').length.toString()
+            })
+            .addFields({
+                name: '中吉',
+                value: omikujis.filter((o) => o.luck === '中吉').length.toString()
+            })
+            .addFields({
+                name: '小吉',
+                value: omikujis.filter((o) => o.luck === '小吉').length.toString()
+            })
+            .addFields({
+                name: '末吉',
+                value: omikujis.filter((o) => o.luck === '末吉').length.toString()
+            })
+            .addFields({
+                name: '凶',
+                value: omikujis.filter((o) => o.luck === '凶').length.toString()
+            })
+            .addFields({
+                name: '大凶',
+                value: omikujis.filter((o) => o.luck === '大凶').length.toString()
+            })
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
+
+        message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
+        return;
+    } else {
+        const omikuji = getOmikujiOnce();
+
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle(omikuji.luck)
+            .setDescription(omikuji.description)
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
+
+        message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
+        return;
+    }
+}
+
+/**
  * ランダムにおみくじを一度引く
  * @returns
  */
-export function getOmikuji(): Omikuji {
+function getOmikujiOnce(): Omikuji {
     const rnd = Math.random();
     let luck = '';
     let description = '';

@@ -29,7 +29,7 @@ export async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('ガチャ')) {
-        await Commands.gacha(message);
+        await BotFunctions.Gacha.pickGacha(message);
     }
     if (message.content.match('(かわい|かわよ|可愛い)')) {
         message.reply('えへへ～！ありがと嬉しい～！');
@@ -40,7 +40,7 @@ export async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('(運勢|みくじ)')) {
-        Commands.luck(message);
+        await BotFunctions.Gacha.pickOmikuji(message);
         return;
     }
     if (message.content.match('(天気|てんき)')) {
@@ -60,12 +60,12 @@ export async function wordSelector(message: Message) {
                 day = Number(d);
             }
         }
-        Commands.weather(message, [cityName, day.toString()]);
+        BotFunctions.Forecast.weather(message, [cityName, day.toString()]);
         return;
     }
     if (message.content.match('地域(覚|憶|おぼ)えて')) {
         const name = message.content.split(' ')[2];
-        Commands.reg(message, ['pref', name]);
+        BotFunctions.Register.save(message, ['pref', name]);
         return;
     }
     if (message.content.match(/\d+d\d+/)) {
@@ -74,7 +74,7 @@ export async function wordSelector(message: Message) {
             return;
         }
         const dice = match[0].split('d');
-        Commands.dice(message, dice);
+        await BotFunctions.Dice.roll(message);
         return;
     }
     message.reply('ごめんなさい、わからなかった……');
