@@ -15,7 +15,10 @@
 </head>
 
 <body>
-    <div class="title">Queue: <%- musics[0].guild_id %>
+    <div class="title">Queue: <%- musics[0].guild_id %></div>
+    <div class="state">
+        <p>現在の曲: <%- current.title %></p>
+        <p>URL: <%- current.url %></p>
     </div>
     <table class="table table-striped">
         <thead>
@@ -32,9 +35,11 @@
                     <td>
                         <%- music.music_id %>
                     </td>
-                    <td>
-                        <%- music.is_play ? '済' : '未' %>
-                    </td>
+                    <% if(music.is_play) { %>
+                        <td style="background-color: #508000;color: #ffffff;">済</td>
+                    <% } else {%>
+                        <td style="background-color: #CC8800; color: #ffffff;">未</td>
+                    <% } %>
                     <td>
                         <%- music.title %>
                     </td>

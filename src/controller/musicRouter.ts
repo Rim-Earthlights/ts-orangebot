@@ -1,6 +1,7 @@
 import Express from 'express';
 import { MusicRepository } from '../model/repository/musicRepository';
 import dayjs from 'dayjs';
+import { MusicInfoRepository } from '../model/repository/musicInfoRepository';
 
 export const musicRouter = Express.Router();
 
@@ -23,9 +24,11 @@ musicRouter.get('/music', async (req: Express.Request, res: Express.Response) =>
 
     const musicRepository = new MusicRepository();
     const musics = await musicRepository.getAll(gid);
+    const infoRepository = new MusicInfoRepository();
+    const info = await infoRepository.get(gid);
     if (musics.length <= 0) {
         res.status(404).send({ code: 404, message: 'not found musics.' });
     }
 
-    res.render('./music.ejs', { musics: musics });
+    res.render('./music.ejs', { musics: musics, current: info });
 });
