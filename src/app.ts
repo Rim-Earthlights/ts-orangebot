@@ -12,7 +12,6 @@ import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
 import { CONFIG } from './config/config';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
 import { TypeOrm } from './model/typeorm/typeorm';
-import { PlayerManager } from 'discord-player-plus';
 import { clog } from './common/logger';
 
 dotenv.config();
@@ -80,7 +79,7 @@ CONFIG.COMMAND_GUILD_ID.map((gid) => {
         .catch(console.error);
 
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: commands })
-        .then((data: any) => clog.info(gid, 'reg-command', 'successfully add command.'))
+        .then(() => clog.info(gid, 'reg-command', 'successfully add command.'))
         .catch(console.error);
 });
 

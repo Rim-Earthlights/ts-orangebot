@@ -1,5 +1,5 @@
 import { playlistItemsResponse } from '../../constant/youtube/youtube';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { CONFIG } from '../../config/config';
 
 /**

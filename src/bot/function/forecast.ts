@@ -1,6 +1,4 @@
 import { getAsync } from '../../common/webWrapper';
-import { TypeOrm } from '../../model/typeorm/typeorm';
-import { Users } from '../../model/models/users';
 import { Forecast, FORECAST_URI } from '../../interface/forecast';
 import { Onecall, ONECALL_URI } from '../../interface/onecall';
 import { UsersRepository } from '../../model/repository/usersRepository';
