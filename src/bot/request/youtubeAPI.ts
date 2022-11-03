@@ -31,7 +31,7 @@ export async function getPlaylistItems(playlistId: string): Promise<{ title: str
 async function convertPlaylist(itemresponse: playlistItemsResponse): Promise<YoutubePlaylists[]> {
     return itemresponse.items
         .map((i) => {
-            if (i.snippet.title === 'Private video') {
+            if (i.snippet.title === 'Private video' || i.snippet.title === 'Deleted video') {
                 return;
             }
             return {
