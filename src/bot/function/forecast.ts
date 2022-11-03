@@ -1,16 +1,150 @@
 import { getAsync } from '../../common/webWrapper';
 import { TypeOrm } from '../../model/typeorm/typeorm';
 import { Users } from '../../model/models/users';
-import { Forecast } from '../../interface/forecast';
-import { Onecall } from '../../interface/onecall';
+import { Forecast, FORECAST_URI } from '../../interface/forecast';
+import { Onecall, ONECALL_URI } from '../../interface/onecall';
 import { UsersRepository } from '../../model/repository/usersRepository';
+import { EmbedBuilder, Message } from 'discord.js';
+import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../../interface/geocoding';
+import url from 'url';
+import { CONFIG } from '../../config/config';
+
+/**
+ * 現在の天気を返す.
+ * @param message 受け取ったメッセージング情報
+ * @param args 0: 地名 1: x日後(number | undefined)
+ * @returns
+ */
+export async function weather(message: Message, args?: string[]) {
+    try {
+        const forecastKey = CONFIG.FORECAST_KEY;
+        if (!forecastKey) {
+            throw new Error('天気情報取得用のAPIキーが登録されていません');
+        }
+        if (args == undefined || args.length === 0) {
+            throw new Error('地名が入力されていません');
+        }
+
+        const cityName = args[0];
+        let day = 0;
+
+        const addDay = Number(args[1]);
+        if (addDay != undefined && addDay <= 6) {
+            day = day + addDay;
+        }
+
+        const geoResponse = await getAsync(
+            'http://geoapi.heartrails.com/api/json',
+            new url.URLSearchParams({
+                method: 'suggest',
+                keyword: cityName,
+                matching: 'like'
+            })
+        );
+
+        let lat: number, lon: number;
+
+        const response = (<Geocoding>geoResponse.data).response;
+        const geoList = response.location;
+
+        if (response.error != undefined || geoList.length <= 0) {
+            console.log(' > geocoding(JP) not found');
+
+            const geoResponse = await getAsync(
+                GEOCODING_URI,
+                new url.URLSearchParams({
+                    q: cityName,
+                    limit: '5',
+                    appid: forecastKey,
+                    lang: 'ja',
+                    unit: 'metric'
+                })
+            );
+
+            const geoList = <WorldGeocoding[]>geoResponse.data;
+
+            if (geoList == undefined || geoList.length <= 0) {
+                throw new Error('名前から場所を検索できませんでした');
+            }
+
+            lat = geoList[0].lat;
+            lon = geoList[0].lon;
+
+            console.log('> return geocoding API');
+            console.log(`  * lat: ${lat}, lon: ${lon}`);
+            console.log(`  * name: ${geoList[0].local_names}`);
+        } else {
+            lat = geoList[0].y;
+            lon = geoList[0].x;
+
+            console.log('> return geocoding API');
+            console.log(`  * lat: ${lat}, lon: ${lon}`);
+            console.log(`  * name: ${geoList[0].prefecture}${geoList[0].city}, ${geoList[0].town}`);
+        }
+
+        const forecastResponse = await getAsync(
+            FORECAST_URI,
+            new url.URLSearchParams({
+                lat: lat.toString(),
+                lon: lon.toString(),
+                appid: forecastKey,
+                lang: 'ja',
+                units: 'metric'
+            })
+        );
+
+        const onecallResponse = await getAsync(
+            ONECALL_URI,
+            new url.URLSearchParams({
+                lat: lat.toString(),
+                lon: lon.toString(),
+                exclude: 'current,minutely,hourly',
+                appid: forecastKey,
+                units: 'metric',
+                lang: 'ja'
+            })
+        );
+
+        const forecast = <Forecast>forecastResponse.data;
+        const onecall = <Onecall>onecallResponse.data;
+
+        let description: string[] = [];
+        let icon = '';
+        if (day === 0) {
+            description = await weatherToday(forecast, onecall);
+            icon = forecast.weather[0].icon;
+        } else {
+            description = await weatherDay(onecall, day);
+            icon = onecall.daily[day].weather[0].icon;
+        }
+
+        const send = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle(`${cityName} の天気`)
+            .setDescription(description.join('\n'))
+            .setThumbnail(`http://openweathermap.org/img/wn/${icon}@2x.png`);
+
+        if (day === 0) {
+            message.reply({ content: `今日の天気ね！はいどーぞ！`, embeds: [send] });
+        } else if (day === 1) {
+            message.reply({ content: `明日の天気ね！はいどーぞ！`, embeds: [send] });
+        } else {
+            message.reply({ content: `${day}日後の天気ね！はいどーぞ！`, embeds: [send] });
+        }
+    } catch (e) {
+        const error = <Error>e;
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle('エラー').setDescription(error.message);
+
+        message.reply({ content: `ありゃ、エラーみたい…なんだろ？`, embeds: [send] });
+    }
+}
 
 /**
  * 今日の天気を返す.
  * @param forecast
  * @param onecall
  */
-export async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<string[]> {
+async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<string[]> {
     // 気温や気象情報
     const weather = forecast.weather[0].description;
     const cloud = forecast.clouds.all;
@@ -70,7 +204,7 @@ export async function weatherToday(forecast: Forecast, onecall: Onecall): Promis
  * @param index
  * @returns
  */
-export async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
+async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
     // 気温や気象情報
     const weather = onecall.daily[index].weather[0].description;
     const cloud = onecall.daily[index].clouds;
