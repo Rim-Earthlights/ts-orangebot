@@ -468,7 +468,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
             const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
-                .setAuthor({ name: '再生中の音楽情報' })
+                .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}` })
                 .setTitle(playing.title)
                 .setURL(playing.url)
                 .setDescription(description)
@@ -620,7 +620,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
         const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setAuthor({ name: '再生中の音楽情報' })
+            .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}` })
             .setTitle(info.title)
             .setURL(info.url)
             .setDescription(description)
