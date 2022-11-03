@@ -69,19 +69,21 @@ export async function add(
 
                 const send = new EmbedBuilder()
                     .setColor('#cc66cc')
+                    .setAuthor({ name: `追加: ${ytinfo.videoDetails.title}` })
                     .setTitle('キュー(先頭の20曲のみ表示しています): ')
                     .setDescription(description);
 
-                (channel as VoiceChannel).send({ content: `追加: ${ytinfo.videoDetails.title}`, embeds: [send] });
+                (channel as VoiceChannel).send({ embeds: [send] });
                 return true;
             }
 
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
+                .setAuthor({ name: `追加: ${ytinfo.videoDetails.title}` })
                 .setTitle(`キュー(全${musics.length}曲): `)
                 .setDescription(description ? description : 'none');
 
-            (channel as VoiceChannel).send({ content: `追加: ${ytinfo.videoDetails.title}`, embeds: [send] });
+            (channel as VoiceChannel).send({ embeds: [send] });
             return true;
         }
         await initPlayerInfo(channel, !!loop, !!shuffle);
@@ -107,19 +109,21 @@ export async function add(
 
                     const send = new EmbedBuilder()
                         .setColor('#cc66cc')
+                        .setAuthor({ name: `追加: ${pm.title}` })
                         .setTitle('キュー(先頭の20曲のみ表示しています): ')
                         .setDescription(description);
 
-                    (channel as VoiceChannel).send({ content: `追加: ${pm.title}`, embeds: [send] });
+                    (channel as VoiceChannel).send({ embeds: [send] });
                     return true;
                 }
 
                 const send = new EmbedBuilder()
                     .setColor('#cc66cc')
+                    .setAuthor({ name: `追加: ${pm.title}` })
                     .setTitle(`キュー(全${musics.length}曲): `)
                     .setDescription(description ? description : 'none');
 
-                (channel as VoiceChannel).send({ content: `追加: ${pm.title}`, embeds: [send] });
+                (channel as VoiceChannel).send({ embeds: [send] });
                 return true;
             }
             await initPlayerInfo(channel, !!loop, !!shuffle);
@@ -173,7 +177,6 @@ export async function getPlayerInfo(channel: VoiceBasedChannel): Promise<void> {
 
     const send = new EmbedBuilder().setColor('#cc66cc').setTitle(`再生設定: `).setDescription(description);
     (channel as VoiceChannel).send({
-        content: `今の設定はこんな感じだよ～！`,
         embeds: [send]
     });
 }
@@ -194,7 +197,6 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
                 .setTitle(`再生設定の変更: `)
                 .setDescription(`シャッフル: ${info.is_shuffle === 0 ? '有効' : '無効'}`);
             (channel as VoiceChannel).send({
-                content: `シャッフルを${info.is_shuffle === 0 ? '有効' : '無効'}にしたよ！`,
                 embeds: [send]
             });
             break;
@@ -206,7 +208,6 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
                 .setTitle(`再生設定の変更: `)
                 .setDescription(`ループ: ${info.is_loop === 0 ? '有効' : '無効'}`);
             (channel as VoiceChannel).send({
-                content: `ループを${info.is_loop === 0 ? '有効' : '無効'}にしたよ！`,
                 embeds: [send]
             });
             break;
@@ -280,16 +281,18 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
 
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: `割込: ${info.videoDetails.title}` })
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
             .setDescription(description);
 
-        (channel as VoiceChannel).send({ content: `割込: ${info.videoDetails.title}`, embeds: [send] });
+        (channel as VoiceChannel).send({ embeds: [send] });
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: `割込: ${info.videoDetails.title}` })
             .setTitle(`キュー(全${musics.length}曲): `)
             .setDescription(description ? description : 'none');
-        (channel as VoiceChannel).send({ content: `割込: ${info.videoDetails.title}`, embeds: [send] });
+        (channel as VoiceChannel).send({ embeds: [send] });
     }
 
     return result;
@@ -333,19 +336,21 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
 
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: `割込: ${music.title}` })
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
             .setDescription(description)
             .setThumbnail(music.thumbnail);
 
-        (channel as VoiceChannel).send({ content: `割込: ${music.title}`, embeds: [send] });
+        (channel as VoiceChannel).send({ embeds: [send] });
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: `割込: ${music.title}` })
             .setTitle(`キュー(全${musics.length}曲): `)
             .setDescription(description ? description : 'none')
             .setThumbnail(music.thumbnail);
 
-        (channel as VoiceChannel).send({ content: `割込: ${music.title}`, embeds: [send] });
+        (channel as VoiceChannel).send({ embeds: [send] });
     }
 
     return result;
@@ -387,21 +392,21 @@ export async function removeId(channel: VoiceBasedChannel, gid: string, musicId:
 
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: `削除: ${musics.find((m) => m.music_id === musicId)?.title}` })
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
             .setDescription(description);
 
         (channel as VoiceChannel).send({
-            content: `削除: ${musics.find((m) => m.music_id === musicId)?.title}`,
             embeds: [send]
         });
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: `削除: ${musics.find((m) => m.music_id === musicId)?.title}` })
             .setTitle(`キュー(全${musics.length}曲): `)
             .setDescription(description ? description : 'none');
 
         (channel as VoiceChannel).send({
-            content: `削除: ${musics.find((m) => m.music_id === musicId)?.title}`,
             embeds: [send]
         });
     }
@@ -432,7 +437,12 @@ export async function playMusic(channel: VoiceBasedChannel) {
     const playing = musics[0];
     musics.shift();
     await updatePlayState(playing.guild_id, playing.music_id, true);
-    await repo_info.save({ guild_id: playing.guild_id, title: playing.title, url: playing.url });
+    await repo_info.save({
+        guild_id: playing.guild_id,
+        title: playing.title,
+        url: playing.url,
+        thumbnail: playing.thumbnail
+    });
 
     const vc = getVoiceConnection(channel.guild.id);
 
@@ -460,27 +470,21 @@ export async function playMusic(channel: VoiceBasedChannel) {
     });
 
     if (info?.silent === 0) {
-        const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
-
-        if (description.length >= 4000) {
-            const sliced = musics.slice(0, 20);
-            const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
-
+        if (musics.length > 0) {
+            const slicedMusics = musics.slice(0, 4);
+            const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
-                .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
+                .setAuthor({ name: '再生中の音楽情報' })
+                .setTitle(playing.title)
+                .setURL(playing.url)
                 .setDescription(description)
-                .setThumbnail(playing.thumbnail);
-
-            (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
-        } else {
-            const send = new EmbedBuilder()
-                .setColor('#cc66cc')
-                .setTitle(`キュー(全${musics.length}曲): `)
-                .setDescription(description ? description : 'none')
-                .setThumbnail(playing.thumbnail);
-
-            (channel as VoiceChannel).send({ content: `再生: ${playing.title}`, embeds: [send] });
+                .setThumbnail(playing.thumbnail)
+                .addFields({
+                    name: '再生キュー',
+                    value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                });
+            (channel as VoiceChannel).send({ embeds: [send] });
         }
     }
 
@@ -564,16 +568,18 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
 
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: 'シャッフル完了' })
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
             .setDescription(description);
 
-        (channel as VoiceChannel).send({ content: `シャッフル完了: `, embeds: [send] });
+        (channel as VoiceChannel).send({ embeds: [send] });
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
+            .setAuthor({ name: 'シャッフル完了' })
             .setTitle(`キュー(全${musics.length}曲): `)
             .setDescription(description ? description : 'none');
-        (channel as VoiceChannel).send({ content: `シャッフル完了: `, embeds: [send] });
+        (channel as VoiceChannel).send({ embeds: [send] });
     }
     return true;
 }
@@ -612,32 +618,25 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
     const musics = await repository.getQueue(channel.guild.id);
     const info = await infoRepository.get(channel.guild.id);
 
-    const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+    if (!info) {
+        return;
+    }
 
-    if (description.length >= 4000) {
-        const sliced = musics.slice(0, 20);
-        const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
-
+    if (musics.length > 0) {
+        const slicedMusics = musics.slice(0, 4);
+        const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setTitle(
-                `キュー(20曲表示/ 全${musics.length}曲)/全曲表示: ${
-                    CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id
-                }`
-            )
-            .setDescription(description);
-
-        (channel as VoiceChannel).send({ content: `現在再生中: ${info?.title}`, embeds: [send] });
-    } else {
-        const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setTitle(
-                `キュー(全${musics.length}曲)/全曲表示: ${
-                    CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id
-                }`
-            )
-            .setDescription(description ? description : 'none');
-        (channel as VoiceChannel).send({ content: `現在再生中: ${info?.title}`, embeds: [send] });
+            .setAuthor({ name: '再生中の音楽情報' })
+            .setTitle(info.title)
+            .setURL(info.url)
+            .setDescription(description)
+            .setThumbnail(info.thumbnail)
+            .addFields({
+                name: '再生キュー',
+                value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+            });
+        (channel as VoiceChannel).send({ embeds: [send] });
     }
     return;
 }
@@ -697,12 +696,4 @@ async function removeAudioPlayer(gid: string): Promise<void> {
     if (PlayerData) {
         Music.player = Music.player.filter((p) => p.id !== gid);
     }
-}
-
-function createPlayStateEmbed(): EmbedBuilder {
-    return createEmbed('', '');
-}
-
-function createEmbed(title: string, desctiption: string): EmbedBuilder {
-    return new EmbedBuilder().setColor('#cc66cc').setTitle(title).setDescription(desctiption);
 }

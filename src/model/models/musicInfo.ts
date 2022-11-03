@@ -17,6 +17,9 @@ export class MusicInfo extends BaseEntity {
     @Column({ type: 'varchar', width: 255, nullable: true })
     url!: string | null;
 
+    @Column({ type: 'varchar', width: 255, nullable: true })
+    thumbnail!: string | null;
+
     @Column({ type: 'tinyint', nullable: false, default: 0 })
     silent!: number;
 
