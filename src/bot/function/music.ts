@@ -6,12 +6,10 @@ import {
     DiscordGatewayAdapterCreator,
     entersState,
     getVoiceConnection,
-    joinVoiceChannel,
-    StreamType
+    joinVoiceChannel
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import ytdl from 'ytdl-core';
-import ytpl from 'ytpl';
+import pldl from 'play-dl';
 import { getRndArray } from '../../common/common';
 import { CONFIG } from '../../config/config';
 import { Playlist } from '../../model/models';
@@ -42,19 +40,18 @@ export async function add(
 
     const status = player.state.status;
 
-    const playlistFlag = ytpl.validateID(url);
-    const movieFlag = ytdl.validateURL(url);
+    const ytFlag = pldl.yt_validate(url);
 
-    if (movieFlag) {
-        const ytinfo = await ytdl.getInfo(url);
+    if (ytFlag === 'video') {
+        const ytinfo = await pldl.video_info(url);
 
         await repository.add(
             channel.guild.id,
             {
                 guild_id: channel.guild.id,
-                title: ytinfo.videoDetails.title,
-                url: ytinfo.videoDetails.video_url,
-                thumbnail: ytinfo.videoDetails.thumbnails[0].url
+                title: ytinfo.video_details.title,
+                url: ytinfo.video_details.url,
+                thumbnail: ytinfo.video_details.thumbnails[0].url
             },
             false
         );
@@ -69,7 +66,7 @@ export async function add(
 
                 const send = new EmbedBuilder()
                     .setColor('#cc66cc')
-                    .setAuthor({ name: `追加: ${ytinfo.videoDetails.title}` })
+                    .setAuthor({ name: `追加: ${ytinfo.video_details.title}` })
                     .setTitle('キュー(先頭の20曲のみ表示しています): ')
                     .setDescription(description);
 
@@ -79,7 +76,7 @@ export async function add(
 
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
-                .setAuthor({ name: `追加: ${ytinfo.videoDetails.title}` })
+                .setAuthor({ name: `追加: ${ytinfo.video_details.title}` })
                 .setTitle(`キュー(全${musics.length}曲): `)
                 .setDescription(description ? description : 'none');
 
@@ -91,8 +88,9 @@ export async function add(
         return true;
     }
 
-    if (playlistFlag) {
-        const pid = await ytpl.getPlaylistID(url);
+    if (ytFlag === 'playlist') {
+        const pid = new URL(url).searchParams.get('list') ?? '';
+
         try {
             const pm = await getPlaylistItems(pid);
 
@@ -151,7 +149,7 @@ export async function add(
         return true;
     }
 
-    if (!playlistFlag && !movieFlag) {
+    if (ytFlag === false) {
         const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
         (channel as VoiceChannel).send({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
@@ -254,19 +252,19 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
  * @returns
  */
 export async function interruptMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
-    if (!ytdl.validateURL(url)) {
+    if (!pldl.yt_validate(url)) {
         return false;
     }
-    const info = await ytdl.getInfo(url);
+    const info = await pldl.video_info(url);
     const repository = new MusicRepository();
 
     const result = await repository.add(
         channel.guild.id,
         {
             guild_id: channel.guild.id,
-            title: info.videoDetails.title,
-            url: info.videoDetails.video_url,
-            thumbnail: info.thumbnail_url
+            title: info.video_details.title,
+            url: info.video_details.url,
+            thumbnail: info.video_details.thumbnails[0].url
         },
         true
     );
@@ -281,7 +279,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
 
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setAuthor({ name: `割込: ${info.videoDetails.title}` })
+            .setAuthor({ name: `割込: ${info.video_details.title}` })
             .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
             .setDescription(description);
 
@@ -289,7 +287,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
     } else {
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setAuthor({ name: `割込: ${info.videoDetails.title}` })
+            .setAuthor({ name: `割込: ${info.video_details.title}` })
             .setTitle(`キュー(全${musics.length}曲): `)
             .setDescription(description ? description : 'none');
         (channel as VoiceChannel).send({ embeds: [send] });
@@ -458,15 +456,10 @@ export async function playMusic(channel: VoiceBasedChannel) {
 
     const player = await updateAudioPlayer(channel.guild.id);
     connection.subscribe(player);
+    const stream = await pldl.stream(playing.url);
 
-    const stream = ytdl(ytdl.getURLVideoID(playing.url), {
-        filter: (format) => format.audioCodec === 'opus' && format.container === 'webm', //webm opus
-        quality: 'highest',
-        highWaterMark: 32 * 1024 * 1024 // https://github.com/fent/node-ytdl-core/issues/902
-    });
-
-    const resource = createAudioResource(stream, {
-        inputType: StreamType.WebmOpus
+    const resource = createAudioResource(stream.stream, {
+        inputType: stream.type
     });
 
     if (info?.silent === 0) {
