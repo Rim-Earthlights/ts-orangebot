@@ -41,9 +41,10 @@ export async function add(
     const status = player.state.status;
 
     const ytFlag = pldl.yt_validate(url);
+    const videoFlag = await pldl.video_info(url);
 
-    if (ytFlag === 'video') {
-        const ytinfo = await pldl.video_info(url);
+    if (ytFlag === 'video' || videoFlag) {
+        const ytinfo = videoFlag ? videoFlag : await pldl.video_info(url);
 
         await repository.add(
             channel.guild.id,
@@ -145,7 +146,7 @@ export async function add(
     const playlistRepository = new PlaylistRepository();
     const playlist = await playlistRepository.get(userId, url);
     if (playlist) {
-        await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
+        // await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
         return true;
     }
 
