@@ -9,6 +9,9 @@ export class Music extends BaseEntity {
     music_id!: number;
 
     @Column({ type: 'varchar', width: 255, nullable: false })
+    type!: 'youtube' | 'spotify';
+
+    @Column({ type: 'varchar', width: 255, nullable: false })
     title!: string;
 
     @Column({ type: 'varchar', width: 255, nullable: false })

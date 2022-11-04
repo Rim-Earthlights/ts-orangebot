@@ -49,7 +49,7 @@ export class MusicRepository {
         return Boolean(result);
     }
 
-    public async addRange(gid: string, musics: YoutubePlaylists[]): Promise<boolean> {
+    public async addRange(gid: string, musics: YoutubePlaylists[], type: 'youtube' | 'spotify'): Promise<boolean> {
         console.log(`repository/music: addAll`);
         let mid = 0;
         const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
@@ -60,6 +60,7 @@ export class MusicRepository {
             return {
                 guild_id: gid,
                 music_id: mid++,
+                type: type,
                 title: m.title,
                 url: `https://youtube.com/watch?v=${m.videoId}`,
                 thumbnail: m.thumbnail
