@@ -41,8 +41,9 @@ export async function add(
     const status = player.state.status;
 
     const ytFlag = pldl.yt_validate(url);
+    const videoFlag = !url.includes('playlist');
 
-    if (ytFlag === 'video') {
+    if (videoFlag && (ytFlag === 'video' || ytFlag === 'playlist')) {
         const ytinfo = await pldl.video_info(url);
 
         await repository.add(
