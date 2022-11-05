@@ -9,14 +9,14 @@ import {
     joinVoiceChannel
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import pldl from 'play-dl';
+import pldl, { SpotifyTrack } from 'play-dl';
 import { getRndArray } from '../../common/common';
 import { CONFIG } from '../../config/config';
 import { Playlist } from '../../model/models';
 import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
 import { MusicRepository } from '../../model/repository/musicRepository';
 import { PlaylistRepository } from '../../model/repository/playlistRepository';
-import { getPlaylistItems } from '../request/youtubeAPI';
+import { getPlaylistItems } from '../request/youtube';
 
 export class Music {
     static player: { id: string; player: AudioPlayer }[] = [];
@@ -44,18 +44,18 @@ export async function add(
             const videoFlag = !url.includes('playlist');
 
             if (videoFlag) {
-                await addYoutubeMusic(channel, 'video', url, loop, shuffle);
+                await addYoutubeMusic(channel, 'video', url, false, loop, shuffle);
             } else {
-                await addYoutubeMusic(channel, 'playlist', url, loop, shuffle);
+                await addYoutubeMusic(channel, 'playlist', url, false, loop, shuffle);
             }
 
             return true;
         }
         case 'sp_track': {
-            await addSpotifyMusic(channel, url, loop, shuffle);
+            await addSpotifyMusic(channel, url, false, loop, shuffle);
             return true;
         }
-        case false: {
+        default: {
             const playlistRepository = new PlaylistRepository();
             const playlist = await playlistRepository.get(userId, url);
             if (playlist) {
@@ -65,9 +65,6 @@ export async function add(
             const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
             (channel as VoiceChannel).send({ content: `YoutubeかSpotifyのURLを指定して～！`, embeds: [send] });
-            return false;
-        }
-        default: {
             return false;
         }
     }
@@ -84,7 +81,12 @@ export async function addSpotifyMusic(
     const player = await getAudioPlayer(channel.guild.id);
     const status = player.state.status;
 
-    const sp = await pldl.spotify(url);
+    if (pldl.is_expired()) {
+        console.log('token expire');
+        await pldl.refreshToken();
+    }
+
+    const sp = (await pldl.spotify(url)) as SpotifyTrack;
 
     await repository.add(
         channel.guild.id,
@@ -306,6 +308,8 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
 export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean, shuffle?: boolean): Promise<void> {
     const repository = new MusicInfoRepository();
     const info = await repository.get(channel.guild.id);
+
+    console.log(JSON.stringify(info));
 
     if (!info) {
         if (loop) {

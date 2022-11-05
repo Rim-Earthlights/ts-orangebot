@@ -1,5 +1,5 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { YoutubePlaylists } from '../../bot/request/youtubeAPI';
+import { YoutubePlaylists } from '../../bot/request/youtube';
 import * as Models from '../models';
 import { TypeOrm } from '../typeorm/typeorm';
 
