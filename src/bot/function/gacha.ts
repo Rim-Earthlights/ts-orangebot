@@ -21,36 +21,36 @@ function getGachaOnce(): Gacha {
     let description;
     let rank;
 
-    if (rnd < 0.00009) {
+    if (rnd < 0.0000988) {
         rare = 'UUR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.UUR.length) - 1;
         description = `:crown: ${GACHA_MONEY_LIST.UUR[index]}`;
         rank = 0;
-    } else if (rnd < 0.00068) {
+    } else if (rnd < 0.00048) {
         rare = 'UR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.UR.length) - 1;
         description = `:sparkles: ${GACHA_MONEY_LIST.UR[index]}`;
         rank = 1;
-    } else if (rnd < 0.028) {
+    } else if (rnd < 0.0266) {
         rare = 'SSR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.SSR.length) - 1;
         description = `${GACHA_MONEY_LIST.SSR[index].includes('ガチャ+') ? ':tickets:' : ':star:'} ${
             GACHA_MONEY_LIST.SSR[index]
         }`;
         rank = 2;
-    } else if (rnd < 0.168) {
+    } else if (rnd < 0.15928) {
         rare = 'SR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.SR.length) - 1;
         description = `${GACHA_MONEY_LIST.SR[index].includes('ガチャ+') ? ':tickets:' : ''} ${
             GACHA_MONEY_LIST.SR[index]
         }`;
         rank = 3;
-    } else if (rnd < 0.678) {
+    } else if (rnd < 0.668) {
         rare = 'R';
         const index = getRndNumber(1, GACHA_MONEY_LIST.R.length) - 1;
         description = ` ${GACHA_MONEY_LIST.R[index]}`;
         rank = 4;
-    } else if (rnd < 0.89) {
+    } else if (rnd < 0.8889) {
         rare = 'UC';
         const index = getRndNumber(1, GACHA_MONEY_LIST.UC.length) - 1;
         description = `${GACHA_MONEY_LIST.UC[index]}`;
@@ -140,9 +140,10 @@ export async function pickGacha(message: Message, args?: string[]) {
 
         // 等級と総数
         const fields = rareList.map((r) => {
+            const length = gachaList.filter((l) => l.rare === r).length;
             return {
                 name: r,
-                value: gachaList.filter((l) => l.rare === r).length.toString()
+                value: length.toString() + ` > 確率: ${((length / gachaList.length) * 100).toFixed(4)}%`
             };
         });
         fields.push({ name: '総数', value: gachaList.length.toString() });
