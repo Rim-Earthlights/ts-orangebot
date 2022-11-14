@@ -220,13 +220,12 @@ export async function pickGacha(message: Message, args?: string[]) {
             }
             // eslint-disable-next-line no-constant-condition
         } while (true);
-        console.log(gachaList);
 
         const t = gachaList.sort((a, b) => {
             return a.rank - b.rank;
         });
 
-        const highTier = t.slice(0, 30);
+        const highTier = t.slice(0, 50);
         t.reverse();
 
         const gachaTable = new GachaRepository();
@@ -248,16 +247,24 @@ export async function pickGacha(message: Message, args?: string[]) {
             userName: message.author.tag,
             gachaDate: dayjs().toDate()
         });
-
+        const presents = t.filter((g) => g.description.includes('_**プレゼント**_'));
         const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
 
-        if (desc.length > 4096) {
+        if (t.length > 99) {
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
-                .setTitle(`${gachaList.length}連の結果: 高い順に30要素のみ抜き出しています`)
+                .setTitle(`${gachaList.length}連の結果: 高い順に50要素のみ抜き出しています`)
                 .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
                 .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
             message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+            if (presents.length > 0) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff9900')
+                    .setTitle('プレゼントだ～！おめでと～！！')
+                    .setDescription(presents.map((p) => `${p.rare}: ${p.description}`).join('\n'))
+                    .setFields({ name: '通知:', value: '<@246007305156558848>' });
+                message.channel.send({ embeds: [send] });
+            }
         } else {
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
@@ -265,6 +272,14 @@ export async function pickGacha(message: Message, args?: string[]) {
                 .setDescription(`${desc}`)
                 .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
             message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+            if (presents.length > 0) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff9900')
+                    .setTitle('プレゼントだ～！おめでと～！！')
+                    .setDescription(presents.map((p) => `${p.rare}: ${p.description}`).join('\n'))
+                    .setFields({ name: '通知用:', value: '<@246007305156558848>' });
+                message.channel.send({ embeds: [send] });
+            }
         }
     }
 }
