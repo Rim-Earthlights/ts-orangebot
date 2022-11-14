@@ -153,13 +153,13 @@ export async function pickGacha(message: Message, args?: string[]) {
             return a.rank - b.rank;
         });
 
-        const highTier = t.slice(0, 30);
+        const highTier = t.slice(0, 50);
         highTier.reverse();
 
         console.log(highTier);
         const send = new EmbedBuilder()
             .setColor('#ff9900')
-            .setTitle(`${gachaList.length}連の結果: 高い順から30個まで表示しています`)
+            .setTitle(`${gachaList.length}連の結果: 高い順から50個まで表示しています`)
             .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
             .setFields(fields)
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
