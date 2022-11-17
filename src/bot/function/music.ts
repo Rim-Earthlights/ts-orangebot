@@ -511,10 +511,13 @@ export async function playMusic(channel: VoiceBasedChannel) {
 export async function stopMusic(channel: VoiceBasedChannel) {
     const player = await getAudioPlayer(channel.guild.id);
 
+    const musicRepository = new MusicRepository();
+    const musics = await musicRepository.getQueue(channel.guild.id);
+
     const infoRepository = new MusicInfoRepository();
     const info = await infoRepository.get(channel.guild.id);
 
-    if (!info || info.is_loop === 0) {
+    if (!info || (musics.length <= 0 && info.is_loop === 0)) {
         await infoRepository.remove(channel.guild.id);
 
         (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
