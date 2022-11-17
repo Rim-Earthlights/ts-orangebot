@@ -180,7 +180,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
         await leftVoiceChannel(guild, oldState);
         logger.info(
             oldState.guild.id,
-            'joinVoiceChannel',
+            'leftVoiceChannel',
             `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).tag}`
         );
     } else if (oldState.channelId === null) {
