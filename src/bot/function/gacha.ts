@@ -10,6 +10,7 @@ import { CONFIG } from '../../config/config';
 import { GACHA_MONEY_LIST } from '../../constant/gacha/gachaList';
 import { GachaRepository } from '../../model/repository/gachaRepository';
 import { UsersRepository } from '../../model/repository/usersRepository';
+import * as logger from '../../common/logger';
 
 /**
  * ランダムにガチャを一度引く
@@ -156,7 +157,6 @@ export async function pickGacha(message: Message, args?: string[]) {
         const highTier = t.slice(0, 50);
         highTier.reverse();
 
-        console.log(highTier);
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle(`${gachaList.length}連の結果: 高い順から50個まで表示しています`)

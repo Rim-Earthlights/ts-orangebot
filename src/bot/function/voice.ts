@@ -1,6 +1,7 @@
 import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'discord.js';
 import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants';
 import { extermAudioPlayer } from './music';
+import * as logger from '../../common/logger';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -14,7 +15,7 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
 
         if (vc.members.size <= 0) {
             await vc.delete();
-            console.log(`delete voice channel: ${vc.id}`);
+            logger.info(vc.guild.id, 'leftVoiceChannel', `delete ch: ${voiceState.channel?.name}`);
         } else if (vc.members.size === 1 && vc.members.find((m) => m.id === DISCORD_CLIENT?.user?.id)) {
             await extermAudioPlayer(vc.guild.id);
         }
@@ -40,6 +41,7 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 type: ChannelType.GuildVoice,
                 parent: parent
             });
+            logger.info(vc.guild.id, 'joinVoiceChannel', `create ch: ${voiceState.channel?.name}`);
             (voiceState.channel as VoiceChannel).members.map((m) => {
                 m.voice.setChannel(vc.id);
             });
