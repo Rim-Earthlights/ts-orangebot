@@ -3,6 +3,7 @@ import ytdl from 'ytdl-core';
 import * as BotFunctions from './function';
 import { PlaylistRepository } from '../model/repository/playlistRepository';
 import ytpl from 'ytpl';
+import * as logger from '../common/logger';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -345,7 +346,7 @@ export async function commandSelector(message: Message) {
             const name = content[0];
             const channel = message.member?.voice.channel;
             if (!channel) {
-                console.log('missing channel');
+                logger.info(message.guild?.id, 'received-command/mode', `missing channel`);
                 return;
             }
             if (!name) {

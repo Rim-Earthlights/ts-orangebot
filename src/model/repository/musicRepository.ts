@@ -2,6 +2,7 @@ import { DeepPartial, Repository } from 'typeorm';
 import { YoutubePlaylists } from '../../bot/request/youtubeAPI';
 import * as Models from '../models';
 import { TypeOrm } from '../typeorm/typeorm';
+import * as logger from '../../common/logger';
 
 export class MusicRepository {
     private repository: Repository<Models.Music>;
@@ -15,7 +16,7 @@ export class MusicRepository {
      * @param gid
      */
     public async getAll(gid: string): Promise<Models.Music[]> {
-        console.log(`repository/music: getAll`);
+        logger.info(gid, `repository/music: getAll`);
         return await this.repository.find({
             where: { guild_id: gid },
             order: { music_id: 'ASC' }
@@ -27,7 +28,7 @@ export class MusicRepository {
      * @param gid
      */
     public async getQueue(gid: string): Promise<Models.Music[]> {
-        console.log(`repository/music: getQueue`);
+        logger.info(gid, `repository/music: getQueue`);
         return await this.repository.find({
             where: { guild_id: gid, is_play: 0 },
             order: { music_id: 'ASC' }
@@ -38,19 +39,19 @@ export class MusicRepository {
      * 音楽を保存する
      */
     public async saveAll(gid: string, musics: Models.Music[]): Promise<Models.Music[]> {
-        console.log(`repository/music: saveAll`);
+        logger.info(gid, `repository/music: saveAll`);
         await this.remove(gid);
         return await this.repository.save(musics);
     }
 
     public async save(music: DeepPartial<Models.Music>): Promise<boolean> {
-        console.log(`repository/music: save`);
+        logger.info(music.guild_id, `repository/music: save`);
         const result = await this.repository.save(music);
         return Boolean(result);
     }
 
     public async addRange(gid: string, musics: YoutubePlaylists[]): Promise<boolean> {
-        console.log(`repository/music: addAll`);
+        logger.info(gid, `repository/music: addAll`);
         let mid = 0;
         const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
         if (getMusic) {
@@ -74,7 +75,7 @@ export class MusicRepository {
      * @returns Promise<boolean>
      */
     public async add(gid: string, music: DeepPartial<Models.Music>, interrupt: boolean): Promise<boolean> {
-        console.log(`repository/music: add`);
+        logger.info(gid, `repository/music: add`);
         if (interrupt) {
             const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
             if (!getMusic) {
@@ -99,7 +100,7 @@ export class MusicRepository {
      */
     public async remove(gid: string, musicId?: number): Promise<boolean> {
         let result;
-        console.log(`remove queue: ${gid}, ${musicId ? musicId : 'all'}`);
+        logger.info(gid, 'repository/music: remove', `queue: ${gid}, ${musicId ? musicId : 'all'}`);
         if (musicId !== undefined) {
             result = await this.repository
                 .createQueryBuilder()
@@ -118,6 +119,7 @@ export class MusicRepository {
     }
 
     public async resetPlayState(gid: string): Promise<boolean> {
+        logger.info(gid, 'repository/music: update', `reset playstate.`);
         const result = await this.repository.update({ guild_id: gid }, { is_play: 0 });
         if (result.affected) {
             return true;
@@ -133,7 +135,7 @@ export class MusicRepository {
         }
 
         await this.save({ ...music, is_play: state ? 1 : 0 });
-        console.log(`${music.title} / played: ${state}`);
+        logger.info(gid, 'repository/music: update', `update playstate: ${music.title} / ${state}`);
         return true;
     }
 }

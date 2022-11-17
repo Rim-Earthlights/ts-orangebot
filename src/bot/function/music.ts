@@ -17,6 +17,7 @@ import { MusicInfoRepository } from '../../model/repository/musicInfoRepository'
 import { MusicRepository } from '../../model/repository/musicRepository';
 import { PlaylistRepository } from '../../model/repository/playlistRepository';
 import { getPlaylistItems } from '../request/youtubeAPI';
+import * as logger from '../../common/logger';
 
 export class Music {
     static player: { id: string; player: AudioPlayer }[] = [];
@@ -129,7 +130,7 @@ export async function add(
             await playMusic(channel);
             return true;
         } catch (e) {
-            console.log(e);
+            logger.info(channel.guild.id, 'command|music-add', JSON.stringify(e));
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
                 .setTitle('エラー:')
@@ -455,35 +456,50 @@ export async function playMusic(channel: VoiceBasedChannel) {
               selfMute: false
           });
 
-    const player = await updateAudioPlayer(channel.guild.id);
-    connection.subscribe(player);
-    const stream = await pldl.stream(playing.url);
+    try {
+        const player = await updateAudioPlayer(channel.guild.id);
+        connection.subscribe(player);
+        const stream = await pldl.stream(playing.url);
 
-    const resource = createAudioResource(stream.stream, {
-        inputType: stream.type
-    });
+        const resource = createAudioResource(stream.stream, {
+            inputType: stream.type
+        });
 
-    if (info?.silent === 0) {
-        const slicedMusics = musics.slice(0, 4);
-        const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
+        if (info?.silent === 0) {
+            const slicedMusics = musics.slice(0, 4);
+            const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
+            const send = new EmbedBuilder()
+                .setColor('#cc66cc')
+                .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}曲` })
+                .setTitle(playing.title)
+                .setURL(playing.url)
+                .setDescription(description ? description : 'none')
+                .setThumbnail(playing.thumbnail)
+                .addFields({
+                    name: '再生キュー',
+                    value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                });
+            (channel as VoiceChannel).send({ embeds: [send] });
+        }
+
+        player.play(resource);
+
+        await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
+        await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    } catch (e) {
+        logger.info(channel.guild.id, 'command|music-play', JSON.stringify(e));
         const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}曲` })
+            .setColor('#ff0000')
+            .setAuthor({ name: `音楽の取得に失敗した` })
             .setTitle(playing.title)
             .setURL(playing.url)
-            .setDescription(description ? description : 'none')
-            .setThumbnail(playing.thumbnail)
+            .setDescription(JSON.stringify(e))
             .addFields({
                 name: '再生キュー',
                 value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }
-
-    player.play(resource);
-
-    await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
-    await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
 
     await playMusic(channel);
 }
@@ -588,8 +604,7 @@ export async function resetAllPlayState(gid: string) {
 
 export async function pause(gid: string): Promise<void> {
     const player = await getAudioPlayer(gid);
-
-    console.log(player.state.status);
+    logger.info(gid, 'command|music-pause', player.state.status);
 
     if (player.state.status === AudioPlayerStatus.Paused) {
         player.unpause();

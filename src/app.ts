@@ -12,7 +12,7 @@ import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
 import { CONFIG } from './config/config';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
 import { TypeOrm } from './model/typeorm/typeorm';
-import { clog } from './common/logger';
+import * as logger from './common/logger';
 
 dotenv.config();
 
@@ -75,11 +75,11 @@ const rest = new REST({ version: '10' }).setToken(CONFIG.TOKEN);
 
 CONFIG.COMMAND_GUILD_ID.map((gid) => {
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: [] })
-        .then(() => clog.info(gid, 'rem-command', 'successfully remove command.'))
+        .then(() => logger.info(gid, 'rem-command', 'successfully remove command.'))
         .catch(console.error);
 
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: commands })
-        .then(() => clog.info(gid, 'reg-command', 'successfully add command.'))
+        .then(() => logger.info(gid, 'reg-command', 'successfully add command.'))
         .catch(console.error);
 });
 
@@ -92,14 +92,13 @@ DISCORD_CLIENT.once('ready', async () => {
     TypeOrm.dataSource
         .initialize()
         .then(async () => {
-            clog.info('system', 'db-init', 'success');
+            logger.info('system', 'db-init', 'success');
         })
         .catch((e) => {
-            clog.error('system', 'db-init', e);
+            logger.error('system', 'db-init', e);
         });
-
-    console.log('Ready!');
-    console.log(`Logged In: ${DISCORD_CLIENT?.user?.tag}`);
+    console.log('==================================================');
+    logger.info(undefined, 'ready', `discord bot logged in: ${DISCORD_CLIENT.user?.tag}`);
 });
 
 /**
@@ -117,7 +116,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         return;
     }
 
-    clog.info(
+    logger.info(
         message.guild ? message.guild.id : 'dm',
         'message-received',
         `author: ${message.author.tag}, content: ${message.content}`
@@ -150,7 +149,7 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
         }
         case 'debug': {
             const url = interaction.options.getString('url');
-            console.log(url);
+            logger.info(undefined, 'received command', `${url}`);
             await interaction.reply('test.');
             break;
         }
@@ -179,11 +178,19 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
     if (newState.channelId === null) {
         //left
         await leftVoiceChannel(guild, oldState);
-        console.log('user left channel', oldState.channelId);
+        logger.info(
+            oldState.guild.id,
+            'joinVoiceChannel',
+            `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).tag}`
+        );
     } else if (oldState.channelId === null) {
         // joined
         await joinVoiceChannel(guild, newState);
-        console.log('user joined channel', newState.channelId);
+        logger.info(
+            oldState.guild.id,
+            'joinVoiceChannel',
+            `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).tag}`
+        );
     }
     // moved
     else {
@@ -191,6 +198,12 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
         await leftVoiceChannel(guild, oldState);
         // joined
         await joinVoiceChannel(guild, newState);
-        console.log('user moved channel', oldState.channelId, newState.channelId);
+        logger.info(
+            oldState.guild.id,
+            'moveVoiceChannel',
+            `ch: ${oldState.channel?.name} -> ${newState.channel?.name}, user: ${
+                (await DISCORD_CLIENT.users.fetch(oldState.id)).tag
+            }`
+        );
     }
 });
