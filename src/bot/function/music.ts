@@ -254,7 +254,8 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
  * @returns
  */
 export async function interruptMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
-    if (!pldl.yt_validate(url)) {
+    const validate = pldl.yt_validate(url);
+    if (validate !== 'video' && validate !== 'playlist') {
         return false;
     }
     const info = await pldl.video_info(url);
@@ -271,7 +272,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
         true
     );
 
-    const musics = await repository.getAll(channel.guild.id);
+    const musics = await repository.getQueue(channel.guild.id);
 
     const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
 

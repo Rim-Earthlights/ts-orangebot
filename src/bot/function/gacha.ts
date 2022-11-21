@@ -10,7 +10,6 @@ import { CONFIG } from '../../config/config';
 import { GACHA_MONEY_LIST } from '../../constant/gacha/gachaList';
 import { GachaRepository } from '../../model/repository/gachaRepository';
 import { UsersRepository } from '../../model/repository/usersRepository';
-import * as logger from '../../common/logger';
 
 /**
  * ランダムにガチャを一度引く
@@ -22,31 +21,31 @@ function getGachaOnce(): Gacha {
     let description;
     let rank;
 
-    if (rnd < 0.0000988) {
+    if (rnd < 0.00002988) {
         rare = 'UUR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.UUR.length) - 1;
         description = `:crown: ${GACHA_MONEY_LIST.UUR[index]}`;
         rank = 0;
-    } else if (rnd < 0.00048) {
+    } else if (rnd < 0.000137) {
         rare = 'UR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.UR.length) - 1;
         description = `:sparkles: ${GACHA_MONEY_LIST.UR[index]}`;
         rank = 1;
-    } else if (rnd < 0.0266) {
+    } else if (rnd < 0.00866) {
         rare = 'SSR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.SSR.length) - 1;
         description = `${GACHA_MONEY_LIST.SSR[index].includes('ガチャ+') ? ':tickets:' : ':star:'} ${
             GACHA_MONEY_LIST.SSR[index]
         }`;
         rank = 2;
-    } else if (rnd < 0.15928) {
+    } else if (rnd < 0.08928) {
         rare = 'SR';
         const index = getRndNumber(1, GACHA_MONEY_LIST.SR.length) - 1;
         description = `${GACHA_MONEY_LIST.SR[index].includes('ガチャ+') ? ':tickets:' : ''} ${
             GACHA_MONEY_LIST.SR[index]
         }`;
         rank = 3;
-    } else if (rnd < 0.668) {
+    } else if (rnd < 0.658) {
         rare = 'R';
         const index = getRndNumber(1, GACHA_MONEY_LIST.R.length) - 1;
         description = ` ${GACHA_MONEY_LIST.R[index]}`;
