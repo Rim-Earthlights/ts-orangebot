@@ -38,6 +38,7 @@ export async function wordSelector(message: Message) {
     }
     if (message.content.match('みかん')) {
         message.reply('はーい！私のこと呼んだ～？');
+        return;
     }
     if (message.content.match('(好き|すき)')) {
         if (message.content.match('(好き|すき)？')) {
@@ -53,9 +54,11 @@ export async function wordSelector(message: Message) {
     }
     if (message.content.match('(綺麗|きれい|美人|美しい)')) {
         message.reply('え、えぇ…！？あ、ありがとね…？');
+        return;
     }
     if (message.content.match('キスして')) {
         message.reply('な、ななな何を突然………\nえっと………………やっぱりだめ！！');
+        return;
     }
     if (message.content.match('チョコレート')) {
         const month = dayjs().month();
@@ -97,30 +100,39 @@ export async function wordSelector(message: Message) {
     }
     if (message.content.match('(行ってくる|行く|出かける)')) {
         message.reply('どこかお出かけ？気をつけていってらっしゃーい！');
+        return;
     }
     if (message.content.match('何時')) {
         message.reply(`今の時間は${dayjs().format('HH時mm分')}だよ～！`);
+        return;
     }
     if (message.content.match('貧乳')) {
         message.reply('………今言っちゃいけないこといった？？？');
+        return;
     }
     if (message.content.match('つるぺた')) {
         message.reply('つるぺたっていうな～！');
+        return;
     }
     if (message.content.match('(夕飯|ばんごはん|晩ごはん|晩飯)')) {
         message.reply('晩御飯だ～！今日はなにたべるの～？いっぱい食べてね！');
+        return;
     }
     if (message.content.match('(にゃあ|にゃー)')) {
         message.reply('にゃ、にゃー？');
+        return;
     }
     if (message.content.match('ぴょん')) {
         message.reply('ぴょんぴょん！');
+        return;
     }
     if (message.content.match('(な|撫)でて')) {
         message.reply('ん、どしたの～？よしよしなでなで～……');
+        return;
     }
     if (message.content.match('((抱|だ)きしめて|ぎゅー|ぎゅっ)')) {
         message.reply('え、えぇ！？う、うーん………ぎ、ぎゅー…？');
+        return;
     }
     if (message.content.match('(運勢|みくじ)')) {
         await BotFunctions.Gacha.pickOmikuji(message);
