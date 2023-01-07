@@ -1,7 +1,9 @@
 import dayjs from 'dayjs';
-import { Message } from 'discord.js';
+import { EmbedBuilder, Message } from 'discord.js';
 import * as Commands from './commands';
 import * as BotFunctions from './function';
+import * as reactions from '../constant/words/reactions';
+import { getRndNumber } from '../common/common';
 
 /**
  * 反応ワードから処理を実行する
@@ -11,6 +13,15 @@ import * as BotFunctions from './function';
 export async function wordSelector(message: Message) {
     if (message.content.match('(言語は|ヘルプ|help)')) {
         Commands.help(message);
+        return;
+    }
+    if (message.content.match('写真')) {
+        const picture = await BotFunctions.Photo.get();
+
+        const send = new EmbedBuilder().setColor('#00cccc').setTitle(`めあの写真`).setImage(picture);
+
+        message.reply({ embeds: [send] });
+
         return;
     }
     if (message.content.match('おはよ')) {
@@ -96,6 +107,11 @@ export async function wordSelector(message: Message) {
     }
     if (message.content.match('(癒して|癒やして|いやして)')) {
         message.reply('どしたの…？よしよし……');
+        return;
+    }
+    if (message.content.match('(ほ|褒)めて')) {
+        const praise = reactions.praise[getRndNumber(0, reactions.praise.length - 1)];
+        message.reply(praise);
         return;
     }
     if (message.content.match('(行ってくる|行く|出かける)')) {
