@@ -16,22 +16,22 @@ export class Users extends BaseEntity {
     id!: string;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
-    userName!: string | null;
+    user_name!: string | null;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
     pref!: string | null;
 
     @Column({ type: 'datetime', nullable: true })
-    gachaDate!: Date | null;
+    last_pick_date!: Date | null;
 
     @DeleteDateColumn({ type: 'datetime', nullable: true })
-    deletedAt!: Date | null;
+    deleted_at!: Date | null;
 
     @UpdateDateColumn({ type: 'datetime', nullable: true })
-    updatedAt!: Date | null;
+    updated_at!: Date | null;
 
     @CreateDateColumn({ type: 'datetime', nullable: false })
-    createdAt!: Date;
+    created_at!: Date;
 
     @OneToMany(() => GachaTable, (g) => g.user_id)
     gacha?: GachaTable[];

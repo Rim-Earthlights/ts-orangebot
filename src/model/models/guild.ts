@@ -17,23 +17,23 @@ export class Guild extends BaseEntity {
     name!: string;
 
     @Column({ type: 'varchar', width: 255, default: 'ロビー' })
-    lobbyName!: string;
+    lobby_name!: string;
 
     @Column({ type: 'varchar', width: 255, default: '墓' })
-    inactiveName!: string;
+    inactive_name!: string;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
-    excludeNames!: string | null;
+    exclude_names?: string;
 
     @Column({ type: 'tinyint', default: 0 })
     silent!: number;
 
     @DeleteDateColumn({ type: 'datetime', nullable: true })
-    deletedAt!: Date | null;
+    deleted_at!: Date | null;
 
     @UpdateDateColumn({ type: 'datetime', nullable: true })
-    updatedAt!: Date | null;
+    updated_at!: Date | null;
 
     @CreateDateColumn({ type: 'datetime', nullable: false })
-    createdAt!: Date;
+    created_at!: Date;
 }

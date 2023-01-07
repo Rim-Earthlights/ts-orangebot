@@ -17,7 +17,7 @@ export async function save(message: Message, args?: string[]): Promise<void> {
             const users = new UsersRepository();
             await users.save({
                 id: userId,
-                userName: message.author.tag,
+                user_name: message.author.tag,
                 pref: regName[0]
             });
 

@@ -24,5 +24,5 @@ export class MusicInfo extends BaseEntity {
     silent!: number;
 
     @CreateDateColumn({ type: 'datetime', nullable: false })
-    createdAt!: Date;
+    created_at!: Date;
 }
