@@ -15,6 +15,7 @@ import { TypeOrm } from './model/typeorm/typeorm';
 import * as logger from './common/logger';
 import { ItemRepository } from './model/repository/itemRepository';
 import { GACHA_LIST } from './constant/gacha/gachaList';
+import { Gacha } from './bot/function';
 
 dotenv.config();
 
@@ -96,6 +97,7 @@ DISCORD_CLIENT.once('ready', async () => {
         .initialize()
         .then(async () => {
             await new ItemRepository().init(GACHA_LIST);
+            Gacha.Gacha.allItemList = await new ItemRepository().getAll();
             logger.info('system', 'db-init', 'success');
         })
         .catch((e) => {

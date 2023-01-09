@@ -12,6 +12,10 @@ import { UsersRepository } from '../../model/repository/usersRepository';
 import * as Models from '../../model/models';
 import { ItemRepository } from '../../model/repository/itemRepository';
 
+export class Gacha {
+    static allItemList: Models.Item[] = [];
+}
+
 function getWeight(list: Models.Item[]): Models.Item[] {
     const weightList = [];
 
@@ -25,116 +29,50 @@ function getWeight(list: Models.Item[]): Models.Item[] {
 }
 
 /**
- * ランダムにガチャを一度引く
+ * ランダムにガチャを一度引き、等級を返す
  * @returns
  */
 export async function getGachaOnce(): Promise<Gacha> {
-    const repository = new ItemRepository();
     const rnd = Math.random();
 
-    if (rnd < 0.00_0088) {
-        const gachaList = await repository.get('UUR');
-        const weightList = getWeight(gachaList);
-
-        const index = getRndNumber(1, weightList.length) - 1;
-        return {
-            item_id: weightList[index].id,
-            name: weightList[index].name,
-            icon: weightList[index].icon,
-            rare: weightList[index].rare,
-            rank: weightList[index].item_rank.rank,
-            is_present: weightList[index].is_present === 1,
-            reroll: weightList[index].reroll
-        };
-    } else if (rnd < 0.00_0906) {
-        const gachaList = await repository.get('UR');
-        const weightList = getWeight(gachaList);
-
-        const index = getRndNumber(1, weightList.length) - 1;
-        return {
-            item_id: weightList[index].id,
-            name: weightList[index].name,
-            icon: weightList[index].icon,
-            rare: weightList[index].rare,
-            rank: weightList[index].item_rank.rank,
-            is_present: weightList[index].is_present === 1,
-            reroll: weightList[index].reroll
-        };
-    } else if (rnd < 0.00_688) {
-        const gachaList = await repository.get('SSR');
-        const weightList = getWeight(gachaList);
-
-        const index = getRndNumber(1, weightList.length) - 1;
-
-        return {
-            item_id: weightList[index].id,
-            name: weightList[index].name,
-            icon: weightList[index].icon,
-            rare: weightList[index].rare,
-            rank: weightList[index].item_rank.rank,
-            is_present: weightList[index].is_present === 1,
-            reroll: weightList[index].reroll
-        };
-    } else if (rnd < 0.08_928) {
-        const gachaList = await repository.get('SR');
-        const weightList = getWeight(gachaList);
-
-        const index = getRndNumber(1, weightList.length) - 1;
-
-        return {
-            item_id: weightList[index].id,
-            name: weightList[index].name,
-            icon: weightList[index].icon,
-            rare: weightList[index].rare,
-            rank: weightList[index].item_rank.rank,
-            is_present: weightList[index].is_present === 1,
-            reroll: weightList[index].reroll
-        };
+    if (rnd < 0.00_00_88) {
+        return await convertGacha('UUR');
+    } else if (rnd < 0.00_09_06) {
+        return await convertGacha('UR');
+    } else if (rnd < 0.00_68_8) {
+        return await convertGacha('SSR');
+    } else if (rnd < 0.08_92_8) {
+        return await convertGacha('SR');
     } else if (rnd < 0.65_8) {
-        const gachaList = await repository.get('R');
-        const weightList = getWeight(gachaList);
-        const index = getRndNumber(1, weightList.length) - 1;
-
-        return {
-            item_id: weightList[index].id,
-            name: weightList[index].name,
-            icon: weightList[index].icon,
-            rare: weightList[index].rare,
-            rank: weightList[index].item_rank.rank,
-            is_present: weightList[index].is_present === 1,
-            reroll: weightList[index].reroll
-        };
+        return await convertGacha('R');
     } else if (rnd < 0.88_89) {
-        const gachaList = await repository.get('UC');
-        const weightList = getWeight(gachaList);
-
-        const index = getRndNumber(1, weightList.length) - 1;
-
-        return {
-            item_id: weightList[index].id,
-            name: weightList[index].name,
-            icon: weightList[index].icon,
-            rare: weightList[index].rare,
-            rank: weightList[index].item_rank.rank,
-            is_present: weightList[index].is_present === 1,
-            reroll: weightList[index].reroll
-        };
+        return await convertGacha('UC');
     } else {
-        const gachaList = await repository.get('C');
-        const weightList = getWeight(gachaList);
-
-        const index = getRndNumber(1, weightList.length) - 1;
-
-        return {
-            item_id: weightList[index].id,
-            name: weightList[index].name,
-            icon: weightList[index].icon,
-            rare: weightList[index].rare,
-            rank: weightList[index].item_rank.rank,
-            is_present: weightList[index].is_present === 1,
-            reroll: weightList[index].reroll
-        };
+        return await convertGacha('C');
     }
+}
+
+/**
+ * 当選結果からランダムにガチャを引く
+ * @param rare
+ * @returns
+ */
+async function convertGacha(rare: string): Promise<Gacha> {
+    const allItems = Gacha.allItemList;
+    const itemList = allItems.filter((i) => i.rare === rare);
+    const weightList = getWeight(itemList);
+
+    const index = getRndNumber(1, weightList.length) - 1;
+
+    return {
+        item_id: weightList[index].id,
+        name: weightList[index].name,
+        icon: weightList[index].icon,
+        rare: weightList[index].rare,
+        rank: weightList[index].item_rank.rank,
+        is_present: weightList[index].is_present === 1,
+        reroll: weightList[index].reroll
+    };
 }
 
 /**
@@ -283,7 +221,7 @@ async function pickNormal(message: Message) {
         gachaList.push(gacha);
     }
 
-    // 10連チケットを引いた分だけ加算する
+    // チケットを引いた分だけ加算する
     let ticketRolls = gachaList
         .filter((g) => g.reroll > 0)
         .reduce(function (sum, element) {
