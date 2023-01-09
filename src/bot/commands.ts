@@ -392,9 +392,8 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-    const r = new ItemRepository();
-    const g = await r.get('UUR');
-    message.reply(JSON.stringify(g));
+    const channel = message.member?.voice.channel as VoiceBasedChannel;
+    await BotFunctions.Music.playMusic(channel);
 }
 
 /**
