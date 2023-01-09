@@ -4,6 +4,8 @@ import * as BotFunctions from './function';
 import { PlaylistRepository } from '../model/repository/playlistRepository';
 import ytpl from 'ytpl';
 import * as logger from '../common/logger';
+import { GachaRepository } from '../model/repository/gachaRepository';
+import { ItemRepository } from '../model/repository/itemRepository';
 
 /**
  * 渡されたコマンドから処理を実行する

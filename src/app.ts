@@ -13,6 +13,8 @@ import { CONFIG } from './config/config';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
 import { TypeOrm } from './model/typeorm/typeorm';
 import * as logger from './common/logger';
+import { ItemRepository } from './model/repository/itemRepository';
+import { GACHA_LIST } from './constant/gacha/gachaList';
 
 dotenv.config();
 
@@ -55,6 +57,7 @@ app.listen(port, hostName);
  * Bot Process
  * =======================
  */
+console.log('==================================================');
 
 const commands = [
     new SlashCommandBuilder().setName('ping').setDescription('replies with pong'),
@@ -92,12 +95,12 @@ DISCORD_CLIENT.once('ready', async () => {
     TypeOrm.dataSource
         .initialize()
         .then(async () => {
+            await new ItemRepository().init(GACHA_LIST);
             logger.info('system', 'db-init', 'success');
         })
         .catch((e) => {
             logger.error('system', 'db-init', e);
         });
-    console.log('==================================================');
     logger.info(undefined, 'ready', `discord bot logged in: ${DISCORD_CLIENT.user?.tag}`);
 });
 

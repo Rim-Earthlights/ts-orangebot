@@ -7,65 +7,134 @@ import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
 import { getRndNumber } from '../../common/common';
 import { CONFIG } from '../../config/config';
-import { GACHA_MONEY_LIST } from '../../constant/gacha/gachaList';
 import { GachaRepository } from '../../model/repository/gachaRepository';
 import { UsersRepository } from '../../model/repository/usersRepository';
+import * as Models from '../../model/models';
+import { ItemRepository } from '../../model/repository/itemRepository';
+
+function getWeight(list: Models.Item[]): Models.Item[] {
+    const weightList = [];
+
+    for (const gacha of list) {
+        for (let i = 0; i < gacha.weight; i++) {
+            weightList.push(gacha);
+        }
+    }
+
+    return weightList;
+}
 
 /**
  * ランダムにガチャを一度引く
  * @returns
  */
-function getGachaOnce(): Gacha {
+export async function getGachaOnce(): Promise<Gacha> {
+    const repository = new ItemRepository();
     const rnd = Math.random();
-    let rare;
-    let description;
-    let rank;
 
-    if (rnd < 0.00002988) {
-        rare = 'UUR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.UUR.length) - 1;
-        description = `:crown: ${GACHA_MONEY_LIST.UUR[index]}`;
-        rank = 0;
-    } else if (rnd < 0.000137) {
-        rare = 'UR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.UR.length) - 1;
-        description = `:sparkles: ${GACHA_MONEY_LIST.UR[index]}`;
-        rank = 1;
-    } else if (rnd < 0.00866) {
-        rare = 'SSR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.SSR.length) - 1;
-        description = `${GACHA_MONEY_LIST.SSR[index].includes('ガチャ+') ? ':tickets:' : ':star:'} ${
-            GACHA_MONEY_LIST.SSR[index]
-        }`;
-        rank = 2;
-    } else if (rnd < 0.08928) {
-        rare = 'SR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.SR.length) - 1;
-        description = `${GACHA_MONEY_LIST.SR[index].includes('ガチャ+') ? ':tickets:' : ''} ${
-            GACHA_MONEY_LIST.SR[index]
-        }`;
-        rank = 3;
-    } else if (rnd < 0.658) {
-        rare = 'R';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.R.length) - 1;
-        description = ` ${GACHA_MONEY_LIST.R[index]}`;
-        rank = 4;
-    } else if (rnd < 0.8889) {
-        rare = 'UC';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.UC.length) - 1;
-        description = `${GACHA_MONEY_LIST.UC[index]}`;
-        rank = 5;
+    if (rnd < 0.00_0088) {
+        const gachaList = await repository.get('UUR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
+    } else if (rnd < 0.00_0906) {
+        const gachaList = await repository.get('UR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
+    } else if (rnd < 0.00_688) {
+        const gachaList = await repository.get('SSR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
+    } else if (rnd < 0.08_928) {
+        const gachaList = await repository.get('SR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
+    } else if (rnd < 0.65_8) {
+        const gachaList = await repository.get('R');
+        const weightList = getWeight(gachaList);
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
+    } else if (rnd < 0.88_89) {
+        const gachaList = await repository.get('UC');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     } else {
-        rare = 'C';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.C.length) - 1;
-        description = `${GACHA_MONEY_LIST.C[index]}`;
-        rank = 6;
+        const gachaList = await repository.get('C');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     }
-    return {
-        rare,
-        description,
-        rank
-    };
 }
 
 /**
@@ -75,212 +144,285 @@ function getGachaOnce(): Gacha {
  * @returns
  */
 export async function pickGacha(message: Message, args?: string[]) {
+    if (args != undefined && args.length > 0) {
+        if (args[0] === 'list') {
+            await getPresent(message);
+        } else if (args[0] === 'use') {
+            await usePresent(message, args[1]);
+        } else {
+            await pickExtra(message, args);
+        }
+    } else {
+        await pickNormal(message);
+    }
+}
+
+/**
+ * 指定された条件でガチャを引く
+ * @param message
+ * @param args
+ * @returns
+ */
+async function pickExtra(message: Message, args: string[]) {
     const gachaList: Gacha[] = [];
 
-    if (args != undefined && args.length > 0) {
-        if (args[0] === 'reset') {
-            if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+    if (args[0] === 'reset') {
+        if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+            message.reply({
+                content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
+            });
+            return;
+        }
+        if (args[1]) {
+            const users = new UsersRepository();
+            const user = await users.get(args[1]);
+            if (!user) {
                 message.reply({
-                    content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
+                    content: `リセットしようとするユーザが登録されてないみたい…？`
                 });
                 return;
             }
-            if (args[1]) {
-                const users = new UsersRepository();
-                const user = await users.get(args[1]);
-                if (!user) {
-                    message.reply({
-                        content: `リセットしようとするユーザが登録されてないみたい…？`
-                    });
-                    return;
-                }
-                await users.resetGacha(args[1]);
-                message.reply({
-                    content: `${user?.userName ? user.userName : user.id} さんのガチャフラグをリセットしたよ～！`
-                });
-            }
-            return;
+            await users.resetGacha(args[1]);
+            message.reply({
+                content: `${user?.user_name ? user.user_name : user.id} さんのガチャフラグをリセットしたよ～！`
+            });
         }
+        return;
+    }
 
-        const num = Number(args[0]);
-        if (num) {
-            for (let i = 0; i < num; i++) {
-                const gacha = getGachaOnce();
-                gachaList.push(gacha);
-            }
-        } else {
-            do {
-                const gacha = getGachaOnce();
-                gachaList.push(gacha);
-                if (gacha.rare === args[0].toUpperCase()) {
-                    if (!gacha.description.includes('連チケット')) {
-                        break;
-                    }
-                }
-                if (
-                    gacha.description.includes(args[0]) &&
-                    !['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[0].toUpperCase())
-                ) {
-                    break;
-                }
-                if (gachaList.length > 1_000_000) {
-                    const send = new EmbedBuilder()
-                        .setColor('#ff0000')
-                        .setTitle(`エラー`)
-                        .setDescription(`1,000,000回引いても該当の等級が出なかった`);
-
-                    message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
-                    return;
-                }
-                // eslint-disable-next-line no-constant-condition
-            } while (true);
-        }
-
-        const rareList = [...new Set(gachaList.map((g) => g.rare))];
-
-        // 等級と総数
-        const fields = rareList.map((r) => {
-            const length = gachaList.filter((l) => l.rare === r).length;
-            return {
-                name: r,
-                value: length.toString() + ` > 確率: ${((length / gachaList.length) * 100).toFixed(4)}%`
-            };
-        });
-        fields.push({ name: '総数', value: gachaList.length.toString() });
-
-        // 等級の高い順に並び替える
-        const t = gachaList.sort((a, b) => {
-            return a.rank - b.rank;
-        });
-
-        const highTier = t.slice(0, 50);
-        highTier.reverse();
-
-        const send = new EmbedBuilder()
-            .setColor('#ff9900')
-            .setTitle(`${gachaList.length}連の結果: 高い順から50個まで表示しています`)
-            .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
-            .setFields(fields)
-            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
-
-        message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
-    } else {
-        const users = new UsersRepository();
-        const user = await users.get(message.author.id);
-
-        if (user) {
-            if (user.gachaDate) {
-                if (user.gachaDate >= dayjs().hour(0).minute(0).second(0).toDate()) {
-                    const send = new EmbedBuilder()
-                        .setColor('#ff0000')
-                        .setTitle(`エラー`)
-                        .setDescription(`ガチャ抽選済`);
-
-                    message.reply({ content: `もう抽選してるみたい！2回目はだめだよ！`, embeds: [send] });
-                    return;
-                }
-            }
-        } else {
-            await users.save({ id: message.author.id, userName: message.author.tag });
-        }
-
-        for (let i = 0; i < 10; i++) {
-            const gacha = getGachaOnce();
+    const num = Number(args[0]);
+    if (num) {
+        for (let i = 0; i < num; i++) {
+            const gacha = await getGachaOnce();
             gachaList.push(gacha);
         }
-
-        // 10連チケットを引いた分だけ加算する
-        let ticket_10 = gachaList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
-        let ticket_20 = gachaList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
+    } else {
         do {
-            const tempList = [];
-
-            if (ticket_10 > 0) {
-                for (let i = 0; i < 10; i++) {
-                    const gacha = getGachaOnce();
-                    tempList.push(gacha);
-                    gachaList.push(gacha);
+            const gacha = await getGachaOnce();
+            gachaList.push(gacha);
+            if (gacha.rare === args[0].toUpperCase()) {
+                if (gacha.reroll === 0) {
+                    break;
                 }
-                ticket_10--;
-            } else if (ticket_20 > 0) {
-                for (let i = 0; i < 20; i++) {
-                    const gacha = getGachaOnce();
-                    tempList.push(gacha);
-                    gachaList.push(gacha);
-                }
-                ticket_20--;
             }
-
-            ticket_10 += tempList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
-            ticket_20 += tempList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
-
-            if (ticket_10 <= 0 && ticket_20 <= 0) {
+            if (
+                gacha.name.includes(args[0]) &&
+                !['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[0].toUpperCase())
+            ) {
                 break;
+            }
+            if (gachaList.length > 1_000_000) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`1,000,000回引いても該当の等級が出なかった`);
+
+                message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
+                return;
             }
             // eslint-disable-next-line no-constant-condition
         } while (true);
+    }
 
-        const t = gachaList.sort((a, b) => {
-            return a.rank - b.rank;
-        });
+    const rareList = [...new Set(gachaList.map((g) => g.rare))];
 
-        const highTier = t.slice(0, 50);
-        t.reverse();
+    // 等級と総数
+    const fields = rareList.map((r) => {
+        const length = gachaList.filter((l) => l.rare === r).length;
+        return {
+            name: r,
+            value: length.toString() + ` > 確率: ${((length / gachaList.length) * 100).toFixed(4)}%`
+        };
+    });
+    fields.push({ name: '総数', value: gachaList.length.toString() });
 
-        const gachaTable = new GachaRepository();
-        const nowTime = dayjs().toDate();
-        const createTables = t.map((g) => {
-            return {
-                user_id: message.author.id,
-                gachaTime: nowTime,
-                rare: g.rare,
-                rank: g.rank,
-                description: g.description
-            };
-        });
+    // 等級の高い順に並び替える
+    const t = gachaList.sort((a, b) => {
+        return a.rank - b.rank;
+    });
 
-        await gachaTable.save(createTables);
+    const highTier = t.slice(0, 50);
+    highTier.reverse();
 
-        await users.save({
-            id: message.author.id,
-            userName: message.author.tag,
-            gachaDate: dayjs().toDate()
-        });
-        const presents = t.filter((g) => g.description.includes('_**プレゼント**_'));
-        const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
+    const send = new EmbedBuilder()
+        .setColor('#ff9900')
+        .setTitle(`${gachaList.length}連の結果: 高い順から50個まで表示しています`)
+        .setDescription(`${highTier.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n')}`)
+        .setFields(fields)
+        .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
 
-        if (t.length > 99) {
-            const send = new EmbedBuilder()
-                .setColor('#ff9900')
-                .setTitle(`${gachaList.length}連の結果: 高い順に50要素のみ抜き出しています`)
-                .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
-                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
-            message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
-            if (presents.length > 0) {
-                const send = new EmbedBuilder()
-                    .setColor('#ff9900')
-                    .setTitle('プレゼントだ～！おめでと～！！')
-                    .setDescription(presents.map((p) => `${p.rare}: ${p.description}`).join('\n'))
-                    .setFields({ name: '通知:', value: '<@246007305156558848>' });
-                message.channel.send({ embeds: [send] });
-            }
-        } else {
-            const send = new EmbedBuilder()
-                .setColor('#ff9900')
-                .setTitle(`${gachaList.length}連の結果`)
-                .setDescription(`${desc}`)
-                .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
-            message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
-            if (presents.length > 0) {
-                const send = new EmbedBuilder()
-                    .setColor('#ff9900')
-                    .setTitle('プレゼントだ～！おめでと～！！')
-                    .setDescription(presents.map((p) => `${p.rare}: ${p.description}`).join('\n'))
-                    .setFields({ name: '通知用:', value: '<@246007305156558848>' });
-                message.channel.send({ embeds: [send] });
+    message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
+}
+
+/**
+ * 通常ガチャを引く
+ * @param message
+ * @returns
+ */
+async function pickNormal(message: Message) {
+    const gachaList = [];
+
+    const users = new UsersRepository();
+    const user = await users.get(message.author.id);
+
+    if (user) {
+        if (user.last_pick_date) {
+            if (user.last_pick_date >= dayjs().hour(0).minute(0).second(0).toDate()) {
+                const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`ガチャ抽選済`);
+
+                message.reply({ content: `もう抽選してるみたい！2回目はだめだよ！`, embeds: [send] });
+                return;
             }
         }
+    } else {
+        await users.save({ id: message.author.id, user_name: message.author.tag });
     }
+
+    for (let i = 0; i < 10; i++) {
+        const gacha = await getGachaOnce();
+        gachaList.push(gacha);
+    }
+
+    // 10連チケットを引いた分だけ加算する
+    let ticketRolls = gachaList
+        .filter((g) => g.reroll > 0)
+        .reduce(function (sum, element) {
+            return sum + element.reroll;
+        }, 0);
+
+    do {
+        let tempList = 0;
+        if (ticketRolls > 0) {
+            for (let i = 0; i < ticketRolls; i++) {
+                const gacha = await getGachaOnce();
+                gachaList.push(gacha);
+                if (gacha.reroll > 0) {
+                    tempList += gacha.reroll;
+                }
+            }
+            ticketRolls = tempList;
+        } else {
+            break;
+        }
+        // eslint-disable-next-line no-constant-condition
+    } while (true);
+
+    const t = gachaList.sort((a, b) => {
+        return a.rank - b.rank;
+    });
+
+    const highTier = t.slice(0, 50);
+    t.reverse();
+
+    const gachaTable = new GachaRepository();
+    const nowTime = dayjs().toDate();
+    const createTables = t.map((g) => {
+        return {
+            user_id: message.author.id,
+            item_id: g.item_id,
+            pick_date: nowTime,
+            rare: g.rare,
+            rank: g.rank,
+            is_used: 0
+        };
+    });
+
+    await gachaTable.save(createTables);
+
+    const itemRepository = new ItemRepository();
+    const items = await itemRepository.getAll();
+
+    await users.save({
+        id: message.author.id,
+        user_name: message.author.tag,
+        last_pick_date: dayjs().toDate()
+    });
+    const presents = t.filter((g) => items.find((i) => i.id === g.item_id)?.is_present === 1);
+    const desc = t.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n');
+
+    if (t.length > 99) {
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle(`${gachaList.length}連の結果: 高い順に50要素のみ抜き出しています`)
+            .setDescription(`${highTier.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n')}`)
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+        message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+        if (presents.length > 0) {
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle('プレゼントだ～！おめでと～！！')
+                .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
+                .setFields({ name: '通知:', value: '<@246007305156558848>' });
+            message.channel.send({ embeds: [send] });
+        }
+    } else {
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle(`${gachaList.length}連の結果`)
+            .setDescription(`${desc}`)
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
+        message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
+        if (presents.length > 0) {
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle('プレゼントだ～！おめでと～！！')
+                .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
+                .setFields({ name: '通知用:', value: '<@246007305156558848>' });
+            message.channel.send({ embeds: [send] });
+        }
+    }
+}
+
+/**
+ * プレゼント一覧を取得する
+ * @param message
+ */
+export async function getPresent(message: Message) {
+    const gachaRepository = new GachaRepository();
+    const gachaList = await gachaRepository.getPresents(message.author.id);
+
+    if (gachaList.length > 0) {
+        const presents: { gacha: Models.Gacha; count: number }[] = [];
+
+        gachaList.map((g) => {
+            const p = presents.find((p) => p.gacha.item_id === g.item_id);
+            if (p != undefined) {
+                p.count++;
+            } else {
+                presents.push({ gacha: g, count: 1 });
+            }
+        });
+
+        const description = presents
+            .map((p) => `${p.gacha.items.id}: [${p.gacha.items.rare}]${p.gacha.items.name} x ${p.count}`)
+            .join('\n');
+
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle('当選したプレゼント一覧')
+            .setDescription(description);
+        message.channel.send({ embeds: [send] });
+    } else {
+        message.reply({
+            content: `何もプレゼントを持っていないみたい・・・？`
+        });
+    }
+}
+
+/**
+ * プレゼントを使用する
+ *
+ */
+export async function usePresent(message: Message, arg: string) {
+    if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+        message.reply({
+            content: `プレゼントの使用権限がないよ！`
+        });
+        return;
+    }
+
+    const gachaRepository = new GachaRepository();
+    await gachaRepository.usePresent(Number(arg));
 }
 
 /**
@@ -398,9 +540,13 @@ function getOmikujiOnce(): Omikuji {
 }
 
 export interface Gacha {
+    item_id: number;
+    name: string;
+    icon: string | null;
     rare: string;
-    description: string;
     rank: number;
+    is_present: boolean;
+    reroll: number;
 }
 
 export interface Omikuji {
