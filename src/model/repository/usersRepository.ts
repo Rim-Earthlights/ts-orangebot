@@ -33,6 +33,6 @@ export class UsersRepository {
      * @param uid user id
      */
     public async resetGacha(uid: string): Promise<void> {
-        await this.repository.save({ id: uid, gachaDate: null });
+        await this.repository.save({ id: uid, last_pick_date: null });
     }
 }

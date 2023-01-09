@@ -9,10 +9,10 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 import { Users } from './users';
-import { ItemTable } from './item';
+import { Item } from './item';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
-export class GachaTable extends BaseEntity {
+export class Gacha extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
@@ -29,16 +29,16 @@ export class GachaTable extends BaseEntity {
     is_used!: number;
 
     @DeleteDateColumn({ type: 'datetime', nullable: true })
-    deleted_at?: Date;
+    deleted_at: Date | null = null;
 
     @CreateDateColumn({ type: 'datetime', nullable: false })
     created_at!: Date;
 
     @ManyToOne(() => Users, (user) => user.id)
-    @JoinColumn({ name: 'user_id' })
+    @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
     users!: Users;
 
-    @ManyToOne(() => ItemTable, (item) => item.id)
-    @JoinColumn({ name: 'item_id' })
-    items!: ItemTable;
+    @ManyToOne(() => Item, (item) => item.id)
+    @JoinColumn({ name: 'item_id', referencedColumnName: 'id' })
+    items!: Item;
 }

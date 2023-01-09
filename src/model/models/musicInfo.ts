@@ -12,13 +12,13 @@ export class MusicInfo extends BaseEntity {
     is_loop!: number;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
-    title!: string | null;
+    title: string | null = null;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
-    url!: string | null;
+    url: string | null = null;
 
     @Column({ type: 'varchar', width: 255, nullable: true })
-    thumbnail!: string | null;
+    thumbnail: string | null = null;
 
     @Column({ type: 'tinyint', nullable: false, default: 0 })
     silent!: number;

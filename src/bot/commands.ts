@@ -4,6 +4,8 @@ import * as BotFunctions from './function';
 import { PlaylistRepository } from '../model/repository/playlistRepository';
 import ytpl from 'ytpl';
 import * as logger from '../common/logger';
+import { GachaRepository } from '../model/repository/gachaRepository';
+import { ItemRepository } from '../model/repository/itemRepository';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -390,8 +392,9 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-    const channel = message.member?.voice.channel as VoiceBasedChannel;
-    await BotFunctions.Music.playMusic(channel);
+    const r = new ItemRepository();
+    const g = await r.get('UUR');
+    message.reply(JSON.stringify(g));
 }
 
 /**

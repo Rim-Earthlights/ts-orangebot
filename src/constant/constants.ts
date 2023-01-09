@@ -17,3 +17,12 @@ export const DISCORD_CLIENT = new Client({
 });
 
 export const EXCLUDE_ROOM = ['ロビー', '墓'];
+
+export const ICON = {
+    CROWN: ':crown:',
+    SPARKLES: ':sparkles:',
+    STAR: ':star:',
+    STAR2: ':star2:',
+    TICKETS: ':tickets:',
+    HEART: ':heart:'
+};

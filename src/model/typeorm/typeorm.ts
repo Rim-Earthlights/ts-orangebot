@@ -21,7 +21,8 @@ export class TypeOrm {
             Models.MusicInfo,
             Models.Playlist,
             Models.Item,
-            Models.Guild
+            Models.Guild,
+            Models.ItemRank
         ] // 利用するエンティティ。パスでの指定も可能
     });
 }

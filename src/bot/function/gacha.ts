@@ -7,66 +7,136 @@ import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
 import { getRndNumber } from '../../common/common';
 import { CONFIG } from '../../config/config';
-import { GACHA_MONEY_LIST } from '../../constant/gacha/gachaList';
+import { GACHA_LIST } from '../../constant/gacha/gachaList';
 import { GachaRepository } from '../../model/repository/gachaRepository';
 import { UsersRepository } from '../../model/repository/usersRepository';
 import * as Models from '../../model/models';
+import { ItemRepository } from '../../model/repository/itemRepository';
+import { ICON } from '../../constant/constants';
+
+function getWeight(list: Models.Item[]): Models.Item[] {
+    const weightList = [];
+
+    for (const gacha of list) {
+        for (let i = 0; i < gacha.weight; i++) {
+            weightList.push(gacha);
+        }
+    }
+
+    return weightList;
+}
 
 /**
  * ランダムにガチャを一度引く
  * @returns
  */
-function getGachaOnce(): Gacha {
+export async function getGachaOnce(): Promise<Gacha> {
+    const repository = new ItemRepository();
     const rnd = Math.random();
-    let rare;
-    let description;
-    let rank;
 
     if (rnd < 0.00002988) {
-        rare = 'UUR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.UUR.length) - 1;
-        description = `:crown: ${GACHA_MONEY_LIST.UUR[index]}`;
-        rank = 0;
+        const gachaList = await repository.get('UUR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     } else if (rnd < 0.000137) {
-        rare = 'UR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.UR.length) - 1;
-        description = `:sparkles: ${GACHA_MONEY_LIST.UR[index]}`;
-        rank = 1;
+        const gachaList = await repository.get('UR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     } else if (rnd < 0.00866) {
-        rare = 'SSR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.SSR.length) - 1;
-        description = `${GACHA_MONEY_LIST.SSR[index].includes('ガチャ+') ? ':tickets:' : ':star:'} ${
-            GACHA_MONEY_LIST.SSR[index]
-        }`;
-        rank = 2;
+        const gachaList = await repository.get('SSR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     } else if (rnd < 0.08928) {
-        rare = 'SR';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.SR.length) - 1;
-        description = `${GACHA_MONEY_LIST.SR[index].includes('ガチャ+') ? ':tickets:' : ''} ${
-            GACHA_MONEY_LIST.SR[index]
-        }`;
-        rank = 3;
+        const gachaList = await repository.get('SR');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     } else if (rnd < 0.658) {
-        rare = 'R';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.R.length) - 1;
-        description = ` ${GACHA_MONEY_LIST.R[index]}`;
-        rank = 4;
+        const gachaList = await repository.get('R');
+        const weightList = getWeight(gachaList);
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     } else if (rnd < 0.8889) {
-        rare = 'UC';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.UC.length) - 1;
-        description = `${GACHA_MONEY_LIST.UC[index]}`;
-        rank = 5;
+        const gachaList = await repository.get('UC');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     } else {
-        rare = 'C';
-        const index = getRndNumber(1, GACHA_MONEY_LIST.C.length) - 1;
-        description = `${GACHA_MONEY_LIST.C[index]}`;
-        rank = 6;
+        const gachaList = await repository.get('C');
+        const weightList = getWeight(gachaList);
+
+        const index = getRndNumber(1, weightList.length) - 1;
+
+        return {
+            item_id: weightList[index].id,
+            name: weightList[index].name,
+            icon: weightList[index].icon,
+            rare: weightList[index].rare,
+            rank: weightList[index].item_rank.rank,
+            is_present: weightList[index].is_present === 1,
+            reroll: weightList[index].reroll
+        };
     }
-    return {
-        rare,
-        description,
-        rank
-    };
 }
 
 /**
@@ -89,7 +159,7 @@ export async function pickGacha(message: Message, args?: string[]) {
  * @param args
  * @returns
  */
-export async function pickExtra(message: Message, args: string[]) {
+async function pickExtra(message: Message, args: string[]) {
     const gachaList: Gacha[] = [];
 
     if (args[0] === 'reset') {
@@ -119,20 +189,20 @@ export async function pickExtra(message: Message, args: string[]) {
     const num = Number(args[0]);
     if (num) {
         for (let i = 0; i < num; i++) {
-            const gacha = getGachaOnce();
+            const gacha = await getGachaOnce();
             gachaList.push(gacha);
         }
     } else {
         do {
-            const gacha = getGachaOnce();
+            const gacha = await getGachaOnce();
             gachaList.push(gacha);
             if (gacha.rare === args[0].toUpperCase()) {
-                if (!gacha.description.includes('連チケット')) {
+                if (gacha.reroll === 0) {
                     break;
                 }
             }
             if (
-                gacha.description.includes(args[0]) &&
+                gacha.name.includes(args[0]) &&
                 !['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[0].toUpperCase())
             ) {
                 break;
@@ -173,7 +243,7 @@ export async function pickExtra(message: Message, args: string[]) {
     const send = new EmbedBuilder()
         .setColor('#ff9900')
         .setTitle(`${gachaList.length}連の結果: 高い順から50個まで表示しています`)
-        .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
+        .setDescription(`${highTier.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n')}`)
         .setFields(fields)
         .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
 
@@ -185,7 +255,7 @@ export async function pickExtra(message: Message, args: string[]) {
  * @param message
  * @returns
  */
-export async function pickNormal(message: Message) {
+async function pickNormal(message: Message) {
     const gachaList = [];
 
     const users = new UsersRepository();
@@ -205,36 +275,29 @@ export async function pickNormal(message: Message) {
     }
 
     for (let i = 0; i < 10; i++) {
-        const gacha = getGachaOnce();
+        const gacha = await getGachaOnce();
         gachaList.push(gacha);
     }
 
     // 10連チケットを引いた分だけ加算する
-    let ticket_10 = gachaList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
-    let ticket_20 = gachaList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
+    let ticketRolls = gachaList
+        .filter((g) => g.reroll > 0)
+        .reduce(function (sum, element) {
+            return sum + element.reroll;
+        }, 0);
+
     do {
-        const tempList = [];
-
-        if (ticket_10 > 0) {
-            for (let i = 0; i < 10; i++) {
-                const gacha = getGachaOnce();
-                tempList.push(gacha);
+        let tempList = 0;
+        if (ticketRolls > 0) {
+            for (let i = 0; i < ticketRolls; i++) {
+                const gacha = await getGachaOnce();
                 gachaList.push(gacha);
+                if (gacha.reroll > 0) {
+                    tempList += gacha.reroll;
+                }
             }
-            ticket_10--;
-        } else if (ticket_20 > 0) {
-            for (let i = 0; i < 20; i++) {
-                const gacha = getGachaOnce();
-                tempList.push(gacha);
-                gachaList.push(gacha);
-            }
-            ticket_20--;
-        }
-
-        ticket_10 += tempList.filter((g) => g.description === ':tickets: ガチャ+10連チケット').length;
-        ticket_20 += tempList.filter((g) => g.description === ':tickets: ガチャ+20連チケット').length;
-
-        if (ticket_10 <= 0 && ticket_20 <= 0) {
+            ticketRolls = tempList;
+        } else {
             break;
         }
         // eslint-disable-next-line no-constant-condition
@@ -252,35 +315,39 @@ export async function pickNormal(message: Message) {
     const createTables = t.map((g) => {
         return {
             user_id: message.author.id,
-            gachaTime: nowTime,
+            item_id: g.item_id,
+            pick_date: nowTime,
             rare: g.rare,
             rank: g.rank,
-            description: g.description
+            is_used: 0
         };
     });
 
     await gachaTable.save(createTables);
+
+    const itemRepository = new ItemRepository();
+    const items = await itemRepository.getAll();
 
     await users.save({
         id: message.author.id,
         user_name: message.author.tag,
         last_pick_date: dayjs().toDate()
     });
-    const presents = t.filter((g) => g.description.includes('_**プレゼント**_'));
-    const desc = t.map((g) => `[${g.rare}] ` + g.description).join('\n');
+    const presents = t.filter((g) => items.find((i) => i.id === g.item_id)?.is_present === 1);
+    const desc = t.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n');
 
     if (t.length > 99) {
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle(`${gachaList.length}連の結果: 高い順に50要素のみ抜き出しています`)
-            .setDescription(`${highTier.map((g) => `[${g.rare}] ` + g.description).join('\n')}`)
+            .setDescription(`${highTier.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n')}`)
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
         message.reply({ content: `ガチャだよ！からんころーん！(景品は一日の最初の一回のみです)`, embeds: [send] });
         if (presents.length > 0) {
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
-                .setDescription(presents.map((p) => `${p.rare}: ${p.description}`).join('\n'))
+                .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
                 .setFields({ name: '通知:', value: '<@246007305156558848>' });
             message.channel.send({ embeds: [send] });
         }
@@ -295,7 +362,7 @@ export async function pickNormal(message: Message) {
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
-                .setDescription(presents.map((p) => `${p.rare}: ${p.description}`).join('\n'))
+                .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
                 .setFields({ name: '通知用:', value: '<@246007305156558848>' });
             message.channel.send({ embeds: [send] });
         }
@@ -446,9 +513,13 @@ function getOmikujiOnce(): Omikuji {
 }
 
 export interface Gacha {
+    item_id: number;
+    name: string;
+    icon: string | null;
     rare: string;
-    description: string;
     rank: number;
+    is_present: boolean;
+    reroll: number;
 }
 
 export interface Omikuji {
