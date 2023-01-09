@@ -32,7 +32,7 @@ export async function getGachaOnce(): Promise<Gacha> {
     const repository = new ItemRepository();
     const rnd = Math.random();
 
-    if (rnd < 0.00002988) {
+    if (rnd < 0.00_0088) {
         const gachaList = await repository.get('UUR');
         const weightList = getWeight(gachaList);
 
@@ -46,7 +46,7 @@ export async function getGachaOnce(): Promise<Gacha> {
             is_present: weightList[index].is_present === 1,
             reroll: weightList[index].reroll
         };
-    } else if (rnd < 0.000137) {
+    } else if (rnd < 0.00_0906) {
         const gachaList = await repository.get('UR');
         const weightList = getWeight(gachaList);
 
@@ -60,7 +60,7 @@ export async function getGachaOnce(): Promise<Gacha> {
             is_present: weightList[index].is_present === 1,
             reroll: weightList[index].reroll
         };
-    } else if (rnd < 0.00866) {
+    } else if (rnd < 0.00_688) {
         const gachaList = await repository.get('SSR');
         const weightList = getWeight(gachaList);
 
@@ -75,7 +75,7 @@ export async function getGachaOnce(): Promise<Gacha> {
             is_present: weightList[index].is_present === 1,
             reroll: weightList[index].reroll
         };
-    } else if (rnd < 0.08928) {
+    } else if (rnd < 0.08_928) {
         const gachaList = await repository.get('SR');
         const weightList = getWeight(gachaList);
 
@@ -90,7 +90,7 @@ export async function getGachaOnce(): Promise<Gacha> {
             is_present: weightList[index].is_present === 1,
             reroll: weightList[index].reroll
         };
-    } else if (rnd < 0.658) {
+    } else if (rnd < 0.65_8) {
         const gachaList = await repository.get('R');
         const weightList = getWeight(gachaList);
         const index = getRndNumber(1, weightList.length) - 1;
@@ -104,7 +104,7 @@ export async function getGachaOnce(): Promise<Gacha> {
             is_present: weightList[index].is_present === 1,
             reroll: weightList[index].reroll
         };
-    } else if (rnd < 0.8889) {
+    } else if (rnd < 0.88_89) {
         const gachaList = await repository.get('UC');
         const weightList = getWeight(gachaList);
 
@@ -145,12 +145,10 @@ export async function getGachaOnce(): Promise<Gacha> {
  */
 export async function pickGacha(message: Message, args?: string[]) {
     if (args != undefined && args.length > 0) {
-        if (args[0] === 'present') {
-            if (args[1] != undefined) {
-                await usePresent(message, args[1]);
-            } else {
-                await getPresent(message);
-            }
+        if (args[0] === 'list') {
+            await getPresent(message);
+        } else if (args[0] === 'use') {
+            await usePresent(message, args[1]);
         } else {
             await pickExtra(message, args);
         }
@@ -404,6 +402,10 @@ export async function getPresent(message: Message) {
             .setTitle('当選したプレゼント一覧')
             .setDescription(description);
         message.channel.send({ embeds: [send] });
+    } else {
+        message.reply({
+            content: `何もプレゼントを持っていないみたい・・・？`
+        });
     }
 }
 
