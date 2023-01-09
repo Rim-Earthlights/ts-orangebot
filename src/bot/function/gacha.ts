@@ -332,7 +332,7 @@ export async function getPresent(message: Message) {
         });
 
         const description = presents
-            .map((p) => `${p.gacha.items.id}: [${p.gacha.items.rare}]${p.gacha.items.name} x ${p.count}`)
+            .map((p) => `${p.gacha.id}: [${p.gacha.items.rare}]${p.gacha.items.name} x ${p.count}`)
             .join('\n');
 
         const send = new EmbedBuilder()
