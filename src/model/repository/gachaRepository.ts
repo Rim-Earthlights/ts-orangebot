@@ -49,6 +49,9 @@ export class GachaRepository {
      */
     public async getPresents(uid: string): Promise<Models.Gacha[]> {
         const gachaList = await this.repository.find({
+            relations: {
+                items: true
+            },
             where: { user_id: uid, items: { is_present: 1 }, is_used: 0 }
         });
         return gachaList;

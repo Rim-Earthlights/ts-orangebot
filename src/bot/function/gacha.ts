@@ -7,12 +7,10 @@ import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
 import { getRndNumber } from '../../common/common';
 import { CONFIG } from '../../config/config';
-import { GACHA_LIST } from '../../constant/gacha/gachaList';
 import { GachaRepository } from '../../model/repository/gachaRepository';
 import { UsersRepository } from '../../model/repository/usersRepository';
 import * as Models from '../../model/models';
 import { ItemRepository } from '../../model/repository/itemRepository';
-import { ICON } from '../../constant/constants';
 
 function getWeight(list: Models.Item[]): Models.Item[] {
     const weightList = [];
@@ -147,9 +145,17 @@ export async function getGachaOnce(): Promise<Gacha> {
  */
 export async function pickGacha(message: Message, args?: string[]) {
     if (args != undefined && args.length > 0) {
-        pickExtra(message, args);
+        if (args[0] === 'present') {
+            if (args[1] != undefined) {
+                await usePresent(message, args[1]);
+            } else {
+                await getPresent(message);
+            }
+        } else {
+            await pickExtra(message, args);
+        }
     } else {
-        pickNormal(message);
+        await pickNormal(message);
     }
 }
 
@@ -370,7 +376,7 @@ async function pickNormal(message: Message) {
 }
 
 /**
- * FIXME: 未実装
+ * プレゼント一覧を取得する
  * @param message
  */
 export async function getPresent(message: Message) {
@@ -389,13 +395,32 @@ export async function getPresent(message: Message) {
             }
         });
 
+        const description = presents
+            .map((p) => `${p.gacha.items.id}: [${p.gacha.items.rare}]${p.gacha.items.name} x ${p.count}`)
+            .join('\n');
+
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle('当選したプレゼント一覧')
-            .setDescription('')
-            .setFields();
+            .setDescription(description);
         message.channel.send({ embeds: [send] });
     }
+}
+
+/**
+ * プレゼントを使用する
+ *
+ */
+export async function usePresent(message: Message, arg: string) {
+    if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+        message.reply({
+            content: `プレゼントの使用権限がないよ！`
+        });
+        return;
+    }
+
+    const gachaRepository = new GachaRepository();
+    await gachaRepository.usePresent(Number(arg));
 }
 
 /**
