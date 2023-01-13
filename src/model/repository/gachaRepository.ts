@@ -61,11 +61,13 @@ export class GachaRepository {
      * プレゼントを使用する
      * @param id ガチャID
      */
-    public async usePresent(id: number): Promise<void> {
+    public async usePresent(id: number): Promise<boolean> {
         const gacha = await this.repository.findOne({ where: { id: id } });
         if (gacha) {
             gacha.is_used = 1;
             await this.repository.save(gacha);
+            return true;
         }
+        return false;
     }
 }
