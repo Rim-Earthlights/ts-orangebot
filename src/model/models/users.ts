@@ -24,6 +24,9 @@ export class Users extends BaseEntity {
     @Column({ type: 'datetime', nullable: true })
     last_pick_date: Date | null = null;
 
+    @Column({ type: 'int', nullable: false, default: 0 })
+    pick_left!: number;
+
     @DeleteDateColumn({ type: 'datetime', nullable: true })
     deleted_at: Date | null = null;
 

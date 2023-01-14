@@ -29,10 +29,21 @@ export class UsersRepository {
     }
 
     /**
-     * ガチャ日をリセットする
+     * ガチャ回数を10に再セットする
      * @param uid user id
      */
     public async resetGacha(uid: string): Promise<void> {
-        await this.repository.save({ id: uid, last_pick_date: null });
+        await this.repository.save({ id: uid, pick_left: 10 });
+    }
+
+    /**
+     * ユーザの残りピック数を10増やす
+     */
+    public async addPickLeft(): Promise<void> {
+        const users = await this.repository.find();
+        const saveUsers = users.map((u) => {
+            return { ...u, pick_left: u.pick_left + 10 };
+        });
+        await this.repository.save(saveUsers);
     }
 }

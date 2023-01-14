@@ -16,6 +16,7 @@ import * as logger from './common/logger';
 import { ItemRepository } from './model/repository/itemRepository';
 import { GACHA_LIST } from './constant/gacha/gachaList';
 import { Gacha } from './bot/function';
+import { initJob } from './job/job';
 
 dotenv.config();
 
@@ -103,6 +104,7 @@ DISCORD_CLIENT.once('ready', async () => {
         .catch((e) => {
             logger.error('system', 'db-init', e);
         });
+    await initJob();
     logger.info(undefined, 'ready', `discord bot logged in: ${DISCORD_CLIENT.user?.tag}`);
 });
 
