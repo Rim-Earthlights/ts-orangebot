@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { getTokenSourceMapRange } from 'typescript';
 import { getAsync } from '../../common/webWrapper';
 
 export async function get() {
+    // TODO: 画像の取得先をAPI経由で取得する
     const pictures = [
         'https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/cat/20190126_123419782.jpg',
         'https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/cat/20210216_224643803.jpg',
