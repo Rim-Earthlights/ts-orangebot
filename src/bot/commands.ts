@@ -394,7 +394,7 @@ export async function commandSelector(message: Message) {
                 message.reply({ embeds: [send] });
                 return;
             }
-            await BotFunctions.Room.changeRoomName(message, content[0]);
+            await BotFunctions.Room.changeRoomName(message, content.join(' '));
             break;
         }
         case 'restart': {
