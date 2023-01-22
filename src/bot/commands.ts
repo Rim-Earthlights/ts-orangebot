@@ -368,6 +368,35 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Register.save(message, content);
             break;
         }
+        case 'team': {
+            if (content.length > 0) {
+                const number = Number(content[0]);
+                if (number < 1) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`1以上の数字を入れてね`);
+
+                    message.reply({ embeds: [send] });
+                    return;
+                }
+                await BotFunctions.Room.team(message, number);
+            }
+            break;
+        }
+        case 'room': {
+            if (content.length <= 0) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`変更したいルーム名を入れてね`);
+
+                message.reply({ embeds: [send] });
+                return;
+            }
+            await BotFunctions.Room.changeRoomName(message, content[0]);
+            break;
+        }
         case 'restart': {
             throw new Error('再起動');
         }
@@ -424,6 +453,10 @@ export async function help(message: Message) {
     res.push('   > チンチロリンで遊ぶ');
     res.push('     みかんちゃんとチンチロリンで遊べます');
     res.push('     3回まで投げて出た目で勝負します');
+    res.push('===== お部屋管理系 =====');
+    res.push(' * .team [チーム数]');
+    res.push('   > チーム分けをする');
+    res.push('     チーム数を指定するとその数で分けて部屋へ移動します');
     res.push('===== 音楽再生系 =====');
     res.push(' * .play [URL] / .pl [URL]');
     res.push('   > Youtube の音楽を再生します。プレイリストも可能');
@@ -439,7 +472,7 @@ export async function help(message: Message) {
     res.push('   > 予約している曲を削除する');
     res.push(' * .rem all | .rm all');
     res.push('   > 予約している曲を全て削除し、音楽再生を中止する');
-    res.push(' * .silent | .sil');
+    res.push(' * .silent | .si');
     res.push('   > 音楽再生の通知を切り替えます。');
     res.push('   > offの場合は次の曲に変わっても通知しなくなりますが、自動シャッフル時にのみ通知されます');
     res.push('===== プレイリスト系 =====');
