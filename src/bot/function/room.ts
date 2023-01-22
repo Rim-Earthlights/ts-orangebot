@@ -63,7 +63,7 @@ export async function team(message: Message, num: number): Promise<void> {
         teams.push({
             team: i % num,
             id: shuffleMembers[i],
-            name: vc.members.find((m) => m.id === shuffleMembers[i])?.user.tag
+            name: vc.members.find((m) => m.id === shuffleMembers[i])?.user.username
         });
     }
 
