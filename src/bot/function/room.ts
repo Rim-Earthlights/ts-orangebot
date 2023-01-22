@@ -77,7 +77,11 @@ export async function team(message: Message, num: number): Promise<void> {
     const t: { team: number; names: string[] }[] = [];
     teams.map((team) => {
         if (team.name != undefined) {
-            t[team.team].names.push(team.name);
+            if (t[team.team] === undefined) {
+                t[team.team] = { team: team.team, names: [team.name] };
+            } else {
+                t[team.team].names.push(team.name);
+            }
         }
     });
     const fields = t.map((team) => {
@@ -91,7 +95,6 @@ export async function team(message: Message, num: number): Promise<void> {
 
     message.reply({ embeds: [send] });
 
-    // ユーザを部屋に移動
     for (let i = 0; i < num; i++) {
         const createVc = await vc.guild.channels.create({
             name: `チーム${i + 1}`,
