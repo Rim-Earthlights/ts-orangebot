@@ -6,3 +6,4 @@ export * as Voice from './voice';
 export * as Mention from './mention';
 export * as Register from './register';
 export * as Photo from './photo';
+export * as Room from './room';
