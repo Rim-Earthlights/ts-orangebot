@@ -2,7 +2,7 @@
  * お部屋関連処理
  */
 
-import { ChannelType, Message } from 'discord.js';
+import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { getRndArray } from '../../common/common';
 
 export async function initRoom(): Promise<void> {
@@ -57,10 +57,14 @@ export async function team(message: Message, num: number): Promise<void> {
     const rnd = getRndArray(members.length - 1);
     const shuffleMembers = members.map((m, i) => members[rnd[i]]);
 
-    const teams: { team: number; id: string }[] = [];
+    const teams: { team: number; id: string; name: string | undefined }[] = [];
 
     for (let i = 0; i < shuffleMembers.length; i++) {
-        teams.push({ team: i % num, id: shuffleMembers[i] });
+        teams.push({
+            team: i % num,
+            id: shuffleMembers[i],
+            name: vc.members.find((m) => m.id === shuffleMembers[i])?.user.tag
+        });
     }
 
     // 部屋の作成
@@ -69,6 +73,23 @@ export async function team(message: Message, num: number): Promise<void> {
         await message.reply('親カテゴリが見つからないよ！');
         return;
     }
+
+    const t: { team: number; names: string[] }[] = [];
+    teams.map((team) => {
+        if (team.name != undefined) {
+            t[team.team].names.push(team.name);
+        }
+    });
+    const fields = t.map((team) => {
+        return {
+            name: `チーム${team.team + 1}`,
+            value: team.names.join('\n')
+        };
+    });
+
+    const send = new EmbedBuilder().setColor('#00ff55').setTitle(`チーム分け結果`).setFields(fields);
+
+    message.reply({ embeds: [send] });
 
     // ユーザを部屋に移動
     for (let i = 0; i < num; i++) {
