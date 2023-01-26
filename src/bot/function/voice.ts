@@ -17,11 +17,12 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
             await vc.delete();
             logger.info(vc.guild.id, 'leftVoiceChannel', `delete ch: ${voiceState.channel?.name}`);
         } else {
-            if (vc.members.find((m) => m.id === DISCORD_CLIENT?.user?.id)) {
-                await extermAudioPlayer(vc.guild.id);
-            }
             const bot = vc.members.filter((m) => m.user.bot);
             if (vc.members.size === bot.size) {
+                if (vc.members.find((m) => m.id === DISCORD_CLIENT?.user?.id)) {
+                    await extermAudioPlayer(vc.guild.id);
+                }
+
                 await vc.delete();
                 logger.info(vc.guild.id, 'leftVoiceChannel', `delete ch: ${voiceState.channel?.name}`);
             }
