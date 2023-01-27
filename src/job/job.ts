@@ -7,9 +7,9 @@ export async function initJob() {
      * 毎日0時に実行されるタスク
      */
     cron.schedule('0 0 * * *', async () => {
-        logger.info(undefined, 'Cron job: 0 0 * * *');
+        logger.info('system', 'Cron job: 0 0 * * *');
         const user = new UsersRepository();
         await user.addPickLeft();
     });
-    logger.info(undefined, 'Cron job', 'Initialized');
+    logger.info('system', 'Cron job', 'Initialized');
 }

@@ -80,11 +80,11 @@ const rest = new REST({ version: '10' }).setToken(CONFIG.TOKEN);
 
 CONFIG.COMMAND_GUILD_ID.map((gid) => {
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: [] })
-        .then(() => logger.info(gid, 'rem-command', 'successfully remove command.'))
+        .then(() => logger.info('system', 'rem-command', 'successfully remove command.'))
         .catch(console.error);
 
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: commands })
-        .then(() => logger.info(gid, 'reg-command', 'successfully add command.'))
+        .then(() => logger.info('system', 'reg-command', 'successfully add command.'))
         .catch(console.error);
 });
 
@@ -156,7 +156,7 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
         }
         case 'debug': {
             const url = interaction.options.getString('url');
-            logger.info(undefined, 'received command', `${url}`);
+            logger.info('system', 'received command', `${url}`);
             await interaction.reply('test.');
             break;
         }

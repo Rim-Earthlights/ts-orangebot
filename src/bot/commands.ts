@@ -397,6 +397,36 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Room.changeRoomName(message, content.join(' '));
             break;
         }
+        case 'seek': {
+            if (content.length <= 0) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`時間を指定してください`);
+
+                message.reply({ embeds: [send] });
+                break;
+            }
+            let seek = 0;
+            if (content[0].includes(':')) {
+                const time = content[0].split(':');
+
+                const min = Number(time[0]);
+                const sec = Number(time[1]);
+                seek = min * 60 + sec;
+            } else {
+                seek = Number(content[0]);
+            }
+
+            const channel = message.member?.voice.channel;
+
+            if (!channel) {
+                break;
+            }
+
+            await BotFunctions.Music.seek(channel, seek);
+            break;
+        }
         case 'restart': {
             throw new Error('再起動');
         }
