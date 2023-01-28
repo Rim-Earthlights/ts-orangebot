@@ -50,6 +50,13 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Gacha.pickGacha(message, content);
             break;
         }
+        case 'give': {
+            const uid = content[0];
+            const iid = Number(content[1]);
+
+            await BotFunctions.Gacha.givePresent(message, uid, iid);
+            break;
+        }
         case 'celo': {
             await BotFunctions.Dice.celo(message);
             break;
