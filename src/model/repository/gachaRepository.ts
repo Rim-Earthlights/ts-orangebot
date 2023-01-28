@@ -60,14 +60,32 @@ export class GachaRepository {
     /**
      * プレゼントを使用する
      * @param id ガチャID
+     * @return Promise<Models.Gacha | null> 使用したプレゼントデータ
      */
-    public async usePresent(id: number): Promise<boolean> {
+    public async usePresent(id: number): Promise<Models.Gacha | null> {
         const gacha = await this.repository.findOne({ where: { id: id } });
         if (gacha) {
             gacha.is_used = 1;
             await this.repository.save(gacha);
-            return true;
+            return gacha;
         }
-        return false;
+        return null;
+    }
+
+    /**
+     * プレゼントを渡す
+     * @param uid UID
+     * @param itemId アイテムID
+     * @returns Promise<Models.Gacha | null> 渡したプレゼントデータ
+     */
+    public async givePresent(uid: string, itemId: number): Promise<Models.Gacha | null> {
+        const gacha: DeepPartial<Models.Gacha> = {
+            user_id: uid,
+            item_id: itemId,
+            pick_date: new Date(),
+            is_used: 0
+        };
+        const result = await this.repository.save(gacha);
+        return result;
     }
 }
