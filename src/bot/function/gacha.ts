@@ -11,6 +11,7 @@ import { GachaRepository } from '../../model/repository/gachaRepository';
 import { UsersRepository } from '../../model/repository/usersRepository';
 import * as Models from '../../model/models';
 import { ItemRepository } from '../../model/repository/itemRepository';
+import { DISCORD_CLIENT } from '../../constant/constants';
 
 export class Gacha {
     static allItemList: Models.Item[] = [];
@@ -417,7 +418,9 @@ export async function usePresent(message: Message, arg: string) {
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle('プレゼントを使用したよ！')
-            .setDescription(`プレゼント: ${result.items.name}`);
+            .setDescription(
+                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).tag}\nプレゼント: ${result.items.name}`
+            );
 
         message.reply({
             embeds: [send]
@@ -450,7 +453,7 @@ export async function givePresent(message: Message, uid: string, itemId: number)
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle('プレゼントを渡したよ！')
-            .setDescription(`プレゼント: ${result.items.name}`);
+            .setDescription(`ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).tag}\nプレゼント: ${result.items.name}`);
 
         message.reply({
             embeds: [send]

@@ -19,7 +19,9 @@ export class GachaRepository {
     public async getHistory(uid: string, date?: Date, limit?: number): Promise<Models.Gacha[] | null> {
         if (date) {
             return await this.repository.find({
-                relations: ['item'],
+                relations: {
+                    items: true
+                },
                 where: { user_id: uid, pick_date: MoreThanOrEqual(date) },
                 order: { pick_date: 'DESC' },
                 take: limit ? limit : 100
@@ -27,7 +29,9 @@ export class GachaRepository {
         }
 
         return await this.repository.find({
-            relations: ['item'],
+            relations: {
+                items: true
+            },
             where: { user_id: uid },
             order: { pick_date: 'DESC' },
             take: limit ? limit : 100
@@ -67,7 +71,12 @@ export class GachaRepository {
         if (gacha) {
             gacha.is_used = 1;
             await this.repository.save(gacha);
-            return gacha;
+            return await this.repository.findOne({
+                relations: {
+                    items: true
+                },
+                where: { id: gacha.id }
+            });
         }
         return null;
     }
@@ -86,6 +95,11 @@ export class GachaRepository {
             is_used: 0
         };
         const result = await this.repository.save(gacha);
-        return result;
+        return await this.repository.findOne({
+            relations: {
+                items: true
+            },
+            where: { id: result.id }
+        });
     }
 }
