@@ -414,8 +414,46 @@ export async function usePresent(message: Message, arg: string) {
     const gachaRepository = new GachaRepository();
     const result = await gachaRepository.usePresent(Number(arg));
     if (result) {
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle('プレゼントを使用したよ！')
+            .setDescription(`プレゼント: ${result.items.name}`);
+
         message.reply({
-            content: `プレゼントを使用したよ！`
+            embeds: [send]
+        });
+    } else {
+        message.reply({
+            content: `プレゼントが見つからないよ！`
+        });
+    }
+}
+
+/**
+ * プレゼントを渡す
+ * @param message
+ * @param uid
+ * @param itemId
+ * @returns
+ */
+export async function givePresent(message: Message, uid: string, itemId: number) {
+    if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+        message.reply({
+            content: `プレゼントを渡す権限がないよ！`
+        });
+        return;
+    }
+
+    const gachaRepository = new GachaRepository();
+    const result = await gachaRepository.givePresent(uid, itemId);
+    if (result) {
+        const send = new EmbedBuilder()
+            .setColor('#ff9900')
+            .setTitle('プレゼントを渡したよ！')
+            .setDescription(`プレゼント: ${result.items.name}`);
+
+        message.reply({
+            embeds: [send]
         });
     } else {
         message.reply({
