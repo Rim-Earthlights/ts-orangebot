@@ -88,7 +88,7 @@ export async function pickGacha(message: Message, args?: string[]) {
         } else if (args[0] === 'use') {
             await usePresent(message, args[1]);
         } else if (args[0] === 'reset') {
-            await reset(message, args[1]);
+            await reset(message, args[1], args[2]);
         } else if (args[0] === 'extra') {
             await pickExtra(message, args);
         } else {
@@ -105,7 +105,7 @@ export async function pickGacha(message: Message, args?: string[]) {
  * @param id
  * @returns
  */
-async function reset(message: Message, id: string | undefined) {
+async function reset(message: Message, id?: string, num?: string) {
     if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
         message.reply({
             content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
@@ -121,7 +121,14 @@ async function reset(message: Message, id: string | undefined) {
             });
             return;
         }
-        await users.resetGacha(id);
+        if (num) {
+            await users.resetGacha(id, Number(num));
+            message.reply({
+                content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を${num}に再セットしたよ！`
+            });
+            return;
+        }
+        await users.resetGacha(id, 10);
         message.reply({
             content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を10に再セットしたよ！`
         });
@@ -216,7 +223,7 @@ async function pickNormal(message: Message, gnum = '10') {
     const users = new UsersRepository();
     const user = await users.get(message.author.id);
 
-    if (gnum === 'limit') {
+    if (gnum === 'limit' || gnum === 'l') {
         limitFlag = true;
         num = user?.pick_left ? user.pick_left : 1;
     } else {

@@ -29,11 +29,12 @@ export class UsersRepository {
     }
 
     /**
-     * ガチャ回数を10に再セットする
+     * ガチャ回数をpickLeft回に再セットする
      * @param uid user id
+     * @param pickLeft 再セットするピック数
      */
-    public async resetGacha(uid: string): Promise<void> {
-        await this.repository.save({ id: uid, pick_left: 10 });
+    public async resetGacha(uid: string, pickLeft: number): Promise<void> {
+        await this.repository.save({ id: uid, pick_left: pickLeft });
     }
 
     /**

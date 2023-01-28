@@ -46,6 +46,10 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Gacha.pickGacha(message, content);
             break;
         }
+        case 'g': {
+            await BotFunctions.Gacha.pickGacha(message, content);
+            break;
+        }
         case 'celo': {
             await BotFunctions.Dice.celo(message);
             break;
