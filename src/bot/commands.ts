@@ -391,7 +391,7 @@ export async function commandSelector(message: Message) {
                     message.reply({ embeds: [send] });
                     return;
                 }
-                await BotFunctions.Room.team(message, number);
+                await BotFunctions.Room.team(message, number, content[1] != undefined);
             }
             break;
         }

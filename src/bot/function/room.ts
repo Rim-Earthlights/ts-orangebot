@@ -36,7 +36,7 @@ export async function changeRoomName(message: Message, roomName: string): Promis
  * @param message
  * @param num チーム数
  */
-export async function team(message: Message, num: number): Promise<void> {
+export async function team(message: Message, num: number, move: boolean): Promise<void> {
     if (!message.guild) {
         await message.channel.send('DM内では使えない機能だよ！');
         return;
@@ -95,16 +95,18 @@ export async function team(message: Message, num: number): Promise<void> {
 
     message.reply({ embeds: [send] });
 
-    for (let i = 0; i < num; i++) {
-        const createVc = await vc.guild.channels.create({
-            name: `チーム${i + 1}`,
-            type: ChannelType.GuildVoice,
-            parent: parent
-        });
-        const team = teams.filter((t) => t.team === i);
-        for (const t of team) {
-            const member = await vc.guild.members.fetch(t.id);
-            await member.voice.setChannel(createVc);
+    if (move) {
+        for (let i = 0; i < num; i++) {
+            const createVc = await vc.guild.channels.create({
+                name: `チーム${i + 1}`,
+                type: ChannelType.GuildVoice,
+                parent: parent
+            });
+            const team = teams.filter((t) => t.team === i);
+            for (const t of team) {
+                const member = await vc.guild.members.fetch(t.id);
+                await member.voice.setChannel(createVc);
+            }
         }
     }
 }
