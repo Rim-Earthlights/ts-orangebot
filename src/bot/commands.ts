@@ -481,9 +481,6 @@ export async function help(message: Message) {
     res.push('   > 指定した地域の天気予報を取得します');
     res.push(' * .dice [ダイスの振る数] [ダイスの面の数]');
     res.push('   > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))');
-    res.push(' * .team [チーム数] [?move]');
-    res.push('   > チーム分けを行います');
-    res.push('    moveを指定するとチーム分け後にメンバーを移動します');
     res.push('===== みかんちゃんと遊ぶ系 =====');
     res.push(' * .luck [?運勢]');
     res.push('   > おみくじを引く');
@@ -497,9 +494,9 @@ export async function help(message: Message) {
     res.push('     みかんちゃんとチンチロリンで遊べます');
     res.push('     3回まで投げて出た目で勝負します');
     res.push('===== お部屋管理系 =====');
-    res.push(' * .team [チーム数]');
-    res.push('   > チーム分けをする');
-    res.push('     チーム数を指定するとその数で分けて部屋へ移動します');
+    res.push(' * .team [チーム数] [?move]');
+    res.push('   > チーム分けを行います');
+    res.push('    moveを指定するとチーム分け後にメンバーを移動します');
     res.push('===== 音楽再生系 =====');
     res.push(' * .play [URL] / .pl [URL]');
     res.push('   > Youtube の音楽を再生します. プレイリストも可能');
