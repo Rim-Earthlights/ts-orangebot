@@ -2,7 +2,6 @@ dist/*
 node_modules/*
 .env
 *.log
-yarn.lock
 .node-version
 src/config/config.ts
 .data/*.data
