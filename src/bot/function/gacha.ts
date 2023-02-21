@@ -4,7 +4,7 @@
  */
 
 import dayjs from 'dayjs';
-import { EmbedBuilder, Message } from 'discord.js';
+import { ChannelType, EmbedBuilder, Message, MessageType } from 'discord.js';
 import { getRndNumber } from '../../common/common';
 import { CONFIG } from '../../config/config';
 import { GachaRepository } from '../../model/repository/gachaRepository';
@@ -216,6 +216,10 @@ async function pickExtra(message: Message, args: string[]) {
  * @returns
  */
 async function pickNormal(message: Message, gnum = '10') {
+    if (message.channel.type === ChannelType.GuildStageVoice) {
+        return;
+    }
+
     let limitFlag = false;
     let num = 10;
 
@@ -364,6 +368,10 @@ async function pickNormal(message: Message, gnum = '10') {
  * @param message
  */
 export async function getPresent(message: Message) {
+    if (message.channel.type === ChannelType.GuildStageVoice) {
+        return;
+    }
+
     const gachaRepository = new GachaRepository();
     const users = new UsersRepository();
     const user = await users.get(message.author.id);

@@ -15,7 +15,11 @@ export async function initRoom(): Promise<void> {
  * @param roomName 変更後のお部屋名
  */
 export async function changeRoomName(message: Message, roomName: string): Promise<void> {
-    if (!message.guild) {
+    if (message.channel.type === ChannelType.GuildStageVoice) {
+        return;
+    }
+
+    if (message.channel.type === ChannelType.DM) {
         await message.channel.send('DM内では使えない機能だよ！');
         return;
     }
@@ -37,6 +41,10 @@ export async function changeRoomName(message: Message, roomName: string): Promis
  * @param num チーム数
  */
 export async function team(message: Message, num: number, move: boolean): Promise<void> {
+    if (message.channel.type === ChannelType.GuildStageVoice) {
+        return;
+    }
+
     if (!message.guild) {
         await message.channel.send('DM内では使えない機能だよ！');
         return;
