@@ -47,10 +47,6 @@ export async function wordSelector(message: Message) {
         message.reply('えへへ～！ありがと嬉しい～！');
         return;
     }
-    if (message.content.match('みかん')) {
-        message.reply('はーい！私のこと呼んだ～？');
-        return;
-    }
     if (message.content.match('(好き|すき)')) {
         if (message.content.match('(好き|すき)？')) {
             message.reply('私も好きだよ～！');
@@ -187,6 +183,10 @@ export async function wordSelector(message: Message) {
     if (message.content.match('誕生日(覚|憶|おぼ)えて')) {
         const birth = message.content.split(' ')[2];
         BotFunctions.Register.save(message, ['birth', birth]);
+        return;
+    }
+    if (message.content.match('みかん')) {
+        message.reply('はーい！私のこと呼んだ～？');
         return;
     }
     if (message.content.match(/\d+d\d+/)) {
