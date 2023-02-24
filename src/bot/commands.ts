@@ -523,6 +523,13 @@ export async function help(message: Message) {
     res.push('    moveを指定するとチーム分け後にメンバーを移動します');
     res.push(' * .room [名前]');
     res.push('   > お部屋の名前を変更します');
+    res.push('===== れもんちゃん系 =====');
+    res.push(' * .speak [ボイス番号] [?速度]');
+    res.push('   > 読み上げを開始します');
+    res.push('    読み上げ番号は`http://rim-linq.net:4044/speakers`で確認できます');
+    res.push('    速度は(0.1 - 5.0 | 整数可)で指定できます');
+    res.push(' * .discon');
+    res.push('   > 読み上げを終了します');
     res.push('===== 音楽再生系 =====');
     res.push(' * .play [URL] / .pl [URL]');
     res.push('   > Youtube の音楽を再生します. プレイリストも可能');
