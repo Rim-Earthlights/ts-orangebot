@@ -221,3 +221,12 @@ export function judge(t: DiceRole, v: DiceRole) {
     }
     return 0;
 }
+
+/**
+ * アイテムをランダムに選ぶ
+ * @param items
+ */
+export function choose(items: string[]) {
+    const rnd = getRndNumber(0, items.length - 1);
+    return items[rnd];
+}

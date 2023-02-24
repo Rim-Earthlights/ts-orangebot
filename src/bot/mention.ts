@@ -97,7 +97,7 @@ export async function wordSelector(message: Message) {
         if (month === 12 && day === 24) {
             message.reply('メリークリスマスだね～！ケーキ一緒に食べよ:cake:');
         } else {
-            message.reply('ケーキはやっぱり王道のショートケーキが好きかな～！');
+            message.reply('ケーキはやっぱりショートケーキが好きかな～！');
         }
         return;
     }
@@ -185,8 +185,8 @@ export async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('誕生日(覚|憶|おぼ)えて')) {
-        const name = message.content.split(' ')[2];
-        BotFunctions.Register.save(message, ['birth', name]);
+        const birth = message.content.split(' ')[2];
+        BotFunctions.Register.save(message, ['birth', birth]);
         return;
     }
     if (message.content.match(/\d+d\d+/)) {

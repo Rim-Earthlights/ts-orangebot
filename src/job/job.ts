@@ -11,5 +11,6 @@ export async function initJob() {
         const user = new UsersRepository();
         await user.addPickLeft();
     });
+
     logger.info('system', 'Cron job', 'Initialized');
 }

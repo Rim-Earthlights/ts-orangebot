@@ -22,6 +22,9 @@ export class Users extends BaseEntity {
     pref: string | null = null;
 
     @Column({ type: 'datetime', nullable: true })
+    birth_date: Date | null = null;
+
+    @Column({ type: 'datetime', nullable: true })
     last_pick_date: Date | null = null;
 
     @Column({ type: 'int', nullable: false, default: 0 })

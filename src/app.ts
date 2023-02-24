@@ -2,7 +2,7 @@ import Express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { Message, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { ChannelType, Message, REST, Routes, SlashCommandBuilder } from 'discord.js';
 import { commandSelector } from './bot/commands';
 import { wordSelector } from './bot/mention';
 import dotenv from 'dotenv';
@@ -163,6 +163,19 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
         default: {
             return;
         }
+    }
+});
+
+DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
+    if (reaction.message.author?.id !== DISCORD_CLIENT.user?.id) {
+        return;
+    }
+    const title = reaction.message.embeds.find((e) => e.title === '色を選択');
+    if (!title) {
+        return;
+    }
+    if (reaction.message.channel.type === ChannelType.GuildText) {
+        return;
     }
 });
 

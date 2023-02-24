@@ -438,6 +438,24 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Music.seek(channel, seek);
             break;
         }
+        case 'choose': {
+            if (content.length <= 0) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`選択肢を入力してください`);
+
+                message.reply({ embeds: [send] });
+            }
+            const item = BotFunctions.Dice.choose(content);
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle(`選択結果: ${item}`)
+                .setDescription(`選択肢: ${content.join(', ')}`);
+
+            message.reply({ embeds: [send] });
+            break;
+        }
         case 'restart': {
             throw new Error('再起動');
         }
