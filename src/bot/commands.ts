@@ -438,7 +438,9 @@ export async function commandSelector(message: Message) {
             await BotFunctions.Music.seek(channel, seek);
             break;
         }
-        case 'choose': {
+        case 'choose':
+        case 'choice':
+        case 'ch': {
             if (content.length <= 0) {
                 const send = new EmbedBuilder()
                     .setColor('#ff0000')
@@ -494,11 +496,15 @@ export async function help(message: Message) {
     res.push('コマンドはここだよ～！');
     res.push('```');
     res.push('===== 便利コマンド系 =====');
-    res.push(' * .tenki [地域]');
+    res.push(' * .tenki [地域] [?日数]');
     res.push('   > 天気予報を取得する');
     res.push('   > 指定した地域の天気予報を取得します');
+    res.push('   > 日数を指定するとその日数後の天気予報を取得します(6日後まで)');
     res.push(' * .dice [ダイスの振る数] [ダイスの面の数]');
     res.push('   > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))');
+    res.push(' * .choose [選択肢1] [選択肢2]... / .choice ... / .ch ...');
+    res.push('   > 選択肢からランダムに選ぶ');
+    res.push('   > 選択肢をスペース区切りで入力するとランダムに選んでくれるよ');
     res.push('===== みかんちゃんと遊ぶ系 =====');
     res.push(' * .luck [?運勢]');
     res.push('   > おみくじを引く');
@@ -515,6 +521,8 @@ export async function help(message: Message) {
     res.push(' * .team [チーム数] [?move]');
     res.push('   > チーム分けを行います');
     res.push('    moveを指定するとチーム分け後にメンバーを移動します');
+    res.push(' * .room [名前]');
+    res.push('   > お部屋の名前を変更します');
     res.push('===== 音楽再生系 =====');
     res.push(' * .play [URL] / .pl [URL]');
     res.push('   > Youtube の音楽を再生します. プレイリストも可能');
