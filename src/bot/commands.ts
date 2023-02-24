@@ -4,8 +4,6 @@ import * as BotFunctions from './function';
 import { PlaylistRepository } from '../model/repository/playlistRepository';
 import ytpl from 'ytpl';
 import * as logger from '../common/logger';
-import { GachaRepository } from '../model/repository/gachaRepository';
-import { ItemRepository } from '../model/repository/itemRepository';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -13,7 +11,8 @@ import { ItemRepository } from '../model/repository/itemRepository';
  * @param command 渡されたメッセージ
  */
 export async function commandSelector(message: Message) {
-    const content = message.content.replace('.', '').trimEnd().split(' ');
+    // eslint-disable-next-line no-irregular-whitespace
+    const content = message.content.replace('.', '').replace(/　/g, ' ').trimEnd().split(' ');
     const command = content[0];
     content.shift();
 
@@ -48,6 +47,10 @@ export async function commandSelector(message: Message) {
         }
         case 'g': {
             await BotFunctions.Gacha.pickGacha(message, content);
+            break;
+        }
+        case 'gl': {
+            await BotFunctions.Gacha.pickGacha(message, ['limit']);
             break;
         }
         case 'give': {
