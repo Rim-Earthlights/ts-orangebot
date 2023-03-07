@@ -4,6 +4,24 @@ import * as BotFunctions from './function';
 import { PlaylistRepository } from '../model/repository/playlistRepository';
 import ytpl from 'ytpl';
 import * as logger from '../common/logger';
+import { OPENAI } from '../constant/constants';
+import { ChatCompletionRequestMessageRoleEnum } from 'openai';
+import dayjs from 'dayjs';
+export class AI {
+    static chat: { role: ChatCompletionRequestMessageRoleEnum; content: string; timestamp: Date }[] = [
+        {
+            role: 'system',
+            content:
+                'この会話中では、あなたは以下のキャラクターとしてなりきって喋ってください。\n・名前は華日咲みかん。好きな食べ物はみかん。誰に対しても明るく接する人気者。可愛く喋る。',
+            timestamp: dayjs('2031-01-01 00:00:00').toDate()
+        },
+        {
+            role: 'assistant',
+            content: 'こんにちは、みなさん！華日咲みかんです。',
+            timestamp: dayjs('2031-01-01 00:00:00').toDate()
+        }
+    ];
+}
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -27,6 +45,14 @@ export async function commandSelector(message: Message) {
         }
         case 'debug': {
             await debug(message, content);
+            break;
+        }
+        case 'gpt': {
+            await gpt(message, content);
+            break;
+        }
+        case 'erase': {
+            await erase(message);
             break;
         }
         case 'dice': {
@@ -487,6 +513,67 @@ export async function ping(message: Message) {
 export async function debug(message: Message, args?: string[]) {
     const channel = message.member?.voice.channel as VoiceBasedChannel;
     await BotFunctions.Music.playMusic(channel);
+}
+
+/**
+ * ChatGPTでおしゃべり.
+ * @param message 受け取ったメッセージング情報
+ * @param args 引数
+ */
+export async function gpt(message: Message, args?: string[]) {
+    if (!args || args.length <= 0) {
+        return;
+    }
+    AI.chat.push({ role: 'user', content: args?.join(' '), timestamp: dayjs().toDate() });
+    const response = await OPENAI.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: AI.chat.map((c) => {
+            return { role: c.role, content: c.content };
+        })
+    });
+
+    if (response.data.choices[0].message) {
+        AI.chat.push({ ...response.data.choices[0].message, timestamp: dayjs().toDate() });
+    }
+    message.reply(response.data.choices[0].message?.content ?? 'error');
+}
+
+/**
+ * ChatGPTでおしゃべり.
+ * @param message 受け取ったメッセージング情報
+ * @param content 引数
+ */
+export async function chatgpt(message: Message, content: string) {
+    AI.chat.push({ role: 'user', content: content, timestamp: dayjs().toDate() });
+    const response = await OPENAI.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        max_tokens: 4000,
+        messages: AI.chat.map((c) => {
+            return { role: c.role, content: c.content };
+        })
+    });
+
+    if (response.data.choices[0].message) {
+        AI.chat.push({ ...response.data.choices[0].message, timestamp: dayjs().toDate() });
+    }
+    message.reply(response.data.choices[0].message?.content ?? 'error');
+}
+
+export async function erase(message: Message) {
+    AI.chat = [
+        {
+            role: 'system',
+            content:
+                'この会話中では、以下のキャラクターとして喋ってください。\n・名前は華日咲みかん。好きな食べ物はみかん。誰に対しても明るく接する人気者。',
+            timestamp: dayjs('2031-01-01 00:00:00').toDate()
+        },
+        {
+            role: 'assistant',
+            content: 'こんにちは、みなさん！華日咲みかんです。',
+            timestamp: dayjs('2031-01-01 00:00:00').toDate()
+        }
+    ];
+    message.reply('会話履歴を削除したよ！');
 }
 
 /**

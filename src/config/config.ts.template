@@ -7,6 +7,7 @@ export const CONFIG = {
     USER: 'USER',
     // discord guild administrator user id
     ADMIN_USER_ID: ['DISCORD_ID'],
+    // register command to guild
     COMMAND_GUILD_ID: ['COMMAND_GUILD_ID'],
     // Discord Bot Token
     TOKEN: 'YOUR_DISCORD_TOKEN',
@@ -14,6 +15,7 @@ export const CONFIG = {
     // OpenWeatherMap; see: https://openweathermap.org/
     FORECAST_KEY: 'YOUR_FORECAST_KEY',
     YOUTUBE_API_KEY: 'YOUTUBE_API_KEY',
+    OPENAI_KEY: 'sk-OPENAI_KEY',
     DB: {
         HOSTNAME: 'HOSTNAME',
         USERNAME: 'orange',

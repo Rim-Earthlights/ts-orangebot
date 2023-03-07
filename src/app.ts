@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { ChannelType, Message, REST, Routes, SlashCommandBuilder } from 'discord.js';
-import { commandSelector } from './bot/commands';
+import { chatgpt, commandSelector } from './bot/commands';
 import { wordSelector } from './bot/mention';
 import dotenv from 'dotenv';
 import 'dayjs/locale/ja';
@@ -97,6 +97,7 @@ DISCORD_CLIENT.once('ready', async () => {
     TypeOrm.dataSource
         .initialize()
         .then(async () => {
+            // DBの初期化と再構築
             await new ItemRepository().init(GACHA_LIST);
             Gacha.Gacha.allItemList = await new ItemRepository().getAll();
             logger.info('system', 'db-init', 'success');
@@ -104,6 +105,7 @@ DISCORD_CLIENT.once('ready', async () => {
         .catch((e) => {
             logger.error('system', 'db-init', e);
         });
+    // 定時バッチ処理 (cron)
     await initJob();
     logger.info(undefined, 'ready', `discord bot logged in: ${DISCORD_CLIENT.user?.tag}`);
 });
@@ -132,6 +134,11 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
         await wordSelector(message);
+        return;
+    }
+
+    if (message.mentions.users.find((x) => x.id === '1054296025562628176')) {
+        await chatgpt(message, message.content.replace('<@&1054296025562628176>', ''));
         return;
     }
 

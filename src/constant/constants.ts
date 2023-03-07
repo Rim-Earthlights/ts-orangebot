@@ -1,4 +1,6 @@
 import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { Configuration, OpenAIApi } from 'openai';
+import { CONFIG } from '../config/config';
 
 // 連携できるbot
 export const COORDINATION_ID = ['985704725016105000'];
@@ -26,3 +28,9 @@ export const ICON = {
     TICKETS: ':tickets:',
     HEART: ':heart:'
 };
+
+const configuration = new Configuration({
+    apiKey: CONFIG.OPENAI_KEY
+});
+
+export const OPENAI = new OpenAIApi(configuration);
