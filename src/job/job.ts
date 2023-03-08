@@ -18,7 +18,6 @@ export async function initJob() {
      * 1分毎に実行されるタスク
      */
     cron.schedule('* * * * *', async () => {
-        logger.info('system', 'Cron job: * * * * *');
         GPT.chat.map((c) => {
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
                 c.timestamp = dayjs();
