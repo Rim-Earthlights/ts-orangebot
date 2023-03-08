@@ -8,7 +8,7 @@ import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { Message } from 'discord.js';
 import dayjs from 'dayjs';
 
-export const ChatGPT = new ChatGPTAPI({ apiKey: CONFIG.OPENAI_KEY });
+export const ChatGPT = new ChatGPTAPI({ apiKey: CONFIG.OPENAI_KEY, completionParams: { model: 'gpt-3.5-turbo' } });
 
 export class GPT {
     static chat: {
@@ -24,11 +24,6 @@ export class GPT {
  */
 async function initalize(gid: string) {
     GPT.chat.push({ guild: gid, timestamp: dayjs() });
-    const response = await ChatGPT.sendMessage(CHATBOT_TEMPLATE);
-    const chat = GPT.chat.find((c) => c.guild === gid);
-    if (chat) {
-        chat.parentMessageId = response.parentMessageId;
-    }
 }
 
 /**
@@ -52,8 +47,11 @@ export async function talk(message: Message, content: string) {
         }
     }
 
-    const response = await ChatGPT.sendMessage(content, { parentMessageId: chat.parentMessageId });
-    chat.parentMessageId = response.parentMessageId;
+    const response = await ChatGPT.sendMessage(content, {
+        parentMessageId: chat.parentMessageId,
+        systemMessage: CHATBOT_TEMPLATE
+    });
+    chat.parentMessageId = response.id;
     chat.timestamp = dayjs();
     await message.reply(response.text);
 }

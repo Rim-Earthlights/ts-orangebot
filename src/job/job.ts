@@ -15,14 +15,15 @@ export async function initJob() {
     });
 
     /**
-     * 10分毎に実行されるタスク
+     * 1分毎に実行されるタスク
      */
-    cron.schedule('*/10 * * * *', async () => {
-        logger.info('system', 'Cron job: */10 * * * *');
+    cron.schedule('* * * * *', async () => {
+        logger.info('system', 'Cron job: * * * * *');
         GPT.chat.map((c) => {
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
                 c.timestamp = dayjs();
                 c.parentMessageId = undefined;
+                logger.info('system', 'Cron job: * * * * *', `${c.guild}: ChatGPT data deleted`);
             }
         });
     });
