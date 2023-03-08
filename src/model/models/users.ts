@@ -8,7 +8,7 @@ import {
     PrimaryColumn,
     UpdateDateColumn
 } from 'typeorm';
-import { Gacha } from './gacha';
+import { Gacha } from './gacha.js';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class Users extends BaseEntity {

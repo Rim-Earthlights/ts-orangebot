@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
-import * as Commands from './commands';
-import * as BotFunctions from './function';
-import * as reactions from '../constant/words/reactions';
-import { getRndNumber } from '../common/common';
+import * as Commands from './commands.js';
+import * as BotFunctions from './function/index.js';
+import * as reactions from '../constant/words/reactions.js';
+import { getRndNumber } from '../common/common.js';
 
 /**
  * 反応ワードから処理を実行する

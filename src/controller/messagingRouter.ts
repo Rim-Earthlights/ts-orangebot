@@ -1,6 +1,6 @@
 import Express from 'express';
 import { TextChannel } from 'discord.js';
-import { DISCORD_CLIENT } from '../constant/constants';
+import { DISCORD_CLIENT } from '../constant/constants.js';
 import dayjs from 'dayjs';
 
 export const messagingRouter = Express.Router();

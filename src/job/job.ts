@@ -1,8 +1,8 @@
 import * as cron from 'node-cron';
-import * as logger from '../common/logger';
-import { UsersRepository } from '../model/repository/usersRepository';
-import { AI } from '../bot/commands';
+import * as logger from '../common/logger.js';
+import { UsersRepository } from '../model/repository/usersRepository.js';
 import dayjs from 'dayjs';
+import { GPT } from '../bot/function/chat.js';
 
 export async function initJob() {
     /**
@@ -19,7 +19,12 @@ export async function initJob() {
      */
     cron.schedule('*/10 * * * *', async () => {
         logger.info('system', 'Cron job: */10 * * * *');
-        AI.chat = AI.chat.filter((c) => dayjs(c.timestamp) > dayjs().add(-10, 'minute'));
+        GPT.chat.map((c) => {
+            if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
+                c.timestamp = dayjs();
+                c.parentMessageId = undefined;
+            }
+        });
     });
 
     logger.info('system', 'Cron job', 'Initialized');

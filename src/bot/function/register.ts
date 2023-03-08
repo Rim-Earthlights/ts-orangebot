@@ -1,5 +1,5 @@
 import { EmbedBuilder, Message } from 'discord.js';
-import { UsersRepository } from '../../model/repository/usersRepository';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
 
 export async function save(message: Message, args?: string[]): Promise<void> {
     if (!args || args.length <= 1) {

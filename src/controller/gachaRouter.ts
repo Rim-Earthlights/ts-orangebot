@@ -1,6 +1,6 @@
 import Express from 'express';
 import dayjs from 'dayjs';
-import { GachaRepository } from '../model/repository/gachaRepository';
+import { GachaRepository } from '../model/repository/gachaRepository.js';
 
 export const gachaRouter = Express.Router();
 

@@ -2,7 +2,7 @@
  * ガチャ品
  */
 
-import { ICON } from '../constants';
+import { ICON } from '../constants.js';
 
 export const GACHA_LIST = [
     {

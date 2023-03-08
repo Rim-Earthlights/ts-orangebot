@@ -1,6 +1,6 @@
-import { playlistItemsResponse } from '../../constant/youtube/youtube';
+import { playlistItemsResponse } from '../../constant/youtube/youtube.js';
 import axios from 'axios';
-import { CONFIG } from '../../config/config';
+import { CONFIG } from '../../config/config.js';
 
 /**
  * プレイリストの動画を抽出する

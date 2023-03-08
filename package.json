@@ -17,6 +17,7 @@
         "@types/vue": "^2.0.0",
         "axios": "^0.27.2",
         "body-parser": "^1.20.0",
+        "chatgpt": "^5.0.8",
         "cors": "^2.8.5",
         "dayjs": "^1.11.3",
         "discord-api-types": "^0.35.0",
@@ -59,12 +60,13 @@
     "main": "src/app.ts",
     "author": "Rim Earthlights",
     "license": "MIT",
+    "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "lint": "yarn run eslint src/**/*.ts",
-        "dev": "yarn run nodemon",
+        "dev": "yarn run nodemon -x \"npm run dist\" -w src/app.ts -e ts,json",
         "compile": "yarn run tsc",
-        "dist": "node dist/app.js"
+        "dist": "node --loader ts-node/esm dist/app.js"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.28.0",

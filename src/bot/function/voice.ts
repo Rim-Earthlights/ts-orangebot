@@ -1,7 +1,7 @@
 import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'discord.js';
-import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants';
-import { extermAudioPlayer } from './music';
-import * as logger from '../../common/logger';
+import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants.js';
+import { extermAudioPlayer } from './music.js';
+import * as logger from '../../common/logger.js';
 
 /**
  * ボイスチャンネルから切断した時の処理

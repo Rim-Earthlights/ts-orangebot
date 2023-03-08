@@ -10,14 +10,14 @@ import {
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import pldl from 'play-dl';
-import { getRndArray } from '../../common/common';
-import { CONFIG } from '../../config/config';
+import { getRndArray } from '../../common/common.js';
+import { CONFIG } from '../../config/config.js';
 import { Playlist } from '../../model/models';
-import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
-import { MusicRepository } from '../../model/repository/musicRepository';
-import { PlaylistRepository } from '../../model/repository/playlistRepository';
-import { getPlaylistItems } from '../request/youtubeAPI';
-import * as logger from '../../common/logger';
+import { MusicInfoRepository } from '../../model/repository/musicInfoRepository.js';
+import { MusicRepository } from '../../model/repository/musicRepository.js';
+import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
+import { getPlaylistItems } from '../request/youtubeAPI.js';
+import * as logger from '../../common/logger.js';
 import { Player } from 'discord-player-plus';
 
 export class Music {

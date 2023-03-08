@@ -1,6 +1,6 @@
 import { DeepPartial, Like, MoreThanOrEqual, Repository } from 'typeorm';
-import * as Models from '../models';
-import { TypeOrm } from '../typeorm/typeorm';
+import * as Models from '../models/index.js';
+import { TypeOrm } from '../typeorm/typeorm.js';
 
 export class GachaRepository {
     private repository: Repository<Models.Gacha>;

@@ -5,13 +5,13 @@
 
 import dayjs from 'dayjs';
 import { ChannelType, EmbedBuilder, Message, MessageType } from 'discord.js';
-import { getRndNumber } from '../../common/common';
-import { CONFIG } from '../../config/config';
-import { GachaRepository } from '../../model/repository/gachaRepository';
-import { UsersRepository } from '../../model/repository/usersRepository';
+import { getRndNumber } from '../../common/common.js';
+import { CONFIG } from '../../config/config.js';
+import { GachaRepository } from '../../model/repository/gachaRepository.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
 import * as Models from '../../model/models';
-import { ItemRepository } from '../../model/repository/itemRepository';
-import { DISCORD_CLIENT } from '../../constant/constants';
+import { ItemRepository } from '../../model/repository/itemRepository.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
 
 export class Gacha {
     static allItemList: Models.Item[] = [];

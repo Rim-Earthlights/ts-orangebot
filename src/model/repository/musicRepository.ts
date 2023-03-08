@@ -1,8 +1,8 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { YoutubePlaylists } from '../../bot/request/youtubeAPI';
-import * as Models from '../models';
-import { TypeOrm } from '../typeorm/typeorm';
-import * as logger from '../../common/logger';
+import { YoutubePlaylists } from '../../bot/request/youtubeAPI.js';
+import * as Models from '../models/index.js';
+import { TypeOrm } from '../typeorm/typeorm.js';
+import * as logger from '../../common/logger.js';
 
 export class MusicRepository {
     private repository: Repository<Models.Music>;

@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
-import { CONFIG } from '../../config/config';
-import * as Models from '../models';
+import { CONFIG } from '../../config/config.js';
+import * as Models from '../models/index.js';
 
 export class TypeOrm {
     static dataSource = new DataSource({

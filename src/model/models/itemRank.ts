@@ -9,7 +9,7 @@ import {
     OneToMany,
     PrimaryGeneratedColumn
 } from 'typeorm';
-import { Item } from './item';
+import { Item } from './item.js';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class ItemRank extends BaseEntity {

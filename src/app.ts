@@ -3,20 +3,20 @@ import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { ChannelType, Message, REST, Routes, SlashCommandBuilder } from 'discord.js';
-import { chatgpt, commandSelector } from './bot/commands';
-import { wordSelector } from './bot/mention';
+import { commandSelector } from './bot/commands.js';
+import { wordSelector } from './bot/mention.js';
 import dotenv from 'dotenv';
-import 'dayjs/locale/ja';
-import { routers } from './routers';
-import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants';
-import { CONFIG } from './config/config';
-import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice';
-import { TypeOrm } from './model/typeorm/typeorm';
-import * as logger from './common/logger';
-import { ItemRepository } from './model/repository/itemRepository';
-import { GACHA_LIST } from './constant/gacha/gachaList';
-import { Gacha } from './bot/function';
-import { initJob } from './job/job';
+import 'dayjs/locale/ja.js';
+import { routers } from './routers.js';
+import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
+import { CONFIG } from './config/config.js';
+import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice.js';
+import { TypeOrm } from './model/typeorm/typeorm.js';
+import * as logger from './common/logger.js';
+import { ItemRepository } from './model/repository/itemRepository.js';
+import { GACHA_LIST } from './constant/gacha/gachaList.js';
+import { Gacha } from './bot/function/index.js';
+import { initJob } from './job/job.js';
 
 dotenv.config();
 
@@ -134,11 +134,6 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
         await wordSelector(message);
-        return;
-    }
-
-    if (message.mentions.users.find((x) => x.id === '1054296025562628176')) {
-        await chatgpt(message, message.content.replace('<@&1054296025562628176>', ''));
         return;
     }
 

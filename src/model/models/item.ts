@@ -9,8 +9,8 @@ import {
     OneToMany,
     PrimaryGeneratedColumn
 } from 'typeorm';
-import { Gacha } from './gacha';
-import { ItemRank } from './itemRank';
+import { Gacha } from './gacha.js';
+import { ItemRank } from './itemRank.js';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class Item extends BaseEntity {

@@ -1,6 +1,6 @@
 import { EmbedBuilder, Message } from 'discord.js';
-import { arrayEquals, getRndNumber } from '../../common/common';
-import { DiceRole, DICE_ROLE } from '../../constant/dice/dice';
+import { arrayEquals, getRndNumber } from '../../common/common.js';
+import { DiceRole, DICE_ROLE } from '../../constant/dice/dice.js';
 
 /**
  * サイコロを振る

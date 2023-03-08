@@ -1,6 +1,5 @@
-import axios from 'axios';
 import Express from 'express';
-import { getAsync } from '../common/webWrapper';
+import { getAsync } from '../common/webWrapper.js';
 import { URLSearchParams } from 'url';
 
 export const speakerRouter = Express.Router();

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { Message } from 'discord.js';
-import { getRndNumber } from '../../common/common';
-import * as GREETING from '../../constant/words/greeting';
+import { getRndNumber } from '../../common/common.js';
+import * as GREETING from '../../constant/words/greeting.js';
 
 /**
  * おはよう の返答

@@ -1,12 +1,12 @@
-import { getAsync } from '../../common/webWrapper';
-import { Forecast, FORECAST_URI } from '../../interface/forecast';
-import { Onecall, ONECALL_URI } from '../../interface/onecall';
-import { UsersRepository } from '../../model/repository/usersRepository';
+import { getAsync } from '../../common/webWrapper.js';
+import { Forecast, FORECAST_URI } from '../../interface/forecast.js';
+import { Onecall, ONECALL_URI } from '../../interface/onecall.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
 import { EmbedBuilder, Message } from 'discord.js';
-import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../../interface/geocoding';
+import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../../interface/geocoding.js';
 import url from 'url';
-import { CONFIG } from '../../config/config';
-import * as logger from '../../common/logger';
+import { CONFIG } from '../../config/config.js';
+import * as logger from '../../common/logger.js';
 
 /**
  * 現在の天気を返す.

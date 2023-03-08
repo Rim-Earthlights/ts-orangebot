@@ -3,7 +3,7 @@
  */
 
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
-import { getRndArray } from '../../common/common';
+import { getRndArray } from '../../common/common.js';
 
 export async function initRoom(): Promise<void> {
     return;
