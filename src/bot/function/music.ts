@@ -18,7 +18,6 @@ import { MusicRepository } from '../../model/repository/musicRepository.js';
 import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
 import { getPlaylistItems } from '../request/youtubeAPI.js';
 import * as logger from '../../common/logger.js';
-import { Player } from 'discord-player-plus';
 
 export class Music {
     static player: { id: string; player: AudioPlayer }[] = [];
@@ -328,7 +327,7 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
 
     await repository.remove(channel.guild.id, music.music_id);
 
-    const newMusics = await repository.getAll(channel.guild.id);
+    const newMusics = await repository.getQueue(channel.guild.id);
 
     const description = newMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
 
@@ -447,7 +446,6 @@ export async function playMusic(channel: VoiceBasedChannel) {
     });
 
     const vc = getVoiceConnection(channel.guild.id);
-
     const connection = vc
         ? vc
         : joinVoiceChannel({
@@ -460,7 +458,6 @@ export async function playMusic(channel: VoiceBasedChannel) {
 
     try {
         const player = await updateAudioPlayer(channel.guild.id);
-        connection.subscribe(player);
         const stream = await pldl.stream(playing.url);
 
         const resource = createAudioResource(stream.stream, {
@@ -483,8 +480,8 @@ export async function playMusic(channel: VoiceBasedChannel) {
                 });
             (channel as VoiceChannel).send({ embeds: [send] });
         }
-
         player.play(resource);
+        connection.subscribe(player);
 
         await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
         await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
