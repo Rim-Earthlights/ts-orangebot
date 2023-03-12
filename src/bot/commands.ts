@@ -29,13 +29,18 @@ export async function commandSelector(message: Message) {
             await debug(message, content);
             break;
         }
+        case 'gpt-no-system': {
+            const chat = content.join(' ');
+            await BotFunctions.Chat.talkCustomSystemMessage(message, chat);
+            break;
+        }
         case 'gpt': {
-            const chat = content.join('');
+            const chat = content.join(' ');
             await BotFunctions.Chat.talk(message, chat);
             break;
         }
         case 'erase': {
-            await BotFunctions.Chat.deleteChatData(message);
+            await BotFunctions.Chat.deleteChatData(message, content[0]);
             break;
         }
         case 'dice': {
