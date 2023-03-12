@@ -21,10 +21,11 @@ export async function initJob() {
         GPT.chat.map((c) => {
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
                 c.timestamp = dayjs();
-                c.parentMessageId = undefined;
+                c.parentMessageId = [];
                 logger.info('system', 'Cron job: * * * * *', `${c.guild}: ChatGPT data deleted`);
             }
         });
+        GPT.chat = GPT.chat.filter((c) => c.parentMessageId.length !== 0);
     });
 
     logger.info('system', 'Cron job', 'Initialized');
