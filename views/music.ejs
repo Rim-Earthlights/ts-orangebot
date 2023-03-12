@@ -35,10 +35,26 @@
                     <td>
                         <%- music.music_id %>
                     </td>
-                    <% if(music.is_play) { %>
-                        <td style="background-color: #508000;color: #ffffff;">済</td>
-                    <% } else {%>
-                        <td style="background-color: #CC8800; color: #ffffff;">未</td>
+                    <% if(music.music_id >= 0) { %>
+                        <% if(music.is_play) { %>
+                            <% if(current.url === music.url) { %>
+                                <td style="background-color: #00FFFF; color: #000000;">再生中</td>
+                            <% } else { %>
+                                <td style="background-color: #508000;color: #FFFFFF;">済</td>
+                            <% } %>
+                        <% } else { %>
+                            <td style="background-color: #FFAA00; color: #FFFFFF;">未</td>
+                        <% } %>
+                    <% } else { %>
+                        <% if(music.is_play) { %>
+                            <% if(current.url === music.url) { %>
+                                <td style="background-color: #00FFFF; color: #000000;">再生中</td>
+                            <% } else { %>
+                                <td style="background-color: #508000;color: #FFFFFF;">済</td>
+                            <% } %>
+                        <% } else { %>
+                            <td style="background-color: #CC99CC; color: #FFFFFF;">割込</td>
+                        <% } %>
                     <% } %>
                     <td>
                         <%- music.title %>
