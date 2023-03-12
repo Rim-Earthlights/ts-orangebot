@@ -64,9 +64,10 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "lint": "yarn run eslint src/**/*.ts",
-        "dev": "yarn run nodemon -x \"npm run dist\" -w src/app.ts -e ts,json",
+        "dev": "yarn run nodemon -x \"npm run nodemon\" -w src/app.ts -e ts,json",
         "compile": "yarn run tsc",
-        "dist": "node --loader ts-node/esm dist/app.js"
+        "dist": "node --loader ts-node/esm dist/app.js",
+        "nodemon": "node --loader ts-node/esm --es-module-specifier-resolution=node src/app.ts"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.28.0",
