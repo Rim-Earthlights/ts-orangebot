@@ -85,9 +85,9 @@ async function convertGacha(rare: string): Promise<Gacha> {
 export async function pickGacha(message: Message, args?: string[]) {
     if (args != undefined && args.length > 0) {
         if (args[0] === 'list') {
-            await getPresent(message);
+            await getPresent(message, args[1]);
         } else if (args[0] === 'use') {
-            await usePresent(message, args[1]);
+            await usePresent(message, args.slice(1));
         } else if (args[0] === 'reset') {
             await reset(message, args[1], args[2]);
         } else if (args[0] === 'extra') {
@@ -367,35 +367,33 @@ async function pickNormal(message: Message, gnum = '10') {
  * プレゼント一覧を取得する
  * @param message
  */
-export async function getPresent(message: Message) {
+export async function getPresent(message: Message, uid?: string) {
+    let getUid: string;
     if (message.channel.type === ChannelType.GuildStageVoice) {
         return;
     }
-
+    if (uid == undefined) {
+        getUid = message.author.id;
+    } else {
+        if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+            message.reply({
+                content: `他ユーザーのプレゼントの閲覧権限がないよ！`
+            });
+            return;
+        }
+        getUid = uid;
+    }
     const gachaRepository = new GachaRepository();
     const users = new UsersRepository();
-    const user = await users.get(message.author.id);
+    const user = await users.get(getUid);
     const pickLeft = user?.pick_left;
-    const gachaList = await gachaRepository.getPresents(message.author.id);
+    const gachaList = await gachaRepository.getPresents(getUid);
 
     if (pickLeft != undefined) {
-        const presents: { gacha: Models.Gacha; count: number }[] = [];
-        if (gachaList.length > 0) {
-            gachaList.map((g) => {
-                const p = presents.find((p) => p.gacha.item_id === g.item_id);
-                if (p != undefined) {
-                    p.count++;
-                } else {
-                    presents.push({ gacha: g, count: 1 });
-                }
-            });
-        }
-        const presentDescription = presents
-            .map((p) => `${p.gacha.id}: [${p.gacha.items.rare}]${p.gacha.items.name} x ${p.count}`)
-            .join('\n');
+        const presentDescription = gachaList.map((p) => `${p.id}: [${p.items.rare}]${p.items.name}`).join('\n');
         const send = new EmbedBuilder()
             .setColor('#ff9900')
-            .setTitle('あなたのガチャ情報だよ！')
+            .setTitle(`${user?.user_name} さんのガチャ情報だよ！`)
             .setFields(
                 { name: '当選したプレゼント', value: presentDescription ? presentDescription : 'なし' },
                 { name: '残りガチャ回数', value: pickLeft.toString() }
@@ -412,7 +410,7 @@ export async function getPresent(message: Message) {
  * プレゼントを使用する
  *
  */
-export async function usePresent(message: Message, arg: string) {
+export async function usePresent(message: Message, args: string[]) {
     if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
         message.reply({
             content: `プレゼントの使用権限がないよ！`
@@ -421,23 +419,27 @@ export async function usePresent(message: Message, arg: string) {
     }
 
     const gachaRepository = new GachaRepository();
-    const result = await gachaRepository.usePresent(Number(arg));
-    if (result) {
-        const send = new EmbedBuilder()
-            .setColor('#ff9900')
-            .setTitle('プレゼントを使用したよ！')
-            .setDescription(
-                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).tag}\nプレゼント: ${result.items.name}`
-            );
+    args.map(async (arg) => {
+        const result = await gachaRepository.usePresent(Number(arg));
+        if (result) {
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle('プレゼントを使用したよ！')
+                .setDescription(
+                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).tag}\nプレゼント: ${
+                        result.items.name
+                    }`
+                );
 
-        message.reply({
-            embeds: [send]
-        });
-    } else {
-        message.reply({
-            content: `プレゼントが見つからないよ！`
-        });
-    }
+            message.reply({
+                embeds: [send]
+            });
+        } else {
+            message.reply({
+                content: `id:${arg} のプレゼントが見つからないよ！`
+            });
+        }
+    });
 }
 
 /**
