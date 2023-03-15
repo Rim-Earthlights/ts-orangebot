@@ -59,9 +59,12 @@ export async function talk(message: Message, content: string) {
         parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
     }
 
-    const sendContent = `日時:[${dayjs().format('YYYY/MM/DD HH:mm:ss')}] 名前:[${
-        message.member?.displayName
-    }]\n${content}`;
+    const systemContent = {
+        date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
+        user: message.member?.displayName ?? 'system'
+    };
+
+    const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
     try {
         const response = await ChatGPT.sendMessage(sendContent, {

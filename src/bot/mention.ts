@@ -68,8 +68,8 @@ export async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('チョコレート')) {
-        const month = dayjs().month();
-        const day = dayjs().day();
+        const month = dayjs().month() + 1;
+        const day = dayjs().date();
         if (month === 2 && day === 14) {
             message.reply('あ、もちろんあるよ～！チョコレートどーぞ！:chocolate_bar:');
         } else {
@@ -78,8 +78,8 @@ export async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('クッキー')) {
-        const month = dayjs().month();
-        const day = dayjs().day();
+        const month = dayjs().month() + 1;
+        const day = dayjs().date();
         if (month === 3 && day === 14) {
             message.reply('もしかしてお返し……！？本当にありがとう～！');
         } else {
@@ -88,8 +88,8 @@ export async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('ケーキ')) {
-        const month = dayjs().month();
-        const day = dayjs().day();
+        const month = dayjs().month() + 1;
+        const day = dayjs().date();
         if (month === 12 && day === 24) {
             message.reply('メリークリスマスだね～！ケーキ一緒に食べよ:cake:');
         } else {
