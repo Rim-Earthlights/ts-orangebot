@@ -55,7 +55,7 @@ export class MusicRepository {
         let mid = 0;
         const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
         if (getMusic) {
-            mid = getMusic.music_id;
+            mid = getMusic.music_id + 1;
         }
         const list = musics.map((m) => {
             return {
