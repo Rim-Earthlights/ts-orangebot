@@ -2,18 +2,22 @@
  * ChatGPT
  */
 import * as logger from '../../common/logger.js';
-import { ChatGPTAPI } from 'chatgpt';
+import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
 import { CONFIG } from '../../config/config.js';
 import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
+import Authenticator from 'openai-token';
 
-const ChatGPT = new ChatGPTAPI({ apiKey: CONFIG.OPENAI_KEY, completionParams: { model: 'gpt-3.5-turbo' } });
-const ChatGPT_NOSYSTEM = new ChatGPTAPI({
-    apiKey: CONFIG.OPENAI_KEY,
-    completionParams: { model: 'gpt-3.5-turbo' }
+const auth = new Authenticator(CONFIG.OPENAI.EMAIL, CONFIG.OPENAI.PASSWORD);
+await auth.begin();
+const token = await auth.getAccessToken();
+const proxyGPT = new ChatGPTUnofficialProxyAPI({
+    accessToken: token,
+    model: 'gpt-4'
 });
+const ChatGPT = new ChatGPTAPI({ apiKey: CONFIG.OPENAI.KEY, completionParams: { model: 'gpt-3.5-turbo' } });
 
 export class GPT {
     static chat: {
@@ -115,9 +119,8 @@ export async function talkCustomSystemMessage(message: Message, content: string)
     }]\n${content}`;
 
     try {
-        const response = await ChatGPT_NOSYSTEM.sendMessage(sendContent, {
-            parentMessageId: parentMessageId,
-            systemMessage: undefined
+        const response = await proxyGPT.sendMessage(sendContent, {
+            parentMessageId: parentMessageId
         });
 
         chat.parentMessageId.push({ id: response.id, message: content });
