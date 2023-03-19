@@ -263,6 +263,7 @@ async function pickNormal(message: Message, gnum = '10') {
             return sum + element.reroll;
         }, 0);
 
+    let totalRolls = ticketRolls;
     if (limitFlag) {
         let tickets = ticketRolls;
 
@@ -279,7 +280,7 @@ async function pickNormal(message: Message, gnum = '10') {
                 }
             }
             tickets = tempList;
-
+            totalRolls += tickets;
             // eslint-disable-next-line no-constant-condition
         } while (true);
     }
@@ -329,7 +330,7 @@ async function pickNormal(message: Message, gnum = '10') {
             .setDescription(`${highTier.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n')}`)
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png')
             .setFields(
-                { name: 'チケット増加回数', value: ticketRolls.toString() },
+                { name: 'チケット増加回数', value: totalRolls.toString() },
                 { name: '残り回数', value: pickLeft.toString() }
             );
         message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
@@ -348,7 +349,7 @@ async function pickNormal(message: Message, gnum = '10') {
             .setDescription(`${desc}`)
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png')
             .setFields(
-                { name: 'チケット増加回数', value: ticketRolls.toString() },
+                { name: 'チケット増加回数', value: totalRolls.toString() },
                 { name: '残り回数', value: pickLeft.toString() }
             );
         message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
