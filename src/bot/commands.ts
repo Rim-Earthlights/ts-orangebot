@@ -1,4 +1,11 @@
-import { Message, EmbedBuilder, VoiceBasedChannel } from 'discord.js';
+import {
+    Message,
+    EmbedBuilder,
+    VoiceBasedChannel,
+    Interaction,
+    ChatInputCommandInteraction,
+    CacheType
+} from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as BotFunctions from './function/index.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';
@@ -477,6 +484,35 @@ export async function commandSelector(message: Message) {
         }
         case 'restart': {
             throw new Error('再起動');
+        }
+    }
+}
+
+export async function interactionSelector(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
+    const { commandName } = interaction;
+
+    switch (commandName) {
+        case 'ping': {
+            await interaction.reply('Pong!');
+            break;
+        }
+        case 'debug': {
+            const url = interaction.options.getString('url');
+            logger.info('system', 'received command', `${url}`);
+            await interaction.reply('test.');
+            break;
+        }
+        case 'gacha': {
+            await interaction.deferReply();
+            const num = interaction.options.getNumber('num');
+            const limit = interaction.options.getBoolean('limit');
+            const type = interaction.options.getString('type');
+
+            // const result = await BotFunctions.Gacha.pickGacha();
+            break;
+        }
+        default: {
+            return;
         }
     }
 }

@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { ChannelType, Message, REST, Routes, SlashCommandBuilder } from 'discord.js';
-import { commandSelector } from './bot/commands.js';
+import { commandSelector, interactionSelector } from './bot/commands.js';
 import { wordSelector } from './bot/mention.js';
 import dotenv from 'dotenv';
 import 'dayjs/locale/ja.js';
@@ -64,9 +64,22 @@ console.log('==================================================');
 const commands = [
     new SlashCommandBuilder().setName('ping').setDescription('replies with pong'),
     new SlashCommandBuilder()
-        .setName('debug')
-        .setDescription('debug command. usually not use.')
-        .addStringOption((option) => option.setName('url').setDescription('youtube url'))
+        .setName('gacha')
+        .setDescription('ガチャを引きます。回数を指定するとその回数分引きます。')
+        .addStringOption((option) =>
+            option
+                .setName('type')
+                .addChoices({ name: 'list', value: 'list' })
+                .addChoices({ name: 'extra', value: 'extra' })
+                .setRequired(false)
+        )
+        .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
+        .addBooleanOption((option) =>
+            option
+                .setName('limit')
+                .setDescription('Trueにするとチケット分も全て引きます。回数指定は無視されます。')
+                .setRequired(false)
+        )
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
@@ -80,11 +93,11 @@ const rest = new REST({ version: '10' }).setToken(CONFIG.TOKEN);
 
 CONFIG.COMMAND_GUILD_ID.map((gid) => {
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: [] })
-        .then(() => logger.info('system', 'rem-command', 'successfully remove command.'))
+        .then(() => logger.info(gid, 'rem-command', 'successfully remove command.'))
         .catch(console.error);
 
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: commands })
-        .then(() => logger.info('system', 'reg-command', 'successfully add command.'))
+        .then(() => logger.info(gid, 'reg-command', 'successfully add command.'))
         .catch(console.error);
 });
 
@@ -148,24 +161,11 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
  * コマンドの受信イベント
  */
 DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-    const { commandName } = interaction;
-
-    switch (commandName) {
-        case 'ping': {
-            await interaction.reply('Pong!');
-            break;
-        }
-        case 'debug': {
-            const url = interaction.options.getString('url');
-            logger.info('system', 'received command', `${url}`);
-            await interaction.reply('test.');
-            break;
-        }
-        default: {
-            return;
-        }
+    if (!interaction.isChatInputCommand()) {
+        return;
     }
+
+    await interactionSelector(interaction);
 });
 
 DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
@@ -198,28 +198,20 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
     }
 
     if (newState.channelId === null) {
-        //left
-        await leftVoiceChannel(guild, oldState);
         logger.info(
             oldState.guild.id,
             'leftVoiceChannel',
             `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).tag}`
         );
+        await leftVoiceChannel(guild, oldState);
     } else if (oldState.channelId === null) {
-        // joined
-        await joinVoiceChannel(guild, newState);
         logger.info(
             oldState.guild.id,
             'joinVoiceChannel',
-            `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).tag}`
+            `ch: ${newState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).tag}`
         );
-    }
-    // moved
-    else {
-        //left
-        await leftVoiceChannel(guild, oldState);
-        // joined
         await joinVoiceChannel(guild, newState);
+    } else {
         logger.info(
             oldState.guild.id,
             'moveVoiceChannel',
@@ -227,5 +219,9 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
                 (await DISCORD_CLIENT.users.fetch(oldState.id)).tag
             }`
         );
+        //left
+        await leftVoiceChannel(guild, oldState);
+        // joined
+        await joinVoiceChannel(guild, newState);
     }
 });

@@ -15,17 +15,21 @@ await auth.begin();
 const token = await auth.getAccessToken();
 const proxyGPT = new ChatGPTUnofficialProxyAPI({
     accessToken: token,
-    model: 'gpt-4'
+    model: 'gpt-3.5-turbo'
 });
-const ChatGPT = new ChatGPTAPI({ apiKey: CONFIG.OPENAI.KEY, completionParams: { model: 'gpt-3.5-turbo' } });
+const ChatGPT = new ChatGPTAPI({
+    apiKey: CONFIG.OPENAI.KEY
+});
 
 export class GPT {
     static chat: {
         guild: string;
         parentMessageId: {
+            cid?: string;
             id: string;
             message: string;
         }[];
+        mode: 'normal' | 'custom';
         timestamp: dayjs.Dayjs;
     }[] = [];
 }
@@ -34,8 +38,8 @@ export class GPT {
  * ChatGPTの初期化
  * @param gid
  */
-async function initalize(gid: string) {
-    GPT.chat.push({ guild: gid, parentMessageId: [], timestamp: dayjs() });
+async function initalize(gid: string, mode: 'normal' | 'custom' = 'normal') {
+    GPT.chat.push({ guild: gid, parentMessageId: [], mode, timestamp: dayjs() });
 }
 
 /**
@@ -58,6 +62,11 @@ export async function talk(message: Message, content: string) {
             return;
         }
     }
+    if (chat.mode == 'custom') {
+        chat.parentMessageId = [];
+        chat.mode = 'normal';
+    }
+
     let parentMessageId: string | undefined = undefined;
     if (chat.parentMessageId.length > 0) {
         parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
@@ -73,11 +82,18 @@ export async function talk(message: Message, content: string) {
     try {
         const response = await ChatGPT.sendMessage(sendContent, {
             parentMessageId: parentMessageId,
-            systemMessage: CHATBOT_TEMPLATE
+            systemMessage: CHATBOT_TEMPLATE,
+            completionParams: { model: 'gpt-3.5-turbo' }
         });
         chat.parentMessageId.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
-        logger.info(message.guild.id, 'ChatGPT', `Response: \n${response.text}`);
+        logger.info(
+            message.guild.id,
+            'ChatGPT',
+            `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail.usage)}\nResponse: \n${
+                response.text
+            }`
+        );
         await message.reply(response.text);
     } catch (err) {
         const error = err as AxiosError;
@@ -100,7 +116,7 @@ export async function talkCustomSystemMessage(message: Message, content: string)
     // ChatGPTが初期化されていない場合は初期化
     let chat = GPT.chat.find((c) => c.guild === message.guild?.id);
     if (!chat) {
-        await initalize(message.guild.id);
+        await initalize(message.guild.id, 'custom');
 
         chat = GPT.chat.find((c) => c.guild === message.guild?.id);
         if (!chat) {
@@ -108,9 +124,15 @@ export async function talkCustomSystemMessage(message: Message, content: string)
             return;
         }
     }
+    if (chat.mode == 'normal') {
+        chat.parentMessageId = [];
+        chat.mode = 'custom';
+    }
 
     let parentMessageId: string | undefined = undefined;
+    let conversationId: string | undefined = undefined;
     if (chat.parentMessageId.length > 0) {
+        conversationId = chat.parentMessageId[chat.parentMessageId.length - 1].cid;
         parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
     }
 
@@ -120,12 +142,16 @@ export async function talkCustomSystemMessage(message: Message, content: string)
 
     try {
         const response = await proxyGPT.sendMessage(sendContent, {
+            conversationId: conversationId,
             parentMessageId: parentMessageId
         });
-
-        chat.parentMessageId.push({ id: response.id, message: content });
+        chat.parentMessageId.push({ cid: response.conversationId, id: response.id, message: content });
         chat.timestamp = dayjs();
-        logger.info(message.guild.id, 'ChatGPT', `Response: \n${response.text}`);
+        logger.info(
+            message.guild.id,
+            'ChatGPT',
+            `ConversationId: ${conversationId}, ParentId: ${parentMessageId}\nResponse: \n${response.text}`
+        );
         await message.reply(response.text);
     } catch (err) {
         const error = err as AxiosError;
@@ -164,7 +190,7 @@ export async function deleteChatData(message: Message, idx?: string) {
         const send = new EmbedBuilder()
             .setColor('#00cc00')
             .setTitle(`直前の会話データを削除したよ～！`)
-            .setDescription(`会話データ: \nid: ${eraseData.id}\nmessage: ${eraseData.message}`);
+            .setDescription(`会話データ: \ncid: ${eraseData.cid}\nid: ${eraseData.id}\nmessage: ${eraseData.message}`);
         await message.reply({ embeds: [send] });
         return;
     }
