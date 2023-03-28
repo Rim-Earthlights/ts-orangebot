@@ -7,6 +7,7 @@ import {
     CacheType
 } from 'discord.js';
 import ytdl from 'ytdl-core';
+import * as DotBotFunctions from './dot_function/index.js';
 import * as BotFunctions from './function/index.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
@@ -38,55 +39,55 @@ export async function commandSelector(message: Message) {
         }
         case 'gpt-no-system': {
             const chat = content.join(' ');
-            await BotFunctions.Chat.talkCustomSystemMessage(message, chat);
+            await DotBotFunctions.Chat.talkCustomSystemMessage(message, chat);
             break;
         }
         case 'gpt': {
             const chat = content.join(' ');
-            await BotFunctions.Chat.talk(message, chat);
+            await DotBotFunctions.Chat.talk(message, chat);
             break;
         }
         case 'erase': {
-            await BotFunctions.Chat.deleteChatData(message, content[0]);
+            await DotBotFunctions.Chat.deleteChatData(message, content[0]);
             break;
         }
         case 'dice': {
-            await BotFunctions.Dice.roll(message, content);
+            await DotBotFunctions.Dice.roll(message, content);
             break;
         }
         case 'tenki': {
-            await BotFunctions.Forecast.weather(message, content);
+            await DotBotFunctions.Forecast.weather(message, content);
             break;
         }
         case 'luck': {
-            await BotFunctions.Gacha.pickOmikuji(message, content);
+            await DotBotFunctions.Gacha.pickOmikuji(message, content);
             break;
         }
         case 'gacha': {
-            await BotFunctions.Gacha.pickGacha(message, content);
+            await DotBotFunctions.Gacha.pickGacha(message, content);
             break;
         }
         case 'g': {
-            await BotFunctions.Gacha.pickGacha(message, content);
+            await DotBotFunctions.Gacha.pickGacha(message, content);
             break;
         }
         case 'gl': {
-            await BotFunctions.Gacha.pickGacha(message, ['limit']);
+            await DotBotFunctions.Gacha.pickGacha(message, ['limit']);
             break;
         }
         case 'give': {
             const uid = content[0];
             const iid = Number(content[1]);
 
-            await BotFunctions.Gacha.givePresent(message, uid, iid);
+            await DotBotFunctions.Gacha.givePresent(message, uid, iid);
             break;
         }
         case 'celo': {
-            await BotFunctions.Dice.celo(message);
+            await DotBotFunctions.Dice.celo(message);
             break;
         }
         case 'celovs': {
-            await BotFunctions.Dice.celovs(message);
+            await DotBotFunctions.Dice.celovs(message);
             break;
         }
         /**
@@ -115,7 +116,7 @@ export async function commandSelector(message: Message) {
                     return;
                 }
 
-                await BotFunctions.Music.add(channel, url, message.author.id);
+                await DotBotFunctions.Music.add(channel, url, message.author.id);
             } catch (e) {
                 const error = e as Error;
                 const send = new EmbedBuilder()
@@ -151,12 +152,12 @@ export async function commandSelector(message: Message) {
             if (!gid) {
                 return;
             }
-            await BotFunctions.Music.pause(gid);
+            await DotBotFunctions.Music.pause(gid);
             break;
         }
         case 'list': {
             if (!content || content.length === 0) {
-                const playlists = await BotFunctions.Music.getPlaylist(message.author.id);
+                const playlists = await DotBotFunctions.Music.getPlaylist(message.author.id);
 
                 if (playlists.length === 0) {
                     const send = new EmbedBuilder()
@@ -192,7 +193,7 @@ export async function commandSelector(message: Message) {
                 case 'rem': {
                     try {
                         const name = content[1];
-                        const deleted = await BotFunctions.Music.removePlaylist(message.author.id, name);
+                        const deleted = await DotBotFunctions.Music.removePlaylist(message.author.id, name);
 
                         if (!deleted) {
                             const send = new EmbedBuilder()
@@ -376,7 +377,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
 
-            await BotFunctions.Music.changeNotify(channel);
+            await DotBotFunctions.Music.changeNotify(channel);
             break;
         }
         case 'mode': {
@@ -387,11 +388,11 @@ export async function commandSelector(message: Message) {
                 return;
             }
             if (!name) {
-                await BotFunctions.Music.getPlayerInfo(channel);
+                await DotBotFunctions.Music.getPlayerInfo(channel);
                 return;
             }
 
-            await BotFunctions.Music.editPlayerInfo(channel, name);
+            await DotBotFunctions.Music.editPlayerInfo(channel, name);
             break;
         }
         case 'shuffle':
@@ -400,7 +401,7 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'reg': {
-            await BotFunctions.Register.save(message, content);
+            await DotBotFunctions.Register.save(message, content);
             break;
         }
         case 'team': {
@@ -415,7 +416,7 @@ export async function commandSelector(message: Message) {
                     message.reply({ embeds: [send] });
                     return;
                 }
-                await BotFunctions.Room.team(message, number, content[1] != undefined);
+                await DotBotFunctions.Room.team(message, number, content[1] != undefined);
             }
             break;
         }
@@ -429,7 +430,7 @@ export async function commandSelector(message: Message) {
                 message.reply({ embeds: [send] });
                 return;
             }
-            await BotFunctions.Room.changeRoomName(message, content.join(' '));
+            await DotBotFunctions.Room.changeRoomName(message, content.join(' '));
             break;
         }
         case 'seek': {
@@ -459,7 +460,7 @@ export async function commandSelector(message: Message) {
                 break;
             }
 
-            await BotFunctions.Music.seek(channel, seek);
+            await DotBotFunctions.Music.seek(channel, seek);
             break;
         }
         case 'choose':
@@ -473,7 +474,7 @@ export async function commandSelector(message: Message) {
 
                 message.reply({ embeds: [send] });
             }
-            const item = BotFunctions.Dice.choose(content);
+            const item = DotBotFunctions.Dice.choose(content);
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle(`選択結果: ${item}`)
@@ -504,11 +505,16 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         }
         case 'gacha': {
             await interaction.deferReply();
-            const num = interaction.options.getNumber('num');
-            const limit = interaction.options.getBoolean('limit');
-            const type = interaction.options.getString('type');
+            const num = interaction.options.getNumber('num') ?? undefined;
+            const limit = interaction.options.getBoolean('limit') ?? undefined;
+            const type = interaction.options.getString('type') ?? undefined;
 
-            // const result = await BotFunctions.Gacha.pickGacha();
+            await BotFunctions.Gacha.pickGacha(interaction, type, limit, num);
+            break;
+        }
+        case 'gl': {
+            await interaction.deferReply();
+            await BotFunctions.Gacha.pickGacha(interaction, 'pick', true);
             break;
         }
         default: {
@@ -536,7 +542,7 @@ export async function ping(message: Message) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
     const channel = message.member?.voice.channel as VoiceBasedChannel;
-    await BotFunctions.Music.playMusic(channel);
+    await DotBotFunctions.Music.playMusic(channel);
 }
 
 /**
@@ -644,7 +650,7 @@ export async function play(message: Message, args?: string[]) {
         return;
     }
 
-    await BotFunctions.Music.add(channel, url, message.author.id);
+    await DotBotFunctions.Music.add(channel, url, message.author.id);
 }
 
 /**
@@ -663,7 +669,7 @@ export async function stop(message: Message) {
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
-    await BotFunctions.Music.stopMusic(channel);
+    await DotBotFunctions.Music.stopMusic(channel);
 }
 
 export async function rem(message: Message, args?: string[]) {
@@ -689,7 +695,7 @@ export async function rem(message: Message, args?: string[]) {
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
-    await BotFunctions.Music.removeId(channel, channel.guild.id, num);
+    await DotBotFunctions.Music.removeId(channel, channel.guild.id, num);
 }
 
 export async function interrupt(message: Message, args?: string[]) {
@@ -715,7 +721,7 @@ export async function interrupt(message: Message, args?: string[]) {
     }
 
     if (num !== undefined) {
-        await BotFunctions.Music.interruptIndex(channel, num);
+        await DotBotFunctions.Music.interruptIndex(channel, num);
         return;
     }
 
@@ -726,7 +732,7 @@ export async function interrupt(message: Message, args?: string[]) {
         return;
     }
 
-    await BotFunctions.Music.interruptMusic(channel, url);
+    await DotBotFunctions.Music.interruptMusic(channel, url);
 }
 
 export async function queue(message: Message) {
@@ -734,7 +740,7 @@ export async function queue(message: Message) {
     if (!channel) {
         return;
     }
-    await BotFunctions.Music.showQueue(channel);
+    await DotBotFunctions.Music.showQueue(channel);
     return;
 }
 
@@ -743,7 +749,7 @@ export async function shuffle(message: Message) {
     if (!channel) {
         return;
     }
-    BotFunctions.Music.shuffleMusic(channel);
+    DotBotFunctions.Music.shuffleMusic(channel);
 }
 
 export async function exterm(message: Message) {
@@ -751,5 +757,5 @@ export async function exterm(message: Message) {
         return;
     }
 
-    await BotFunctions.Music.extermAudioPlayer(message.guild.id);
+    await DotBotFunctions.Music.extermAudioPlayer(message.guild.id);
 }

@@ -12,7 +12,7 @@ import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import pldl from 'play-dl';
 import { getRndArray } from '../../common/common.js';
 import { CONFIG } from '../../config/config.js';
-import { Playlist } from '../../model/models';
+import { Playlist } from '../../model/models/index.js';
 import { MusicInfoRepository } from '../../model/repository/musicInfoRepository.js';
 import { MusicRepository } from '../../model/repository/musicRepository.js';
 import { PlaylistRepository } from '../../model/repository/playlistRepository.js';

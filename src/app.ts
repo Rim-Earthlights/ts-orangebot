@@ -10,11 +10,12 @@ import 'dayjs/locale/ja.js';
 import { routers } from './routers.js';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
 import { CONFIG } from './config/config.js';
-import { joinVoiceChannel, leftVoiceChannel } from './bot/function/voice.js';
+import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { TypeOrm } from './model/typeorm/typeorm.js';
 import * as logger from './common/logger.js';
 import { ItemRepository } from './model/repository/itemRepository.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
+import { Gacha as OldGacha } from './bot/dot_function/index.js';
 import { Gacha } from './bot/function/index.js';
 import { initJob } from './job/job.js';
 
@@ -69,9 +70,13 @@ const commands = [
         .addStringOption((option) =>
             option
                 .setName('type')
-                .addChoices({ name: 'list', value: 'list' })
-                .addChoices({ name: 'extra', value: 'extra' })
+                .setDescription('type')
                 .setRequired(false)
+                .addChoices(
+                    { name: 'pick', value: 'pick' },
+                    { name: 'list', value: 'list' },
+                    { name: 'extra', value: 'extra' }
+                )
         )
         .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
         .addBooleanOption((option) =>
@@ -79,7 +84,12 @@ const commands = [
                 .setName('limit')
                 .setDescription('Trueにするとチケット分も全て引きます。回数指定は無視されます。')
                 .setRequired(false)
-        )
+        ),
+    new SlashCommandBuilder().setName('gl').setDescription('ガチャを上限いっぱいまで引く短縮形コマンド'),
+    new SlashCommandBuilder()
+        .setName('gpt')
+        .setDescription('ChatGPTとおしゃべりします')
+        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true))
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
@@ -112,6 +122,7 @@ DISCORD_CLIENT.once('ready', async () => {
         .then(async () => {
             // DBの初期化と再構築
             await new ItemRepository().init(GACHA_LIST);
+            OldGacha.Gacha.allItemList = await new ItemRepository().getAll();
             Gacha.Gacha.allItemList = await new ItemRepository().getAll();
             logger.info('system', 'db-init', 'success');
         })
