@@ -69,8 +69,8 @@ const commands = [
         .addStringOption((option) =>
             option
                 .setName('type')
-                .addChoices({ name: 'list', value: 'list' })
-                .addChoices({ name: 'extra', value: 'extra' })
+                .setDescription('gacha')
+                .addChoices({ name: 'list', value: 'list' }, { name: 'extra', value: 'extra' })
                 .setRequired(false)
         )
         .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))

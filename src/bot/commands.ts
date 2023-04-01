@@ -714,7 +714,7 @@ export async function interrupt(message: Message, args?: string[]) {
         return;
     }
 
-    if (num !== undefined) {
+    if (!Number.isNaN(num)) {
         await BotFunctions.Music.interruptIndex(channel, num);
         return;
     }
