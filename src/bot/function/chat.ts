@@ -10,13 +10,13 @@ import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
 import Authenticator from 'openai-token';
 
-const auth = new Authenticator(CONFIG.OPENAI.EMAIL, CONFIG.OPENAI.PASSWORD);
-await auth.begin();
-const token = await auth.getAccessToken();
-const proxyGPT = new ChatGPTUnofficialProxyAPI({
-    accessToken: token,
-    model: 'gpt-3.5-turbo'
-});
+// const auth = new Authenticator(CONFIG.OPENAI.EMAIL, CONFIG.OPENAI.PASSWORD);
+// await auth.begin();
+// const token = await auth.getAccessToken();
+// const proxyGPT = new ChatGPTUnofficialProxyAPI({
+//     accessToken: token,
+//     model: 'gpt-3.5-turbo'
+// });
 const ChatGPT = new ChatGPTAPI({
     apiKey: CONFIG.OPENAI.KEY
 });
@@ -107,60 +107,60 @@ export async function talk(message: Message, content: string) {
 /**
  * systemMessageを指定してChatGPTで会話する
  */
-export async function talkCustomSystemMessage(message: Message, content: string) {
-    // サーバー内のテキストチャンネル以外は無視
-    if (!message.guild) {
-        return;
-    }
+// export async function talkCustomSystemMessage(message: Message, content: string) {
+//     // サーバー内のテキストチャンネル以外は無視
+//     if (!message.guild) {
+//         return;
+//     }
 
-    // ChatGPTが初期化されていない場合は初期化
-    let chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-    if (!chat) {
-        await initalize(message.guild.id, 'custom');
+//     // ChatGPTが初期化されていない場合は初期化
+//     let chat = GPT.chat.find((c) => c.guild === message.guild?.id);
+//     if (!chat) {
+//         await initalize(message.guild.id, 'custom');
 
-        chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-        if (!chat) {
-            logger.error('system', 'ChatGPT', 'ChatGPT initialization failed');
-            return;
-        }
-    }
-    if (chat.mode == 'normal') {
-        chat.parentMessageId = [];
-        chat.mode = 'custom';
-    }
+//         chat = GPT.chat.find((c) => c.guild === message.guild?.id);
+//         if (!chat) {
+//             logger.error('system', 'ChatGPT', 'ChatGPT initialization failed');
+//             return;
+//         }
+//     }
+//     if (chat.mode == 'normal') {
+//         chat.parentMessageId = [];
+//         chat.mode = 'custom';
+//     }
 
-    let parentMessageId: string | undefined = undefined;
-    let conversationId: string | undefined = undefined;
-    if (chat.parentMessageId.length > 0) {
-        conversationId = chat.parentMessageId[chat.parentMessageId.length - 1].cid;
-        parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
-    }
+//     let parentMessageId: string | undefined = undefined;
+//     let conversationId: string | undefined = undefined;
+//     if (chat.parentMessageId.length > 0) {
+//         conversationId = chat.parentMessageId[chat.parentMessageId.length - 1].cid;
+//         parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
+//     }
 
-    const sendContent = `日時:[${dayjs().format('YYYY/MM/DD HH:mm:ss')}] 名前:[${
-        message.member?.displayName
-    }]\n${content}`;
+//     const sendContent = `日時:[${dayjs().format('YYYY/MM/DD HH:mm:ss')}] 名前:[${
+//         message.member?.displayName
+//     }]\n${content}`;
 
-    try {
-        const response = await proxyGPT.sendMessage(sendContent, {
-            conversationId: conversationId,
-            parentMessageId: parentMessageId
-        });
-        chat.parentMessageId.push({ cid: response.conversationId, id: response.id, message: content });
-        chat.timestamp = dayjs();
-        logger.info(
-            message.guild.id,
-            'ChatGPT',
-            `ConversationId: ${conversationId}, ParentId: ${parentMessageId}\nResponse: \n${response.text}`
-        );
-        await message.reply(response.text);
-    } catch (err) {
-        const error = err as AxiosError;
-        if (error.response?.status === 500) {
-            const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
-            await message.reply({ embeds: [send] });
-        }
-    }
-}
+//     try {
+//         const response = await proxyGPT.sendMessage(sendContent, {
+//             conversationId: conversationId,
+//             parentMessageId: parentMessageId
+//         });
+//         chat.parentMessageId.push({ cid: response.conversationId, id: response.id, message: content });
+//         chat.timestamp = dayjs();
+//         logger.info(
+//             message.guild.id,
+//             'ChatGPT',
+//             `ConversationId: ${conversationId}, ParentId: ${parentMessageId}\nResponse: \n${response.text}`
+//         );
+//         await message.reply(response.text);
+//     } catch (err) {
+//         const error = err as AxiosError;
+//         if (error.response?.status === 500) {
+//             const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+//             await message.reply({ embeds: [send] });
+//         }
+//     }
+// }
 
 /**
  * ChatGPTの会話データの削除
