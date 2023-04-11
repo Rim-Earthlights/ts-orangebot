@@ -63,29 +63,35 @@ app.listen(port, hostName);
 console.log('==================================================');
 
 const commands = [
+    // ping command
     new SlashCommandBuilder().setName('ping').setDescription('replies with pong'),
+    // gacha command
     new SlashCommandBuilder()
         .setName('gacha')
-        .setDescription('ガチャを引きます。回数を指定するとその回数分引きます。')
-        .addStringOption((option) =>
-            option
-                .setName('type')
-                .setDescription('type')
-                .setRequired(false)
-                .addChoices(
-                    { name: 'pick', value: 'pick' },
-                    { name: 'list', value: 'list' },
-                    { name: 'extra', value: 'extra' }
+        .setDescription('ガチャ関連機能')
+        .addSubcommand((sc) =>
+            sc
+                .setName('pick')
+                .setDescription('ガチャを引きます. 回数指定しない場合は10回引きます. ')
+                .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
+                .addBooleanOption((option) =>
+                    option
+                        .setName('limit')
+                        .setDescription('Trueにするとチケット分も全て引きます。回数指定は無視されます。')
+                        .setRequired(false)
                 )
         )
-        .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
-        .addBooleanOption((option) =>
-            option
-                .setName('limit')
-                .setDescription('Trueにするとチケット分も全て引きます。回数指定は無視されます。')
-                .setRequired(false)
+        .addSubcommand((sc) => sc.setName('list').setDescription('あなたのガチャ景品を表示します'))
+        .addSubcommand((sc) =>
+            sc
+                .setName('extra')
+                .setDescription('ガチャを試し引きします. 景品取得判定にはなりません.')
+                .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
+                .addStringOption((option) =>
+                    option.setName('item').setDescription('アイテム名 or 等級').setRequired(false)
+                )
         ),
-    new SlashCommandBuilder().setName('gl').setDescription('ガチャを上限いっぱいまで引く短縮形コマンド'),
+    new SlashCommandBuilder().setName('gl').setDescription('/gacha limitの短縮形コマンドです.'),
     new SlashCommandBuilder()
         .setName('gpt')
         .setDescription('ChatGPTとおしゃべりします')

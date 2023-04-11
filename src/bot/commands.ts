@@ -504,12 +504,14 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             break;
         }
         case 'gacha': {
-            await interaction.deferReply();
-            const num = interaction.options.getNumber('num') ?? undefined;
-            const limit = interaction.options.getBoolean('limit') ?? undefined;
-            const type = interaction.options.getString('type') ?? undefined;
+            logger.info(interaction.guildId ?? undefined, 'received-command/gacha', JSON.stringify(interaction));
+            // await interaction.deferReply();
+            // const num = interaction.options.getNumber('num') ?? undefined;
+            // const limit = interaction.options.getBoolean('limit') ?? undefined;
+            // const type = interaction.options.getString('type') ?? undefined;
 
-            await BotFunctions.Gacha.pickGacha(interaction, type, limit, num);
+            // await BotFunctions.Gacha.pickGacha(interaction, type, limit, num);
+            // break;
             break;
         }
         case 'gl': {
