@@ -36,13 +36,13 @@ function getWeight(list: Models.Item[]): Models.Item[] {
 export async function getGachaOnce(): Promise<Gacha> {
     const rnd = Math.random();
 
-    if (rnd < 0.01) {
+    if (rnd < 0.000068) {
         return await convertGacha('UUR');
-    } else if (rnd < 0.03) {
+    } else if (rnd < 0.000577) {
         return await convertGacha('UR');
-    } else if (rnd < 0.09) {
+    } else if (rnd < 0.00688) {
         return await convertGacha('SSR');
-    } else if (rnd < 0.10928) {
+    } else if (rnd < 0.08928) {
         return await convertGacha('SR');
     } else if (rnd < 0.658) {
         return await convertGacha('R');

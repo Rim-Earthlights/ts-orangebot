@@ -37,11 +37,11 @@ export async function commandSelector(message: Message) {
             await debug(message, content);
             break;
         }
-        case 'gpt-no-system': {
-            const chat = content.join(' ');
-            await DotBotFunctions.Chat.talkCustomSystemMessage(message, chat);
-            break;
-        }
+        // case 'gpt-no-system': {
+        //     const chat = content.join(' ');
+        //     await BotFunctions.Chat.talkCustomSystemMessage(message, chat);
+        //     break;
+        // }
         case 'gpt': {
             const chat = content.join(' ');
             await DotBotFunctions.Chat.talk(message, chat);
@@ -722,7 +722,7 @@ export async function interrupt(message: Message, args?: string[]) {
         return;
     }
 
-    if (num !== undefined) {
+    if (!Number.isNaN(num)) {
         await DotBotFunctions.Music.interruptIndex(channel, num);
         return;
     }
