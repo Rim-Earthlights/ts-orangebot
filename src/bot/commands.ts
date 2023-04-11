@@ -504,19 +504,46 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             break;
         }
         case 'gacha': {
-            logger.info(interaction.guildId ?? undefined, 'received-command/gacha', JSON.stringify(interaction));
-            // await interaction.deferReply();
-            // const num = interaction.options.getNumber('num') ?? undefined;
-            // const limit = interaction.options.getBoolean('limit') ?? undefined;
-            // const type = interaction.options.getString('type') ?? undefined;
+            logger.info(interaction.guildId ?? undefined, 'received-command/gacha', `${interaction}`);
+            const type = interaction.options.getSubcommand();
+            switch (type) {
+                case 'pick': {
+                    await interaction.deferReply();
+                    const num = interaction.options.getNumber('num') ?? undefined;
+                    const limit = interaction.options.getBoolean('limit') ?? undefined;
 
-            // await BotFunctions.Gacha.pickGacha(interaction, type, limit, num);
-            // break;
+                    await BotFunctions.Gacha.pickGacha(interaction, limit, num);
+                    break;
+                }
+                case 'list': {
+                    await BotFunctions.Gacha.getGachaInfo(interaction);
+                    break;
+                }
+            }
+            break;
+        }
+        case 'gc': {
+            await interaction.deferReply();
+            const num = interaction.options.getNumber('num') ?? undefined;
+            const limit = interaction.options.getBoolean('limit') ?? undefined;
+
+            await BotFunctions.Gacha.pickGacha(interaction, limit, num);
             break;
         }
         case 'gl': {
             await interaction.deferReply();
-            await BotFunctions.Gacha.pickGacha(interaction, 'pick', true);
+            await BotFunctions.Gacha.pickGacha(interaction, true);
+            break;
+        }
+        case 'gpt': {
+            await interaction.deferReply();
+            const text = interaction.options.getString('text')!;
+            await BotFunctions.Chat.talk(interaction, text);
+            break;
+        }
+        case 'erase': {
+            const last = interaction.options.getBoolean('last') ?? undefined;
+            await BotFunctions.Chat.deleteChatData(interaction, last);
             break;
         }
         default: {

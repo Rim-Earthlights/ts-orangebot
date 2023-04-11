@@ -91,11 +91,26 @@ const commands = [
                     option.setName('item').setDescription('アイテム名 or 等級').setRequired(false)
                 )
         ),
+    new SlashCommandBuilder()
+        .setName('gc')
+        .setDescription('/gachaの短縮形です. 回数指定しない場合は10回引きます.')
+        .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
+        .addBooleanOption((option) =>
+            option
+                .setName('limit')
+                .setDescription('Trueにするとチケット分も全て引きます. 回数指定は無視されます.')
+                .setRequired(false)
+        ),
     new SlashCommandBuilder().setName('gl').setDescription('/gacha limitの短縮形コマンドです.'),
     new SlashCommandBuilder()
         .setName('gpt')
         .setDescription('ChatGPTとおしゃべりします')
-        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true))
+        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('erase')
+        .setDescription('ChatGPTとのチャット履歴を削除します')
+        .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false))
+
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

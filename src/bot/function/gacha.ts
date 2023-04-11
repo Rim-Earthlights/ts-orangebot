@@ -78,56 +78,31 @@ async function convertGacha(rare: string): Promise<Gacha> {
 
 /**
  * ガチャを引く
- * @param interaction 受け取ったメッセージング情報
- * @param args 0: 指定回数 or 等級 (出るまで引く)
- * @returns
+ * @param interaction 発行されたコマンド情報
+ * @param limit 全て引くかどうか
+ * @param num 引く回数
  */
-export async function pickGacha(
-    interaction: ChatInputCommandInteraction<CacheType>,
-    type?: string,
-    limit?: boolean,
-    num?: number
-) {
-    switch (type) {
-        case 'pick':
-        case undefined: {
-            await pickNormal(interaction, num, limit ?? false);
-            break;
-        }
-        case 'list': {
-            await getPresent(interaction, '');
-            break;
-        }
-        case 'use': {
-            break;
-        }
-        case 'reset': {
-            break;
-        }
-        case 'extra': {
-            break;
-        }
-        default: {
-            break;
-        }
-    }
+export const pickGacha = async (interaction: ChatInputCommandInteraction<CacheType>, limit?: boolean, num?: number) => {
+    await pickNormal(interaction, num, limit ?? false);
+};
 
-    // if (args != undefined && args.length > 0) {
-    //     if (args[0] === 'list') {
-    //         await getPresent(interaction, args[1]);
-    //     } else if (args[0] === 'use') {
-    //         await usePresent(interaction, args.slice(1));
-    //     } else if (args[0] === 'reset') {
-    //         await reset(interaction, args[1], args[2]);
-    //     } else if (args[0] === 'extra') {
-    //         await pickExtra(interaction, args);
-    //     } else {
-    //         await pickNormal(interaction, args[0]);
-    //     }
-    // } else {
-    //     await pickNormal(interaction);
-    // }
-}
+/**
+ * ガチャ情報の取得
+ * @param interaction
+ */
+export const getGachaInfo = async (interaction: ChatInputCommandInteraction<CacheType>) => {
+    await getPresent(interaction);
+};
+
+/**
+ * 指定条件でガチャを引く(景品は無効)
+ * @param interaction 発行されたコマンド情報
+ * @param num 引く回数
+ * @param word 検索ワード
+ */
+export const extraPick = async (interaction: ChatInputCommandInteraction<CacheType>, num?: number, word?: string) => {
+    await pickExtra(interaction, num, word);
+};
 
 /**
  * ガチャフラグをリセットする
@@ -172,28 +147,24 @@ async function reset(interaction: ChatInputCommandInteraction<CacheType>, id?: s
  * @param args
  * @returns
  */
-async function pickExtra(interaction: ChatInputCommandInteraction<CacheType>, args: string[]) {
+async function pickExtra(interaction: ChatInputCommandInteraction<CacheType>, num?: number, word?: string) {
     const gachaList: Gacha[] = [];
 
-    const num = Number(args[1]);
     if (num) {
         for (let i = 0; i < num; i++) {
             const gacha = await getGachaOnce();
             gachaList.push(gacha);
         }
-    } else {
+    } else if (word) {
         do {
             const gacha = await getGachaOnce();
             gachaList.push(gacha);
-            if (gacha.rare === args[1].toUpperCase()) {
+            if (gacha.rare === word) {
                 if (gacha.reroll === 0) {
                     break;
                 }
             }
-            if (
-                gacha.name.includes(args[1]) &&
-                !['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[1].toUpperCase())
-            ) {
+            if (!['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === word.toUpperCase())) {
                 break;
             }
             if (gachaList.length > 1_000_000) {
@@ -207,6 +178,11 @@ async function pickExtra(interaction: ChatInputCommandInteraction<CacheType>, ar
             }
             // eslint-disable-next-line no-constant-condition
         } while (true);
+    } else {
+        for (let i = 0; i < 10; i++) {
+            const gacha = await getGachaOnce();
+            gachaList.push(gacha);
+        }
     }
 
     const rareList = [...new Set(gachaList.map((g) => g.rare))];
@@ -405,7 +381,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
         getUid = interaction.user.id;
     } else {
         if (!CONFIG.ADMIN_USER_ID.includes(interaction.user.id)) {
-            interaction.editReply({
+            interaction.reply({
                 content: `他ユーザーのプレゼントの閲覧権限がないよ！`
             });
             return;
@@ -427,9 +403,9 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
                 { name: '当選したプレゼント', value: presentDescription ? presentDescription : 'なし' },
                 { name: '残りガチャ回数', value: pickLeft.toString() }
             );
-        interaction.channel.send({ embeds: [send] });
+        interaction.reply({ embeds: [send] });
     } else {
-        interaction.editReply({
+        interaction.reply({
             content: `ユーザーが登録されていないみたい？ガチャを引いてみると解決するかも！`
         });
     }
