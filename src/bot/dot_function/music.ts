@@ -541,11 +541,14 @@ export async function extermAudioPlayer(gid: string): Promise<boolean> {
     await infoRepository.remove(gid);
 
     const connection = getVoiceConnection(gid);
-    if (connection) {
-        connection.destroy();
+    try {
+        if (connection) {
+            connection.destroy();
+        }
         return true;
+    } catch (err) {
+        return false;
     }
-    return false;
 }
 
 /**
