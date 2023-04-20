@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
 import * as Commands from './commands.js';
-import * as BotFunctions from './function/index.js';
+import * as BotFunctions from './dot_function/index.js';
 import * as reactions from '../constant/words/reactions.js';
 import { getRndNumber } from '../common/common.js';
 
