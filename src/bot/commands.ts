@@ -47,6 +47,11 @@ export async function commandSelector(message: Message) {
             await DotBotFunctions.Chat.talk(message, chat);
             break;
         }
+        case 'g4': {
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.talk(message, chat, 'gpt-4');
+            break;
+        }
         case 'erase': {
             await DotBotFunctions.Chat.deleteChatData(message, content[0]);
             break;
@@ -539,6 +544,12 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.deferReply();
             const text = interaction.options.getString('text')!;
             await BotFunctions.Chat.talk(interaction, text);
+            break;
+        }
+        case 'g4': {
+            await interaction.deferReply();
+            const text = interaction.options.getString('text')!;
+            await BotFunctions.Chat.talk(interaction, text, 'gpt-4');
             break;
         }
         case 'erase': {

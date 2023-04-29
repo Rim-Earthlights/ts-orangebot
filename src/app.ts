@@ -107,6 +107,10 @@ const commands = [
         .setDescription('ChatGPTとおしゃべりします')
         .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
     new SlashCommandBuilder()
+        .setName('g4')
+        .setDescription('GPT-4でおしゃべりします(非常にレスポンスが遅いので注意)')
+        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
+    new SlashCommandBuilder()
         .setName('erase')
         .setDescription('ChatGPTとのチャット履歴を削除します')
         .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false))
