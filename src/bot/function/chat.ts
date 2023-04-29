@@ -8,23 +8,11 @@ import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
+import { GPT } from '../../constant/chat/chat.js';
 
 const ChatGPT = new ChatGPTAPI({
     apiKey: CONFIG.OPENAI.KEY
 });
-
-export class GPT {
-    static chat: {
-        guild: string;
-        parentMessageId: {
-            cid?: string;
-            id: string;
-            message: string;
-        }[];
-        mode: 'normal' | 'custom';
-        timestamp: dayjs.Dayjs;
-    }[] = [];
-}
 
 /**
  * ChatGPTの初期化

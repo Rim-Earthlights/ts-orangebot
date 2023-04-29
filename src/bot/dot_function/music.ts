@@ -18,10 +18,7 @@ import { MusicRepository } from '../../model/repository/musicRepository.js';
 import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
 import { getPlaylistItems } from '../request/youtubeAPI.js';
 import * as logger from '../../common/logger.js';
-
-export class Music {
-    static player: { id: string; player: AudioPlayer }[] = [];
-}
+import { Music } from '../../constant/music/music.js';
 
 /**
  * キューに音楽を追加する

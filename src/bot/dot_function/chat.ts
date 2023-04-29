@@ -9,6 +9,7 @@ import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
 import Authenticator from 'openai-token';
+import { GPT } from '../../constant/chat/chat.js';
 
 // const auth = new Authenticator(CONFIG.OPENAI.EMAIL, CONFIG.OPENAI.PASSWORD);
 // await auth.begin();
@@ -20,19 +21,6 @@ import Authenticator from 'openai-token';
 const ChatGPT = new ChatGPTAPI({
     apiKey: CONFIG.OPENAI.KEY
 });
-
-export class GPT {
-    static chat: {
-        guild: string;
-        parentMessageId: {
-            cid?: string;
-            id: string;
-            message: string;
-        }[];
-        mode: 'normal' | 'custom';
-        timestamp: dayjs.Dayjs;
-    }[] = [];
-}
 
 /**
  * ChatGPTの初期化

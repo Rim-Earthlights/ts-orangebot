@@ -2,7 +2,7 @@ import * as cron from 'node-cron';
 import * as logger from '../common/logger.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import dayjs from 'dayjs';
-import { GPT } from '../bot/dot_function/chat.js';
+import { GPT } from '../constant/chat/chat.js';
 
 export async function initJob() {
     /**
