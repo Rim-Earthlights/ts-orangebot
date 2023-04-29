@@ -177,7 +177,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     logger.info(
         message.guild ? message.guild.id : 'dm',
         'message-received',
-        `author: ${message.author.tag}, content: ${message.content}`
+        [`cid: ${message.channel.id}`, `author: ${message.author.tag}`, `content: ${message.content}`].join('\n')
     );
 
     // mention to bot
@@ -200,7 +200,11 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) {
         return;
     }
-
+    logger.info(
+        interaction.guild ? interaction.guild.id : 'dm',
+        'message-received',
+        [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.tag}`, `content: ${interaction}`].join('\n')
+    );
     await interactionSelector(interaction);
 });
 
