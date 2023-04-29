@@ -22,9 +22,6 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 if (vc.members.find((m) => m.id === DISCORD_CLIENT?.user?.id)) {
                     await extermAudioPlayer(vc.guild.id);
                 }
-
-                await vc.delete();
-                logger.info(vc.guild.id, 'leftVoiceChannel', `delete ch: ${voiceState.channel?.name}`);
             }
         }
     }
