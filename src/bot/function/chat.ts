@@ -37,7 +37,11 @@ const initalize = async (gid: string, mode: 'normal' | 'custom' = 'normal') => {
 /**
  * ChatGPTで会話する
  */
-export const talk = async (interaction: ChatInputCommandInteraction<CacheType>, content: string) => {
+export const talk = async (
+    interaction: ChatInputCommandInteraction<CacheType>,
+    content: string,
+    model = 'gpt-3.5-turbo'
+) => {
     // サーバー内のテキストチャンネル以外は無視
     if (!interaction.guild) {
         return;
@@ -75,7 +79,7 @@ export const talk = async (interaction: ChatInputCommandInteraction<CacheType>, 
         const response = await ChatGPT.sendMessage(sendContent, {
             parentMessageId: parentMessageId,
             systemMessage: CHATBOT_TEMPLATE,
-            completionParams: { model: 'gpt-3.5-turbo' }
+            completionParams: { model: model }
         });
         chat.parentMessageId.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
