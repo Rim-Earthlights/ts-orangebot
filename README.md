@@ -90,6 +90,6 @@
 # License
 ### CopyRights
 - Copyright (c) 2022-2023 / Rim Earthlights
-- [https://twitter.com/Rim_Earthlights](@Rim_Earthlights)
+  - https://twitter.com/Rim_Earthlights
 ### Modules
 - https://gitlab.com/Rim_Earthlights/ts-orangebot/-/blob/main/lisence.txt
