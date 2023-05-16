@@ -227,12 +227,24 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
     if (reaction.message.channel.type === ChannelType.GuildText) {
         await reaction.users.remove(user.id);
 
-        // add user role
-        await reaction.message.guild?.members.cache.get(user.id)?.roles.add(CONFIG.MEMBER_ROLE_ID);
+        const u = reaction.message.guild?.members.cache.get(user.id);
+        const role = u?.roles.cache.find((role) => role.id === CONFIG.MEMBER_ROLE_ID);
+        if (role) {
+            const message = await reaction.message.reply(`もうロールが付いてるみたい！`);
+            setTimeout(async () => {
+                await message.delete();
+                return;
+            }, 3000);
+        }
 
-        const message = await reaction.message.reply(`success/ ${reaction.emoji.name}`);
-        await message.delete();
-        return;
+        // add user role
+        await u?.roles.add(CONFIG.MEMBER_ROLE_ID);
+
+        const message = await reaction.message.reply(`読んでくれてありがと～！ロールを付与したよ！`);
+        setTimeout(async () => {
+            await message.delete();
+            return;
+        }, 3000);
     }
 });
 
