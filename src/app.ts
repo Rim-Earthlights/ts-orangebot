@@ -225,7 +225,7 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
         return;
     }
     if (reaction.message.channel.type === ChannelType.GuildText) {
-        await reaction.users.remove(user as User);
+        await reaction.users.remove(user.id);
 
         // add user role
         await reaction.message.guild?.members.cache.get(user.id)?.roles.add(CONFIG.MEMBER_ROLE_ID);
