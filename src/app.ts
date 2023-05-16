@@ -233,8 +233,8 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
             const message = await reaction.message.reply(`もうロールが付いてるみたい！`);
             setTimeout(async () => {
                 await message.delete();
-                return;
             }, 3000);
+            return;
         }
 
         // add user role
@@ -243,8 +243,8 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
         const message = await reaction.message.reply(`読んでくれてありがと～！ロールを付与したよ！`);
         setTimeout(async () => {
             await message.delete();
-            return;
         }, 3000);
+        return;
     }
 });
 
