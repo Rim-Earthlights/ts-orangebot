@@ -225,7 +225,6 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
         return;
     }
     if (reaction.message.channel.type === ChannelType.GuildText) {
-        console.log(reaction);
         await reaction.users.remove(user as User);
 
         // add user role
