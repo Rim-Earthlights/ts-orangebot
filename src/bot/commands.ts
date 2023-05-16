@@ -492,7 +492,10 @@ export async function commandSelector(message: Message) {
         case 'popup-rule': {
             const channel = message.channel;
             if (channel) {
-                const send = new EmbedBuilder().setColor('#ffcc00').setTitle(`ルールを読んだらリアクション`);
+                const send = new EmbedBuilder()
+                    .setColor('#ffcc00')
+                    .setTitle(`ルールを読んだ`)
+                    .setDescription('リアクションをすると全ての機能が使えるようになります');
                 const result = await channel?.send({ embeds: [send] });
                 result.react('✅');
             }

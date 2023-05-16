@@ -220,7 +220,7 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
         return;
     }
 
-    const title = reaction.message.embeds.find((e) => e.title === 'ルールを読んだらリアクション');
+    const title = reaction.message.embeds.find((e) => e.title === 'ルールを読んだ');
     if (!title) {
         return;
     }
