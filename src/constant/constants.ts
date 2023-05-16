@@ -5,7 +5,7 @@ export const COORDINATION_ID = ['985704725016105000'];
 
 // Client
 export const DISCORD_CLIENT = new Client({
-    partials: [Partials.Channel],
+    partials: [Partials.User, Partials.Channel, Partials.Message, Partials.Reaction, Partials.GuildMember],
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.DirectMessages,
