@@ -21,6 +21,7 @@
 + コマンド集
   + > .help
 ```
+(?がついている引数は入力自由です)
 ===== 便利コマンド系 =====
  * .tenki [地域] [?日数]
    > 天気予報を取得する
@@ -43,6 +44,13 @@
    > チンチロリンで遊ぶ
      みかんちゃんとチンチロリンで遊べます
      3回まで投げて出た目で勝負します
+ * .gpt [text] / /gpt [text]
+   > おしゃべり(ChatGPT)
+     みかんちゃんとChatGPTを使ったおしゃべりができます
+ * .g4 [text] / /g4 [text]
+   > おしゃべり(GPT-4)
+     みかんちゃんとChatGPTを使ったおしゃべりができます
+     (GPT-4なのでレスポンスは非常に遅いです)
 ===== お部屋管理系 =====
  * .team [チーム数] [?move]
    > チーム分けを行います
@@ -86,3 +94,10 @@
  * .list shuffle [名前] [on | off] | .list sf [名前] [on | off]
    > 対象プレイリストの自動シャッフル処理を書き換えます
 ```
+
+# License
+### CopyRights
+- Copyright (c) 2022-2023 / Rim Earthlights
+  - https://twitter.com/Rim_Earthlights
+### Modules
+- https://gitlab.com/Rim_Earthlights/ts-orangebot/-/blob/main/lisence.txt

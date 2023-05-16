@@ -620,6 +620,7 @@ export async function help(message: Message) {
     res.push(`今動いている言語は[TypeScript]版だよ！\n`);
     res.push('コマンドはここだよ～！');
     res.push('```');
+    res.push('(?がついている引数は入力自由です)');
     res.push('===== 便利コマンド系 =====');
     res.push(' * .tenki [地域] [?日数]');
     res.push('   > 天気予報を取得する');
@@ -642,6 +643,13 @@ export async function help(message: Message) {
     res.push('   > チンチロリンで遊ぶ');
     res.push('     みかんちゃんとチンチロリンで遊べます');
     res.push('     3回まで投げて出た目で勝負します');
+    res.push(' * .gpt [text] / /gpt [text]');
+    res.push('   > おしゃべり(ChatGPT)');
+    res.push('     みかんちゃんとChatGPTを使ったおしゃべりができます');
+    res.push(' * .g4 [text] / /g4 [text]');
+    res.push('   > おしゃべり(GPT-4)');
+    res.push('     みかんちゃんとChatGPTを使ったおしゃべりができます');
+    res.push('     (GPT-4なのでレスポンスは非常に遅いです)');
     res.push('===== お部屋管理系 =====');
     res.push(' * .team [チーム数] [?move]');
     res.push('   > チーム分けを行います');
