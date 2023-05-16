@@ -2,7 +2,7 @@ import Express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { ChannelType, Message, REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { ChannelType, Message, REST, Routes, SlashCommandBuilder, User } from 'discord.js';
 import { commandSelector, interactionSelector } from './bot/commands.js';
 import { wordSelector } from './bot/mention.js';
 import dotenv from 'dotenv';
@@ -114,7 +114,6 @@ const commands = [
         .setName('erase')
         .setDescription('ChatGPTとのチャット履歴を削除します')
         .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false))
-
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
@@ -130,7 +129,6 @@ CONFIG.COMMAND_GUILD_ID.map((gid) => {
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: [] })
         .then(() => logger.info(gid, 'rem-command', 'successfully remove command.'))
         .catch(console.error);
-
     rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: commands })
         .then(() => logger.info(gid, 'reg-command', 'successfully add command.'))
         .catch(console.error);
@@ -209,14 +207,32 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
 });
 
 DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
-    if (reaction.message.author?.id !== DISCORD_CLIENT.user?.id) {
+    if (reaction.partial) {
+        try {
+            await reaction.fetch();
+        } catch (error) {
+            console.error('Something went wrong when fetching the message:', error);
+            return;
+        }
+    }
+
+    if (reaction.message.author?.id !== DISCORD_CLIENT.user?.id || user.bot) {
         return;
     }
-    const title = reaction.message.embeds.find((e) => e.title === '色を選択');
+
+    const title = reaction.message.embeds.find((e) => e.title === 'ルールを読んだらリアクション');
     if (!title) {
         return;
     }
     if (reaction.message.channel.type === ChannelType.GuildText) {
+        console.log(reaction);
+        await reaction.users.remove(user as User);
+
+        // add user role
+        await reaction.message.guild?.members.cache.get(user.id)?.roles.add(CONFIG.MEMBER_ROLE_ID);
+
+        const message = await reaction.message.reply(`success/ ${reaction.emoji.name}`);
+        await message.delete();
         return;
     }
 });

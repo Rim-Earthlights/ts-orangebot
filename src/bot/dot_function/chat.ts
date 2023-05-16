@@ -33,7 +33,7 @@ async function initalize(gid: string, mode: 'normal' | 'custom' = 'normal') {
 /**
  * ChatGPTで会話する
  */
-export async function talk(message: Message, content: string, model = 'gpt-3.5-turbo') {
+export async function talk(message: Message, content: string, model: 'gpt-3.5-turbo' | 'gpt-4' = 'gpt-3.5-turbo') {
     // サーバー内のテキストチャンネル以外は無視
     if (!message.guild) {
         return;

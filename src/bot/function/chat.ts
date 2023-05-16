@@ -28,7 +28,7 @@ const initalize = async (gid: string, mode: 'normal' | 'custom' = 'normal') => {
 export const talk = async (
     interaction: ChatInputCommandInteraction<CacheType>,
     content: string,
-    model = 'gpt-3.5-turbo'
+    model: 'gpt-3.5-turbo' | 'gpt-4' = 'gpt-3.5-turbo'
 ) => {
     // サーバー内のテキストチャンネル以外は無視
     if (!interaction.guild) {

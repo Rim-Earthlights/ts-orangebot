@@ -12,6 +12,7 @@ import * as BotFunctions from './function/index.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
 import * as logger from '../common/logger.js';
+import { CONFIG } from '../config/config.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -486,6 +487,31 @@ export async function commandSelector(message: Message) {
                 .setDescription(`選択肢: ${content.join(', ')}`);
 
             message.reply({ embeds: [send] });
+            break;
+        }
+        case 'popup-rule': {
+            const channel = message.channel;
+            if (channel) {
+                const send = new EmbedBuilder().setColor('#ffcc00').setTitle(`ルールを読んだらリアクション`);
+                const result = await channel?.send({ embeds: [send] });
+                result.react('✅');
+            }
+            const m = await channel.send('pop-up success.');
+            await m.delete();
+            break;
+        }
+        case 'add-role-all': {
+            const members = await message.guild?.members.fetch();
+            if (!members) {
+                break;
+            }
+            members.map(async (m) => {
+                if (m.user.bot) {
+                    return;
+                }
+                await m.roles.add(CONFIG.MEMBER_ROLE_ID);
+            });
+            await message.reply('add roles to all members.');
             break;
         }
         case 'restart': {
