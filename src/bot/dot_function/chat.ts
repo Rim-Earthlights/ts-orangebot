@@ -78,7 +78,7 @@ export async function talk(message: Message, content: string, model: 'gpt-3.5-tu
         logger.info(
             message.guild.id,
             'ChatGPT',
-            `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail.usage)}\nResponse: \n${
+            `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail?.usage)}\nResponse: \n${
                 response.text
             }`
         );

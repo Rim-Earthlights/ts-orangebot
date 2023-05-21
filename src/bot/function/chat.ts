@@ -74,7 +74,7 @@ export const talk = async (
         logger.info(
             interaction.guild.id,
             'ChatGPT',
-            `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail.usage)}\nResponse: \n${
+            `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail?.usage)}\nResponse: \n${
                 response.text
             }`
         );
