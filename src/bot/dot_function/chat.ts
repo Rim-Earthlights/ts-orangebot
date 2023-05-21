@@ -79,7 +79,7 @@ export async function talk(message: Message, content: string, model: 'gpt-3.5-tu
             message.guild.id,
             'ChatGPT',
             `ParentId: ${parentMessageId}, ResponseId: ${response.id}\nUsage: ${JSON.stringify(
-                response.detail.usage
+                response.detail?.usage
             )}\nResponse: \n${response.text}`
         );
         await message.reply(response.text);
