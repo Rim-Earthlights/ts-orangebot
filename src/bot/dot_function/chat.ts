@@ -75,12 +75,12 @@ export async function talk(message: Message, content: string, model: 'gpt-3.5-tu
         });
         chat.parentMessageId.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
-        logger.info(
+        await logger.info(
             message.guild.id,
             'ChatGPT',
-            `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail?.usage)}\nResponse: \n${
-                response.text
-            }`
+            `ParentId: ${parentMessageId}, ResponseId: ${response.id}\nUsage: ${JSON.stringify(
+                response.detail.usage
+            )}\nResponse: \n${response.text}`
         );
         await message.reply(response.text);
     } catch (err) {

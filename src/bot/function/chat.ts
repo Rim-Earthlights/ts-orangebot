@@ -71,14 +71,14 @@ export const talk = async (
         });
         chat.parentMessageId.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
-        logger.info(
+        await logger.info(
             interaction.guild.id,
             'ChatGPT',
             `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail?.usage)}\nResponse: \n${
                 response.text
             }`
         );
-        await interaction.editReply(response.text);
+        await interaction.editReply([`ParentId: ${parentMessageId}`, response.text].join('\n'));
     } catch (err) {
         const error = err as AxiosError;
         if (error.response?.status === 500) {
