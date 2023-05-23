@@ -38,11 +38,11 @@ export async function commandSelector(message: Message) {
             await debug(message, content);
             break;
         }
-        // case 'gpt-no-system': {
-        //     const chat = content.join(' ');
-        //     await BotFunctions.Chat.talkCustomSystemMessage(message, chat);
-        //     break;
-        // }
+        case 'gpt-no-system': {
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.talkWithoutPrompt(message, chat);
+            break;
+        }
         case 'gpt': {
             const chat = content.join(' ');
             await DotBotFunctions.Chat.talk(message, chat);

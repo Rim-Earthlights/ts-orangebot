@@ -5,7 +5,11 @@ export const CONFIG = {
     // use privillage user
     HOST_URL: 'http://exsample.com',
     USER: 'USER',
-    // discord guild administrator user id
+    // Discord APP_ID
+    APP_ID: 'APP_ID',
+    // Discord member role id
+    MEMBER_ROLE_ID: 'MEMBER_ROLE_ID',
+    // Discord guild administrator user id
     ADMIN_USER_ID: ['DISCORD_ID'],
     // register command to guild
     COMMAND_GUILD_ID: ['COMMAND_GUILD_ID'],
@@ -15,11 +19,18 @@ export const CONFIG = {
     // OpenWeatherMap; see: https://openweathermap.org/
     FORECAST_KEY: 'YOUR_FORECAST_KEY',
     YOUTUBE_API_KEY: 'YOUTUBE_API_KEY',
-    OPENAI_KEY: 'sk-OPENAI_KEY',
+    OPENAI: {
+        EMAIL: 'OPENAI_MAIL',
+        PASSWORD: 'OPENAI_PASSWORD',
+        ORG: 'YOUR_OPENAI_ORG_KEY',
+        KEY: 'YOUR_OPENAI_SECRET',
+        ACCESSTOKEN:
+            'YOUR_TOKEN: https://chat.openai.com/api/auth/session'
+    },
     DB: {
         HOSTNAME: 'HOSTNAME',
-        USERNAME: 'orange',
-        DATABASE: 'orangebot',
+        USERNAME: 'USERNAME',
+        DATABASE: 'DATABASE',
         PASSWORD: 'PASSWORD',
         FLUSH: false,
     },
