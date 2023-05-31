@@ -428,12 +428,25 @@ export async function commandSelector(message: Message) {
         }
         case 'room': {
             if (content.length <= 0) {
-                const send = new EmbedBuilder()
-                    .setColor('#ff0000')
-                    .setTitle(`エラー`)
-                    .setDescription(`変更したいルーム名を入れてね`);
+                // 初期名(お部屋: #NUM)に変更
+                const guild = message.guild!;
+                const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
+                const roomName = `お部屋: #${('000' + channelLength).slice(-3)}`;
 
-                message.reply({ embeds: [send] });
+                const vc = message.member?.voice.channel;
+
+                if (!vc) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`ボイスチャンネルに入ってから使ってね`);
+
+                    message.reply({ embeds: [send] });
+                    return;
+                }
+
+                await vc.setName(roomName, '部屋名変更: ' + message.author.tag);
+                message.reply(`お部屋の名前を${roomName}に変更したよ！`);
                 return;
             }
             await DotBotFunctions.Room.changeRoomName(message, content.join(' '));
