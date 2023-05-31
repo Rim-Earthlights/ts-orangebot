@@ -46,9 +46,9 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 type: ChannelType.GuildVoice,
                 parent: parent
             });
-            logger.info(vc.guild.id, 'joinVoiceChannel', `create ch: ${voiceState.channel?.name}`);
-            (voiceState.channel as VoiceChannel).members.map((m) => {
-                m.voice.setChannel(vc.id);
+            await logger.info(vc.guild.id, 'joinVoiceChannel', `create ch: ${voiceState.channel?.name}`);
+            (voiceState.channel as VoiceChannel).members.map(async (m) => {
+                await m.voice.setChannel(vc.id);
             });
         }
     }
