@@ -38,6 +38,9 @@ export class Item extends BaseEntity {
     @Column({ type: 'smallint', default: 0, nullable: false })
     reroll!: number;
 
+    @Column({ type: 'int', default: 0, nullable: false })
+    price!: number;
+
     @DeleteDateColumn({ type: 'datetime', nullable: true })
     deleted_at: Date | null = null;
 

@@ -403,11 +403,15 @@ export async function getPresent(message: Message, uid?: string) {
 
     if (pickLeft != undefined) {
         const presentDescription = gachaList.map((p) => `${p.id}: [${p.items.rare}]${p.items.name}`).join('\n');
+        const money = gachaList.reduce((prev, current) => {
+            return prev + current.items.price;
+        }, 0);
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle(`${user?.user_name} さんのガチャ情報だよ！`)
             .setFields(
                 { name: '当選したプレゼント', value: presentDescription ? presentDescription : 'なし' },
+                { name: '現在の金額', value: money.toString() },
                 { name: '残りガチャ回数', value: pickLeft.toString() }
             );
         await message.channel.send({ embeds: [send] });
