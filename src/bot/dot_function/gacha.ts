@@ -43,7 +43,7 @@ export async function getGachaOnce(): Promise<Gacha> {
         }
     };
 
-    const rnd = Math.random() * switchMultiplicationToDivision(CONFIG.PICKRATE);
+    const rnd = Math.random() * switchMultiplicationToDivision(CONFIG.GACHA.PICKRATE);
 
     console.log(rnd);
 
