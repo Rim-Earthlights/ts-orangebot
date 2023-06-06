@@ -78,7 +78,7 @@ export const talk = async (
                 response.text
             }`
         );
-        await interaction.editReply([`ParentId: ${parentMessageId}`, response.text].join('\n'));
+        await interaction.editReply(response.text);
     } catch (err) {
         const error = err as AxiosError;
         if (error.response?.status === 500) {

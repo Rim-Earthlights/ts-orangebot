@@ -13,6 +13,8 @@ import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
 import * as logger from '../common/logger.js';
 import { CONFIG } from '../config/config.js';
+import { isEnableFunction } from '../common/common.js';
+import { functionNames } from '../constant/constants.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -39,16 +41,44 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'gpt-no-system': {
+            if (!isEnableFunction(functionNames.GPT_WITHOUT_KEY)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT_WITHOUT_KEY)`, embeds: [send] });
+                return;
+            }
             const chat = content.join(' ');
             await DotBotFunctions.Chat.talkWithoutPrompt(message, chat);
             break;
         }
         case 'gpt': {
+            if (!isEnableFunction(functionNames.GPT)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
+                return;
+            }
             const chat = content.join(' ');
             await DotBotFunctions.Chat.talk(message, chat);
             break;
         }
         case 'g4': {
+            if (!isEnableFunction(functionNames.GPT) || !isEnableFunction(functionNames.ENABLE_GPT4)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT-4)`, embeds: [send] });
+                return;
+            }
+
             const chat = content.join(' ');
             await DotBotFunctions.Chat.talk(message, chat, 'gpt-4');
             break;
@@ -62,6 +92,15 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'tenki': {
+            if (!isEnableFunction(functionNames.FORECAST)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(FORECAST)`, embeds: [send] });
+                return;
+            }
             await DotBotFunctions.Forecast.weather(message, content);
             break;
         }
@@ -101,6 +140,15 @@ export async function commandSelector(message: Message) {
          */
         case 'play':
         case 'pl': {
+            if (!isEnableFunction(functionNames.YOUTUBE)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(YOUTUBE)`, embeds: [send] });
+                return;
+            }
             try {
                 if (!content || content.length === 0) {
                     const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
@@ -525,7 +573,7 @@ export async function commandSelector(message: Message) {
                 if (m.user.bot) {
                     return;
                 }
-                await m.roles.add(CONFIG.MEMBER_ROLE_ID);
+                await m.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
             });
             await message.reply('add roles to all members.');
             break;
@@ -583,12 +631,30 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             break;
         }
         case 'gpt': {
+            if (!isEnableFunction(functionNames.GPT)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
+                return;
+            }
             await interaction.deferReply();
             const text = interaction.options.getString('text')!;
             await BotFunctions.Chat.talk(interaction, text);
             break;
         }
         case 'g4': {
+            if (!isEnableFunction(functionNames.GPT) || !isEnableFunction(functionNames.ENABLE_GPT4)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                interaction.reply({ content: `機能が有効化されてないよ！(ENABLE_GPT4)`, embeds: [send] });
+                return;
+            }
             await interaction.deferReply();
             const text = interaction.options.getString('text')!;
             await BotFunctions.Chat.talk(interaction, text, 'gpt-4');

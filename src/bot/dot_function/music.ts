@@ -473,7 +473,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
                 .setThumbnail(playing.thumbnail)
                 .addFields({
                     name: '再生キュー',
-                    value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                    value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
                 });
             (channel as VoiceChannel).send({ embeds: [send] });
         }
@@ -492,7 +492,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
             .setDescription(JSON.stringify(e))
             .addFields({
                 name: '再生キュー',
-                value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }
@@ -643,7 +643,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
             .setThumbnail(info.thumbnail)
             .addFields({
                 name: '再生キュー',
-                value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }
@@ -758,7 +758,7 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
             .setDescription(JSON.stringify(error.message))
             .addFields({
                 name: '再生キュー',
-                value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }

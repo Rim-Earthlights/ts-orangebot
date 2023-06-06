@@ -55,7 +55,7 @@ async function getPlaylistItemsResponse(playlistId: string, pageToken?: string):
     const uri = 'https://www.googleapis.com/youtube/v3/playlistItems';
 
     const params = new URLSearchParams({
-        key: CONFIG.YOUTUBE_API_KEY,
+        key: CONFIG.YOUTUBE.KEY,
         part: 'snippet',
         playlistId: playlistId,
         maxResults: '50'

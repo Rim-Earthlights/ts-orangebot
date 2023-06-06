@@ -18,6 +18,7 @@ import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { Gacha as OldGacha } from './bot/dot_function/index.js';
 import { Gacha } from './bot/function/index.js';
 import { initJob } from './job/job.js';
+import { switchFunctionByAPIKey } from './common/common.js';
 
 dotenv.config();
 
@@ -40,9 +41,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // port
-const port = CONFIG.PORT;
+const port = CONFIG.COMMON.PORT;
 // const user = process.env.USER ? process.env.USER : 'default';
-const hostName = CONFIG.HOSTNAME;
+const hostName = CONFIG.COMMON.HOSTNAME;
 
 // route settings in routers.ts
 app.use('/', routers);
@@ -123,23 +124,27 @@ const commands = [
     //     .addStringOption((option) => option.setName('url').setDescription('youtube url').setRequired(true))
 ].map((command) => command.toJSON());
 
-const rest = new REST({ version: '10' }).setToken(CONFIG.TOKEN);
+const rest = new REST({ version: '10' }).setToken(CONFIG.DISCORD.TOKEN);
 
-CONFIG.COMMAND_GUILD_ID.map((gid) => {
-    rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: [] })
+CONFIG.DISCORD.COMMAND_GUILD_ID.map((gid) => {
+    rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: [] })
         .then(() => logger.info(gid, 'rem-command', 'successfully remove command.'))
         .catch(console.error);
-    rest.put(Routes.applicationGuildCommands(CONFIG.APP_ID, gid), { body: commands })
+    rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: commands })
         .then(() => logger.info(gid, 'reg-command', 'successfully add command.'))
         .catch(console.error);
 });
 
-DISCORD_CLIENT.login(CONFIG.TOKEN);
+DISCORD_CLIENT.login(CONFIG.DISCORD.TOKEN);
 
 /**
  * bot初回読み込み
  */
 DISCORD_CLIENT.once('ready', async () => {
+    // APIキーによって有効無効を切り替える
+    switchFunctionByAPIKey();
+
+    // DBの初期化
     TypeOrm.dataSource
         .initialize()
         .then(async () => {
@@ -228,7 +233,7 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
         await reaction.users.remove(user.id);
 
         const u = reaction.message.guild?.members.cache.get(user.id);
-        const role = u?.roles.cache.find((role) => role.id === CONFIG.MEMBER_ROLE_ID);
+        const role = u?.roles.cache.find((role) => role.id === CONFIG.DISCORD.MEMBER_ROLE_ID);
         if (role) {
             const message = await reaction.message.reply(`もうロールが付いてるみたい！`);
             setTimeout(async () => {
@@ -238,7 +243,7 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
         }
 
         // add user role
-        await u?.roles.add(CONFIG.MEMBER_ROLE_ID);
+        await u?.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
 
         const message = await reaction.message.reply(`読んでくれてありがと～！ロールを付与したよ！`);
         setTimeout(async () => {
