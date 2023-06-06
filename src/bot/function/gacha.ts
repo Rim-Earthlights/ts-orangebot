@@ -111,7 +111,7 @@ export const extraPick = async (interaction: ChatInputCommandInteraction<CacheTy
  * @returns
  */
 async function reset(interaction: ChatInputCommandInteraction<CacheType>, id?: string, num?: string) {
-    if (!CONFIG.ADMIN_USER_ID.includes(interaction.user.id)) {
+    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(interaction.user.id)) {
         interaction.editReply({
             content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
         });
@@ -380,7 +380,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
     if (uid == undefined) {
         getUid = interaction.user.id;
     } else {
-        if (!CONFIG.ADMIN_USER_ID.includes(interaction.user.id)) {
+        if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(interaction.user.id)) {
             interaction.reply({
                 content: `他ユーザーのプレゼントの閲覧権限がないよ！`
             });
@@ -416,7 +416,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
  *
  */
 export async function usePresent(interaction: ChatInputCommandInteraction<CacheType>, args: string[]) {
-    if (!CONFIG.ADMIN_USER_ID.includes(interaction.user.id)) {
+    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(interaction.user.id)) {
         interaction.editReply({
             content: `プレゼントの使用権限がないよ！`
         });
@@ -455,7 +455,7 @@ export async function usePresent(interaction: ChatInputCommandInteraction<CacheT
  * @returns
  */
 export async function givePresent(message: Message, uid: string, itemId: number) {
-    if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
         message.reply({
             content: `プレゼントを渡す権限がないよ！`
         });

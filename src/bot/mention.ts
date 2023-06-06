@@ -3,7 +3,8 @@ import { EmbedBuilder, Message } from 'discord.js';
 import * as Commands from './commands.js';
 import * as BotFunctions from './dot_function/index.js';
 import * as reactions from '../constant/words/reactions.js';
-import { getRndNumber } from '../common/common.js';
+import { getRndNumber, isEnableFunction } from '../common/common.js';
+import { functionNames } from '../constant/constants.js';
 
 /**
  * 反応ワードから処理を実行する
@@ -151,6 +152,15 @@ export async function wordSelector(message: Message) {
         return;
     }
     if (message.content.match('(天気|てんき)')) {
+        if (!isEnableFunction(functionNames.FORECAST)) {
+            const send = new EmbedBuilder()
+                .setColor('#ff0000')
+                .setTitle(`エラー`)
+                .setDescription(`機能が有効化されていません。`);
+
+            message.reply({ content: `ごめんなさい、天気情報取ってこれなかった……`, embeds: [send] });
+            return;
+        }
         const cityName = await BotFunctions.Forecast.getPref(message.author.id);
         if (!cityName) {
             message.reply('地域が登録されてないよ！\n@みかんちゃん 地域覚えて [地域]  で登録して！');

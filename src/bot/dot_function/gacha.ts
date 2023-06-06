@@ -107,7 +107,7 @@ export async function pickGacha(message: Message, args?: string[]) {
  * @returns
  */
 async function reset(message: Message, id?: string, num?: string) {
-    if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
         message.reply({
             content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
         });
@@ -376,7 +376,7 @@ export async function getPresent(message: Message, uid?: string) {
     if (uid == undefined) {
         getUid = message.author.id;
     } else {
-        if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+        if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
             message.reply({
                 content: `他ユーザーのプレゼントの閲覧権限がないよ！`
             });
@@ -412,7 +412,7 @@ export async function getPresent(message: Message, uid?: string) {
  *
  */
 export async function usePresent(message: Message, args: string[]) {
-    if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
         message.reply({
             content: `プレゼントの使用権限がないよ！`
         });
@@ -451,7 +451,7 @@ export async function usePresent(message: Message, args: string[]) {
  * @returns
  */
 export async function givePresent(message: Message, uid: string, itemId: number) {
-    if (!CONFIG.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
         message.reply({
             content: `プレゼントを渡す権限がないよ！`
         });

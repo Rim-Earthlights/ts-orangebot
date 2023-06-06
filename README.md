@@ -13,6 +13,10 @@
 7. `yarn run compile`
 8. `yarn run dist` run compiled js (./dist)
 
+# config.tsについて
+- 基本はテンプレートに沿えば大丈夫ですが、DISCORD, DB設定の入力は必須です。
+- Forecast, GPT, YoutubeのAPIキーは任意ですが、入力するとその機能が使えるようになります。
+
 # 出来ること
 + お部屋の自動作成/削除機能
   + ロビーに誰かが入ると、お部屋:(001)のような連番のお部屋が作成される

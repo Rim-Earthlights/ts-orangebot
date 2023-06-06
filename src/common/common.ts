@@ -1,3 +1,6 @@
+import { CONFIG } from '../config/config';
+import { ENABLE_FUNCTION, functionNames } from '../constant/constants';
+
 /**
  * 乱数生成機
  * n-mまでの整数を出力する.
@@ -45,4 +48,26 @@ export function arrayEquals(t: number[], v: number[]): boolean {
         }
     }
     return true;
+}
+
+export function switchFunctionByAPIKey() {
+    if (CONFIG.FORECAST.KEY) {
+        ENABLE_FUNCTION.find((f) => f.name === functionNames.FORECAST)!.enable = true;
+    }
+    if (CONFIG.YOUTUBE.KEY) {
+        ENABLE_FUNCTION.find((f) => f.name === functionNames.YOUTUBE)!.enable = true;
+    }
+    if (CONFIG.OPENAI.KEY) {
+        ENABLE_FUNCTION.find((f) => f.name === functionNames.GPT)!.enable = true;
+    }
+    if (CONFIG.OPENAI.IS_ENABLE_GPT4) {
+        ENABLE_FUNCTION.find((f) => f.name === functionNames.ENABLE_GPT4)!.enable = true;
+    }
+    if (CONFIG.OPENAI.ACCESSTOKEN) {
+        ENABLE_FUNCTION.find((f) => f.name === functionNames.GPT_WITHOUT_KEY)!.enable = true;
+    }
+}
+
+export function isEnableFunction(name: functionNames) {
+    return ENABLE_FUNCTION.find((f) => f.name === name)!.enable;
 }

@@ -16,7 +16,7 @@ import * as logger from '../../common/logger.js';
  */
 export async function weather(message: Message, args?: string[]) {
     try {
-        const forecastKey = CONFIG.FORECAST_KEY;
+        const forecastKey = CONFIG.FORECAST.KEY;
         if (!forecastKey) {
             throw new Error('天気情報取得用のAPIキーが登録されていません');
         }
