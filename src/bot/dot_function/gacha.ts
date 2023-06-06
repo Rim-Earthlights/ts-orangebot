@@ -12,6 +12,7 @@ import { UsersRepository } from '../../model/repository/usersRepository.js';
 import * as Models from '../../model/models/index.js';
 import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
+import * as Logger from '../../common/logger.js';
 
 export class Gacha {
     static allItemList: Models.Item[] = [];
@@ -34,19 +35,29 @@ function getWeight(list: Models.Item[]): Models.Item[] {
  * @returns
  */
 export async function getGachaOnce(): Promise<Gacha> {
-    const rnd = Math.random();
+    const switchMultiplicationToDivision = (num: number) => {
+        if (num === 0) {
+            return Infinity;
+        } else {
+            return 1 / num;
+        }
+    };
 
-    if (rnd < 0.00_00_44) {
+    const rnd = Math.random() * switchMultiplicationToDivision(CONFIG.PICKRATE);
+
+    console.log(rnd);
+
+    if (rnd < 0.000044) {
         return await convertGacha('UUR');
-    } else if (rnd < 0.00_03_06) {
+    } else if (rnd < 0.000306) {
         return await convertGacha('UR');
-    } else if (rnd < 0.00_68_8) {
+    } else if (rnd < 0.00688) {
         return await convertGacha('SSR');
-    } else if (rnd < 0.08_92_8) {
+    } else if (rnd < 0.08928) {
         return await convertGacha('SR');
-    } else if (rnd < 0.65_8) {
+    } else if (rnd < 0.658) {
         return await convertGacha('R');
-    } else if (rnd < 0.88_89) {
+    } else if (rnd < 0.8889) {
         return await convertGacha('UC');
     } else {
         return await convertGacha('C');
@@ -108,7 +119,7 @@ export async function pickGacha(message: Message, args?: string[]) {
  */
 async function reset(message: Message, id?: string, num?: string) {
     if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
-        message.reply({
+        await message.reply({
             content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
         });
         return;
@@ -117,20 +128,20 @@ async function reset(message: Message, id?: string, num?: string) {
         const users = new UsersRepository();
         const user = await users.get(id);
         if (!user) {
-            message.reply({
+            await message.reply({
                 content: `リセットしようとするユーザが登録されてないみたい…？`
             });
             return;
         }
         if (num) {
             await users.resetGacha(id, Number(num));
-            message.reply({
+            await message.reply({
                 content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を${num}に再セットしたよ！`
             });
             return;
         }
         await users.resetGacha(id, 10);
-        message.reply({
+        await message.reply({
             content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を10に再セットしたよ！`
         });
     }
@@ -173,7 +184,7 @@ async function pickExtra(message: Message, args: string[]) {
                     .setTitle(`エラー`)
                     .setDescription(`1,000,000回引いても該当の等級が出なかった`);
 
-                message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
+                await message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
                 return;
             }
             // eslint-disable-next-line no-constant-condition
@@ -207,7 +218,7 @@ async function pickExtra(message: Message, args: string[]) {
         .setFields(fields)
         .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png');
 
-    message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
+    await message.reply({ content: `ガチャを${gachaList.length}回ひいたよ！(_**景品無効**_)`, embeds: [send] });
 }
 
 /**
@@ -241,7 +252,7 @@ async function pickNormal(message: Message, gnum = '10') {
                 .setColor('#ff0000')
                 .setTitle(`ガチャ回数不足`)
                 .setFields({ name: '残り回数', value: user.pick_left.toString() });
-            message.reply({
+            await message.reply({
                 content: `ガチャを引く残り回数が足りないみたい！`,
                 embeds: [send]
             });
@@ -333,14 +344,14 @@ async function pickNormal(message: Message, gnum = '10') {
                 { name: 'チケット増加回数', value: totalRolls.toString() },
                 { name: '残り回数', value: pickLeft.toString() }
             );
-        message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
+        await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
                 .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
                 .setFields({ name: '通知:', value: '<@246007305156558848>' });
-            message.channel.send({ embeds: [send] });
+            await message.channel.send({ embeds: [send] });
         }
     } else {
         const send = new EmbedBuilder()
@@ -352,14 +363,14 @@ async function pickNormal(message: Message, gnum = '10') {
                 { name: 'チケット増加回数', value: totalRolls.toString() },
                 { name: '残り回数', value: pickLeft.toString() }
             );
-        message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
+        await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
                 .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
                 .setFields({ name: '通知用:', value: '<@246007305156558848>' });
-            message.channel.send({ embeds: [send] });
+            await message.channel.send({ embeds: [send] });
         }
     }
 }
@@ -399,9 +410,9 @@ export async function getPresent(message: Message, uid?: string) {
                 { name: '当選したプレゼント', value: presentDescription ? presentDescription : 'なし' },
                 { name: '残りガチャ回数', value: pickLeft.toString() }
             );
-        message.channel.send({ embeds: [send] });
+        await message.channel.send({ embeds: [send] });
     } else {
-        message.reply({
+        await message.reply({
             content: `ユーザーが登録されていないみたい？ガチャを引いてみると解決するかも！`
         });
     }
@@ -413,7 +424,7 @@ export async function getPresent(message: Message, uid?: string) {
  */
 export async function usePresent(message: Message, args: string[]) {
     if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
-        message.reply({
+        await message.reply({
             content: `プレゼントの使用権限がないよ！`
         });
         return;
@@ -432,11 +443,11 @@ export async function usePresent(message: Message, args: string[]) {
                     }`
                 );
 
-            message.reply({
+            await message.reply({
                 embeds: [send]
             });
         } else {
-            message.reply({
+            await message.reply({
                 content: `id:${arg} のプレゼントが見つからないよ！`
             });
         }
@@ -452,7 +463,7 @@ export async function usePresent(message: Message, args: string[]) {
  */
 export async function givePresent(message: Message, uid: string, itemId: number) {
     if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
-        message.reply({
+        await message.reply({
             content: `プレゼントを渡す権限がないよ！`
         });
         return;
@@ -466,11 +477,11 @@ export async function givePresent(message: Message, uid: string, itemId: number)
             .setTitle('プレゼントを渡したよ！')
             .setDescription(`ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).tag}\nプレゼント: ${result.items.name}`);
 
-        message.reply({
+        await message.reply({
             embeds: [send]
         });
     } else {
-        message.reply({
+        await message.reply({
             content: `プレゼントが見つからないよ！`
         });
     }
@@ -497,7 +508,7 @@ export async function pickOmikuji(message: Message, args?: string[]) {
                     .setTitle(`エラー`)
                     .setDescription(`500回引いても該当のおみくじが出なかった`);
 
-                message.reply({ content: `おみくじ、出なかったみたい・・・`, embeds: [send] });
+                await message.reply({ content: `おみくじ、出なかったみたい・・・`, embeds: [send] });
                 return;
             }
             // eslint-disable-next-line no-constant-condition
@@ -537,7 +548,7 @@ export async function pickOmikuji(message: Message, args?: string[]) {
             })
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
 
-        message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
+        await message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
         return;
     } else {
         const omikuji = getOmikujiOnce();
@@ -548,7 +559,7 @@ export async function pickOmikuji(message: Message, args?: string[]) {
             .setDescription(omikuji.description)
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
 
-        message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
+        await message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
         return;
     }
 }
