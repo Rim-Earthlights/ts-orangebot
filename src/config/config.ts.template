@@ -20,6 +20,9 @@ export const CONFIG = {
         // discord bot token
         TOKEN: '******.*********.****-*****-*****'
     },
+    GACHA: {
+        PICKRATE: 1.00
+    },
     // OpenWeatherMap API KEY
     // OpenWeatherMap; see: https://openweathermap.org/
     FORECAST: {
