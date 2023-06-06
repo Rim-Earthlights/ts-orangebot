@@ -17,6 +17,11 @@ export class Gacha {
     static allItemList: Models.Item[] = [];
 }
 
+/**
+ * ガチャの当選結果を重み付けして取得する
+ * @param list
+ * @returns
+ */
 function getWeight(list: Models.Item[]): Models.Item[] {
     const weightList = [];
 
@@ -103,43 +108,6 @@ export const getGachaInfo = async (interaction: ChatInputCommandInteraction<Cach
 export const extraPick = async (interaction: ChatInputCommandInteraction<CacheType>, num?: number, word?: string) => {
     await pickExtra(interaction, num, word);
 };
-
-/**
- * ガチャフラグをリセットする
- * @param interaction
- * @param id
- * @returns
- */
-async function reset(interaction: ChatInputCommandInteraction<CacheType>, id?: string, num?: string) {
-    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(interaction.user.id)) {
-        interaction.editReply({
-            content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
-        });
-        return;
-    }
-    if (id) {
-        const users = new UsersRepository();
-        const user = await users.get(id);
-        if (!user) {
-            interaction.editReply({
-                content: `リセットしようとするユーザが登録されてないみたい…？`
-            });
-            return;
-        }
-        if (num) {
-            await users.resetGacha(id, Number(num));
-            interaction.editReply({
-                content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を${num}に再セットしたよ！`
-            });
-            return;
-        }
-        await users.resetGacha(id, 10);
-        interaction.editReply({
-            content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を10に再セットしたよ！`
-        });
-    }
-    return;
-}
 
 /**
  * 指定された条件でガチャを引く
