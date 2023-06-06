@@ -1,5 +1,5 @@
-import { CONFIG } from '../config/config';
-import { ENABLE_FUNCTION, functionNames } from '../constant/constants';
+import { CONFIG } from '../config/config.js';
+import { ENABLE_FUNCTION, functionNames } from '../constant/constants.js';
 
 /**
  * 乱数生成機
