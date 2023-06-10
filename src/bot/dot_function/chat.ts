@@ -59,7 +59,7 @@ export async function talk(message: Message, content: string, model: 'gpt-3.5-tu
 
     const systemContent = {
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
-        user: message.member?.displayName ?? 'system'
+        user: message.member?.nickname ?? message.member?.displayName ?? 'system'
     };
 
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
