@@ -32,4 +32,4 @@ export class ItemRank extends BaseEntity {
     items!: Item[];
 }
 
-type RARE = 'UUR' | 'UR' | 'SSR' | 'SR' | 'R' | 'UC' | 'C';
+type RARE = 'UUR' | 'UR' | 'SSR' | 'SR' | 'R' | 'UC' | 'C' | 'P';
