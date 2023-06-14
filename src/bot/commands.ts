@@ -619,9 +619,10 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     await interaction.deferReply();
                     await BotFunctions.Gacha.extraPick(
                         interaction,
-                        interaction.options.getInteger('num') ?? undefined,
+                        interaction.options.getNumber('num') ?? undefined,
                         interaction.options.getString('item') ?? undefined
                     );
+                    break;
                 }
             }
             break;

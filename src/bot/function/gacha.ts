@@ -163,6 +163,7 @@ async function pickExtra(interaction: ChatInputCommandInteraction<CacheType>, nu
             value: length.toString() + ` > 確率: ${((length / gachaList.length) * 100).toFixed(4)}%`
         };
     });
+    fields.push({ name: '当たり数', value: gachaList.filter((g) => g.is_present).length.toString() });
     fields.push({ name: '総数', value: gachaList.length.toString() });
 
     // 等級の高い順に並び替える
