@@ -363,7 +363,9 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
     const gachaList = await gachaRepository.getPresents(getUid);
 
     if (pickLeft != undefined) {
-        const presentDescription = gachaList.map((p) => `${p.id}: [${p.items.rare}]${p.items.name}`).join('\n');
+        const presentDescription = gachaList
+            .map((p) => `${p.id}: [${p.items.rare}]${p.items.icon ? p.items.icon : ''} ${p.items.name}`)
+            .join('\n');
         const money = gachaList.reduce((prev, current) => {
             return prev + current.items.price;
         }, 0);
