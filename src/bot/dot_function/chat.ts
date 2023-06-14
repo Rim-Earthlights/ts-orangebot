@@ -8,7 +8,7 @@ import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
-import { GPT } from '../../constant/chat/chat.js';
+import { ChatGPTModel, GPT, getMaxTokens } from '../../constant/chat/chat.js';
 
 const ChatGPT = new ChatGPTAPI({
     apiKey: CONFIG.OPENAI.KEY
@@ -30,7 +30,7 @@ async function initalize(gid: string, mode: 'normal' | 'custom' = 'normal') {
 /**
  * ChatGPTで会話する
  */
-export async function talk(message: Message, content: string, model: 'gpt-3.5-turbo' | 'gpt-4' = 'gpt-3.5-turbo') {
+export async function talk(message: Message, content: string, model: ChatGPTModel) {
     // サーバー内のテキストチャンネル以外は無視
     if (!message.guild) {
         return;
@@ -77,7 +77,7 @@ export async function talk(message: Message, content: string, model: 'gpt-3.5-tu
             'ChatGPT',
             `ParentId: ${parentMessageId}, ResponseId: ${response.id}\nUsage: ${JSON.stringify(
                 response.detail?.usage
-            )}\nResponse: \n${response.text}`
+            )}\nModel: ${response.detail?.model}\nResponse: \n${response.text}`
         );
         await message.reply(response.text);
     } catch (err) {

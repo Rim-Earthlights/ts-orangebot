@@ -15,6 +15,7 @@ import * as logger from '../common/logger.js';
 import { CONFIG } from '../config/config.js';
 import { isEnableFunction } from '../common/common.js';
 import { functionNames } from '../constant/constants.js';
+import { ChatGPTModel } from '../constant/chat/chat.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -65,7 +66,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat);
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_3_16K);
             break;
         }
         case 'g4': {
@@ -80,7 +81,7 @@ export async function commandSelector(message: Message) {
             }
 
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, 'gpt-4');
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4);
             break;
         }
         case 'erase': {
@@ -642,7 +643,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             }
             await interaction.deferReply();
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text);
+            await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_3_16K);
             break;
         }
         case 'g4': {
@@ -657,7 +658,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             }
             await interaction.deferReply();
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, 'gpt-4');
+            await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_4);
             break;
         }
         case 'erase': {
