@@ -13,6 +13,7 @@ import * as Models from '../../model/models/index.js';
 import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import * as Logger from '../../common/logger.js';
+import { getGachaOnce } from '../function/gacha.js';
 
 export class Gacha {
     static allItemList: Models.Item[] = [];
@@ -28,63 +29,6 @@ function getWeight(list: Models.Item[]): Models.Item[] {
     }
 
     return weightList;
-}
-
-/**
- * ランダムにガチャを一度引き、等級を返す
- * @returns
- */
-export async function getGachaOnce(): Promise<Gacha> {
-    const switchMultiplicationToDivision = (num: number) => {
-        if (num === 0) {
-            return Infinity;
-        } else {
-            return 1 / num;
-        }
-    };
-
-    const rnd = Math.random() * switchMultiplicationToDivision(CONFIG.GACHA.PICKRATE);
-
-    console.log(rnd);
-
-    if (rnd < 0.000044) {
-        return await convertGacha('UUR');
-    } else if (rnd < 0.000306) {
-        return await convertGacha('UR');
-    } else if (rnd < 0.00688) {
-        return await convertGacha('SSR');
-    } else if (rnd < 0.08928) {
-        return await convertGacha('SR');
-    } else if (rnd < 0.658) {
-        return await convertGacha('R');
-    } else if (rnd < 0.8889) {
-        return await convertGacha('UC');
-    } else {
-        return await convertGacha('C');
-    }
-}
-
-/**
- * 当選結果からランダムにガチャを引く
- * @param rare
- * @returns
- */
-async function convertGacha(rare: string): Promise<Gacha> {
-    const allItems = Gacha.allItemList;
-    const itemList = allItems.filter((i) => i.rare === rare);
-    const weightList = getWeight(itemList);
-
-    const index = getRndNumber(1, weightList.length) - 1;
-
-    return {
-        item_id: weightList[index].id,
-        name: weightList[index].name,
-        icon: weightList[index].icon,
-        rare: weightList[index].rare,
-        rank: weightList[index].item_rank.rank,
-        is_present: weightList[index].is_present === 1,
-        reroll: weightList[index].reroll
-    };
 }
 
 /**
