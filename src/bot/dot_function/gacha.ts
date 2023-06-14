@@ -441,51 +441,30 @@ export async function givePresent(message: Message, uid: string, itemId: number)
 
 export const showPercent = async (message: Message) => {
     const fields = [];
-    fields.push({ name: 'UUR', value: `${GachaPercents.UUR * 100}` });
-    fields.push({ name: 'UR', value: `${GachaPercents.UR * 100 - GachaPercents.UUR * 100}` });
+    fields.push({ name: 'UUR', value: `${GachaPercents.UUR * 100} %` });
+    fields.push({ name: 'UR', value: `${GachaPercents.UR * 100 - GachaPercents.UUR * 100} %` });
     fields.push({
         name: 'SSR',
-        value: `${GachaPercents.SSR * 100 - GachaPercents.UR * 100 - GachaPercents.UUR * 100}`
+        value: `${(GachaPercents.SSR * 100 - GachaPercents.UR * 100).toFixed(4)} %`
     });
     fields.push({
         name: 'SR',
-        value: `${GachaPercents.SR * 100 - GachaPercents.SSR * 100 - GachaPercents.UR * 100 - GachaPercents.UUR * 100}`
+        value: `${(GachaPercents.SR * 100 - GachaPercents.SSR * 100).toFixed(4)} %`
     });
     fields.push({
         name: 'R',
-        value: `${
-            GachaPercents.R * 100 -
-            GachaPercents.SR * 100 -
-            GachaPercents.SSR * 100 -
-            GachaPercents.UR * 100 -
-            GachaPercents.UUR * 100
-        }`
+        value: `${(GachaPercents.R * 100 - GachaPercents.SR * 100).toFixed(4)} %`
     });
     fields.push({
         name: 'UC',
-        value: `${
-            GachaPercents.UC * 100 -
-            GachaPercents.R * 100 -
-            GachaPercents.SR * 100 -
-            GachaPercents.SSR * 100 -
-            GachaPercents.UR * 100 -
-            GachaPercents.UUR * 100
-        }`
+        value: `${(GachaPercents.UC * 100 - GachaPercents.R * 100).toFixed(4)} %`
     });
     fields.push({
         name: 'C',
-        value: `${
-            GachaPercents.C * 100 -
-            GachaPercents.UC * 100 -
-            GachaPercents.R * 100 -
-            GachaPercents.SR * 100 -
-            GachaPercents.SSR * 100 -
-            GachaPercents.UR * 100 -
-            GachaPercents.UUR * 100
-        }`
+        value: `${(GachaPercents.C * 100 - GachaPercents.UC * 100).toFixed(4)} %`
     });
 
-    const send = new EmbedBuilder().setColor('#ff9900').setTitle('確率一覧').setFields(fields);
+    const send = new EmbedBuilder().setColor('#ff9900').setTitle('現在の確率一覧だよ！').setFields(fields);
 
     await message.reply({
         embeds: [send]
