@@ -616,6 +616,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     break;
                 }
                 case 'extra': {
+                    await interaction.deferReply();
                     await BotFunctions.Gacha.extraPick(
                         interaction,
                         interaction.options.getInteger('num') ?? undefined,
