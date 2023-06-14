@@ -14,6 +14,7 @@ import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import * as Logger from '../../common/logger.js';
 import { getGachaOnce } from '../function/gacha.js';
+import { GachaPercents } from '../../constant/gacha/gacha.js';
 
 export class Gacha {
     static allItemList: Models.Item[] = [];
@@ -437,6 +438,59 @@ export async function givePresent(message: Message, uid: string, itemId: number)
         });
     }
 }
+
+export const showPercent = async (message: Message) => {
+    const fields = [];
+    fields.push({ name: 'UUR', value: `${GachaPercents.UUR * 100}` });
+    fields.push({ name: 'UR', value: `${GachaPercents.UR * 100 - GachaPercents.UUR * 100}` });
+    fields.push({
+        name: 'SSR',
+        value: `${GachaPercents.SSR * 100 - GachaPercents.UR * 100 - GachaPercents.UUR * 100}`
+    });
+    fields.push({
+        name: 'SR',
+        value: `${GachaPercents.SR * 100 - GachaPercents.SSR * 100 - GachaPercents.UR * 100 - GachaPercents.UUR * 100}`
+    });
+    fields.push({
+        name: 'R',
+        value: `${
+            GachaPercents.R * 100 -
+            GachaPercents.SR * 100 -
+            GachaPercents.SSR * 100 -
+            GachaPercents.UR * 100 -
+            GachaPercents.UUR * 100
+        }`
+    });
+    fields.push({
+        name: 'UC',
+        value: `${
+            GachaPercents.UC * 100 -
+            GachaPercents.R * 100 -
+            GachaPercents.SR * 100 -
+            GachaPercents.SSR * 100 -
+            GachaPercents.UR * 100 -
+            GachaPercents.UUR * 100
+        }`
+    });
+    fields.push({
+        name: 'C',
+        value: `${
+            GachaPercents.C * 100 -
+            GachaPercents.UC * 100 -
+            GachaPercents.R * 100 -
+            GachaPercents.SR * 100 -
+            GachaPercents.SSR * 100 -
+            GachaPercents.UR * 100 -
+            GachaPercents.UUR * 100
+        }`
+    });
+
+    const send = new EmbedBuilder().setColor('#ff9900').setTitle('確率一覧').setFields(fields);
+
+    await message.reply({
+        embeds: [send]
+    });
+};
 
 /**
  * おみくじを引く

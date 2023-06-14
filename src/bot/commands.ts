@@ -117,6 +117,10 @@ export async function commandSelector(message: Message) {
             await DotBotFunctions.Gacha.pickGacha(message, content);
             break;
         }
+        case 'gp': {
+            await DotBotFunctions.Gacha.showPercent(message);
+            break;
+        }
         case 'gl': {
             await DotBotFunctions.Gacha.pickGacha(message, ['limit']);
             break;

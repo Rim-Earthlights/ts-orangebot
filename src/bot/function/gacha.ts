@@ -12,6 +12,7 @@ import { UsersRepository } from '../../model/repository/usersRepository.js';
 import * as Models from '../../model/models/index.js';
 import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
+import { GachaPercents } from '../../constant/gacha/gacha.js';
 
 export class Gacha {
     static allItemList: Models.Item[] = [];
@@ -41,17 +42,17 @@ function getWeight(list: Models.Item[]): Models.Item[] {
 export async function getGachaOnce(): Promise<Gacha> {
     const rnd = Math.random();
 
-    if (rnd < 0.000068) {
+    if (rnd < GachaPercents.UUR) {
         return await convertGacha('UUR');
-    } else if (rnd < 0.000577) {
+    } else if (rnd < GachaPercents.UR) {
         return await convertGacha('UR');
-    } else if (rnd < 0.00688) {
+    } else if (rnd < GachaPercents.SSR) {
         return await convertGacha('SSR');
-    } else if (rnd < 0.08928) {
+    } else if (rnd < GachaPercents.SR) {
         return await convertGacha('SR');
-    } else if (rnd < 0.658) {
+    } else if (rnd < GachaPercents.R) {
         return await convertGacha('R');
-    } else if (rnd < 0.8889) {
+    } else if (rnd < GachaPercents.UC) {
         return await convertGacha('UC');
     } else {
         return await convertGacha('C');
