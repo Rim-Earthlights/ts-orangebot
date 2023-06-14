@@ -615,6 +615,13 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     await BotFunctions.Gacha.getGachaInfo(interaction);
                     break;
                 }
+                case 'extra': {
+                    await BotFunctions.Gacha.extraPick(
+                        interaction,
+                        interaction.options.getInteger('num') ?? undefined,
+                        interaction.options.getString('item') ?? undefined
+                    );
+                }
             }
             break;
         }
