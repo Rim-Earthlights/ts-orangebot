@@ -811,6 +811,8 @@ export async function help(message: Message) {
     res.push('===== 音楽再生系 =====');
     res.push(' * .play [URL] / .pl [URL]');
     res.push('   > Youtube の音楽を再生します. プレイリストも可能');
+    res.push(' * .search [検索ワード] / .sc [検索ワード]');
+    res.push('   > Youtube から検索して音楽を追加/再生します');
     res.push(' * .interrupt [URL] | .pi [URL]');
     res.push('   > 曲を1番目に割り込んで予約する');
     res.push(' * .interrupt [予約番号] | .pi [予約番号]');

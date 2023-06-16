@@ -71,6 +71,8 @@
 ===== 音楽再生系 =====
  * .play [URL] / .pl [URL]
    > Youtube の音楽を再生します. プレイリストも可能
+ * .search [検索ワード] / .sc [検索ワード]
+   > Youtube から検索して音楽を追加/再生します
  * .interrupt [URL] | .pi [URL]
    > 曲を1番目に割り込んで予約する
  * .interrupt [予約番号] | .pi [予約番号]
