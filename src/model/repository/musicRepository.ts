@@ -1,5 +1,5 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { YoutubePlaylists } from '../../bot/request/youtubeAPI.js';
+import { YoutubePlaylists } from '../../bot/request/youtube.js';
 import * as Models from '../models/index.js';
 import { TypeOrm } from '../typeorm/typeorm.js';
 import * as logger from '../../common/logger.js';
@@ -50,8 +50,8 @@ export class MusicRepository {
         return Boolean(result);
     }
 
-    public async addRange(gid: string, musics: YoutubePlaylists[]): Promise<boolean> {
-        logger.info(gid, `repository/music: addAll`);
+    public async addRange(gid: string, musics: YoutubePlaylists[], type: 'youtube' | 'spotify'): Promise<boolean> {
+        console.log(`repository/music: addAll`);
         let mid = 0;
         const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
         if (getMusic) {
@@ -61,6 +61,7 @@ export class MusicRepository {
             return {
                 guild_id: gid,
                 music_id: mid++,
+                type: type,
                 title: m.title,
                 url: `https://youtube.com/watch?v=${m.videoId}`,
                 thumbnail: m.thumbnail

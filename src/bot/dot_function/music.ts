@@ -9,14 +9,14 @@ import {
     joinVoiceChannel
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import pldl from 'play-dl';
+import pldl, { SpotifyTrack } from 'play-dl';
 import { getRndArray } from '../../common/common.js';
 import { CONFIG } from '../../config/config.js';
 import { Playlist } from '../../model/models/index.js';
 import { MusicInfoRepository } from '../../model/repository/musicInfoRepository.js';
 import { MusicRepository } from '../../model/repository/musicRepository.js';
 import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
-import { getPlaylistItems } from '../request/youtubeAPI.js';
+import { getPlaylistItems } from '../request/youtube.js';
 import * as logger from '../../common/logger.js';
 import { Music } from '../../constant/music/music.js';
 
@@ -33,15 +33,76 @@ export async function add(
     loop?: boolean,
     shuffle?: boolean
 ): Promise<boolean> {
+    // false | "so_playlist" | "so_track" | "sp_track" | "sp_album" | "sp_playlist" | "dz_track" | "dz_playlist" | "dz_album" | "yt_video" | "yt_playlist" | "search"
+    const musicFlag = await pldl.validate(url);
+
+    switch (musicFlag) {
+        case 'yt_video':
+        case 'yt_playlist': {
+            const videoFlag = !url.includes('playlist');
+
+            if (videoFlag) {
+                await addYoutubeMusic(channel, 'video', url, false, loop, shuffle);
+            } else {
+                await addYoutubeMusic(channel, 'playlist', url, false, loop, shuffle);
+            }
+
+            return true;
+        }
+        case 'sp_track': {
+            await addSpotifyMusic(channel, url, false, loop, shuffle);
+            return true;
+        }
+        default: {
+            const playlistRepository = new PlaylistRepository();
+            const playlist = await playlistRepository.get(userId, url);
+            if (playlist) {
+                await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
+                return true;
+            }
+            const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+            (channel as VoiceChannel).send({ content: `YoutubeかSpotifyのURLを指定して～！`, embeds: [send] });
+            return false;
+        }
+    }
+}
+
+export async function addSpotifyMusic(
+    channel: VoiceBasedChannel,
+    url: string,
+    interrupt?: boolean,
+    loop?: boolean,
+    shuffle?: boolean
+): Promise<boolean> {
+    if (pldl.is_expired()) {
+        console.log('token expire');
+        await pldl.refreshToken();
+    }
+
+    const sp = (await pldl.spotify(url)) as SpotifyTrack;
+
+    const searched = await pldl.search(`${sp.name}`, {
+        limit: 1
+    });
+
+    await addYoutubeMusic(channel, 'video', searched[0].url, false, loop, shuffle);
+    return true;
+}
+
+export async function addYoutubeMusic(
+    channel: VoiceBasedChannel,
+    type: 'video' | 'playlist',
+    url: string,
+    interrupt?: boolean,
+    loop?: boolean,
+    shuffle?: boolean
+): Promise<boolean> {
     const repository = new MusicRepository();
     const player = await getAudioPlayer(channel.guild.id);
-
     const status = player.state.status;
 
-    const ytFlag = pldl.yt_validate(url);
-    const videoFlag = !url.includes('playlist');
-
-    if (videoFlag && (ytFlag === 'video' || ytFlag === 'playlist')) {
+    if (type === 'video') {
         const ytinfo = await pldl.video_info(url);
 
         await repository.add(
@@ -52,7 +113,7 @@ export async function add(
                 url: ytinfo.video_details.url,
                 thumbnail: ytinfo.video_details.thumbnails[0].url
             },
-            false
+            !!interrupt
         );
         const musics = await repository.getQueue(channel.guild.id);
 
@@ -87,13 +148,13 @@ export async function add(
         return true;
     }
 
-    if (ytFlag === 'playlist') {
+    if (type === 'playlist') {
         const pid = new URL(url).searchParams.get('list') ?? '';
 
         try {
             const pm = await getPlaylistItems(pid);
 
-            await repository.addRange(channel.guild.id, pm.playlists);
+            await repository.addRange(channel.guild.id, pm.playlists, 'youtube');
 
             const musics = await repository.getQueue(channel.guild.id);
 
@@ -140,21 +201,6 @@ export async function add(
             return false;
         }
     }
-
-    const playlistRepository = new PlaylistRepository();
-    const playlist = await playlistRepository.get(userId, url);
-    if (playlist) {
-        await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
-        return true;
-    }
-
-    if (ytFlag === false) {
-        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
-
-        (channel as VoiceChannel).send({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
-        return false;
-    }
-
     return false;
 }
 
@@ -219,6 +265,8 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
     const repository = new MusicInfoRepository();
     const info = await repository.get(channel.guild.id);
 
+    console.log(JSON.stringify(info));
+
     if (!info) {
         if (loop) {
             await repository.save({ guild_id: channel.guild.id, is_loop: 1 });
@@ -251,49 +299,81 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
  * @returns
  */
 export async function interruptMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
-    const validate = pldl.yt_validate(url);
-    if (validate !== 'video' && validate !== 'playlist') {
-        return false;
-    }
-    const info = await pldl.video_info(url);
+    // false | "so_playlist" | "so_track" | "sp_track" | "sp_album" | "sp_playlist" | "dz_track" | "dz_playlist" | "dz_album" | "yt_video" | "yt_playlist" | "search"
+    const musicFlag = await pldl.validate(url);
     const repository = new MusicRepository();
 
-    const result = await repository.add(
-        channel.guild.id,
-        {
-            guild_id: channel.guild.id,
-            title: info.video_details.title,
-            url: info.video_details.url,
-            thumbnail: info.video_details.thumbnails[0].url
-        },
-        true
-    );
+    switch (musicFlag) {
+        case 'yt_video':
+        case 'yt_playlist': {
+            const videoFlag = !url.includes('playlist');
 
-    const musics = await repository.getQueue(channel.guild.id);
+            if (videoFlag) {
+                const m = addYoutubeMusic(channel, 'video', url, true);
 
-    const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+                const ytinfo = await pldl.video_info(url);
+                const musics = await repository.getQueue(channel.guild.id);
+                const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
 
-    if (description.length >= 4000) {
-        const sliced = musics.slice(0, 20);
-        const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
+                if (description.length >= 4000) {
+                    const sliced = musics.slice(0, 20);
+                    const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
 
-        const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setAuthor({ name: `割込: ${info.video_details.title}` })
-            .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
-            .setDescription(description);
+                    const send = new EmbedBuilder()
+                        .setColor('#cc66cc')
+                        .setAuthor({ name: `割込: ${ytinfo.video_details.title}` })
+                        .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
+                        .setDescription(description);
 
-        (channel as VoiceChannel).send({ embeds: [send] });
-    } else {
-        const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setAuthor({ name: `割込: ${info.video_details.title}` })
-            .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description ? description : 'none');
-        (channel as VoiceChannel).send({ embeds: [send] });
+                    (channel as VoiceChannel).send({ embeds: [send] });
+                } else {
+                    const send = new EmbedBuilder()
+                        .setColor('#cc66cc')
+                        .setAuthor({ name: `割込: ${ytinfo.video_details.title}` })
+                        .setTitle(`キュー(全${musics.length}曲): `)
+                        .setDescription(description ? description : 'none');
+                    (channel as VoiceChannel).send({ embeds: [send] });
+                }
+
+                await m;
+            }
+            break;
+        }
+        case 'sp_track': {
+            const s = addSpotifyMusic(channel, url, true);
+
+            const sp = await pldl.spotify(url);
+            const musics = await repository.getQueue(channel.guild.id);
+            const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+
+            if (description.length >= 4000) {
+                const sliced = musics.slice(0, 20);
+                const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
+
+                const send = new EmbedBuilder()
+                    .setColor('#cc66cc')
+                    .setAuthor({ name: `割込: ${sp.name}` })
+                    .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
+                    .setDescription(description);
+
+                (channel as VoiceChannel).send({ embeds: [send] });
+            } else {
+                const send = new EmbedBuilder()
+                    .setColor('#cc66cc')
+                    .setAuthor({ name: `割込: ${sp.name}` })
+                    .setTitle(`キュー(全${musics.length}曲): `)
+                    .setDescription(description ? description : 'none');
+                (channel as VoiceChannel).send({ embeds: [send] });
+            }
+
+            await s;
+            break;
+        }
+        default: {
+            return false;
+        }
     }
-
-    return result;
+    return true;
 }
 
 /**
@@ -454,6 +534,10 @@ export async function playMusic(channel: VoiceBasedChannel) {
           });
 
     try {
+        if (pldl.is_expired()) {
+            await pldl.refreshToken();
+        }
+
         const player = await updateAudioPlayer(channel.guild.id);
         const stream = await pldl.stream(playing.url);
 
