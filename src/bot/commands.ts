@@ -191,6 +191,55 @@ export async function commandSelector(message: Message) {
             }
             break;
         }
+        case 'search':
+        case 'sc': {
+            if (!isEnableFunction(functionNames.YOUTUBE)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(YOUTUBE)`, embeds: [send] });
+                return;
+            }
+
+            try {
+                if (!content || content.length === 0) {
+                    const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+                    message.reply({ content: `検索する単語を指定してね！`, embeds: [send] });
+                    return;
+                }
+
+                const words = content.join(' ');
+                const channel = message.member?.voice.channel;
+
+                if (!channel) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`userのボイスチャンネルが見つからなかった`);
+
+                    message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
+                    return;
+                }
+
+                await DotBotFunctions.Music.search(channel, words);
+            } catch (e) {
+                const error = e as Error;
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription([error.name, error.message, error.stack].join('\n'));
+
+                message.reply({
+                    content: `ありゃ、何かで落ちたみたい…？よかったらりむくんに送ってみてね！`,
+                    embeds: [send]
+                });
+                return;
+            }
+            break;
+        }
         case 'interrupt':
         case 'pi': {
             await interrupt(message, content);

@@ -68,6 +68,26 @@ export async function add(
     }
 }
 
+/**
+ * 音楽を検索してキューに追加する
+ * @param channel 送信するchannel
+ * @param word 検索語句
+ * @returns
+ */
+export async function search(channel: VoiceBasedChannel, word: string): Promise<boolean> {
+    const searched = await pldl.search(word, { limit: 5 });
+
+    const mv = searched.find((s) => s.title?.includes('MV'));
+
+    if (mv) {
+        await addYoutubeMusic(channel, 'video', mv.url, false, undefined, undefined);
+        return true;
+    } else {
+        await addYoutubeMusic(channel, 'video', searched[0].url, false, undefined, undefined);
+        return true;
+    }
+}
+
 export async function addSpotifyMusic(
     channel: VoiceBasedChannel,
     url: string,
