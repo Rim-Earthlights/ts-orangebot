@@ -24,5 +24,5 @@ export class Playlist extends BaseEntity {
     loop!: number;
 
     @CreateDateColumn({ type: 'datetime', nullable: false })
-    createdAt!: Date;
+    created_at!: Date;
 }

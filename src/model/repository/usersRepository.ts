@@ -1,6 +1,6 @@
 import { DeepPartial, Repository } from 'typeorm';
-import * as Models from '../models';
-import { TypeOrm } from '../typeorm/typeorm';
+import * as Models from '../models/index.js';
+import { TypeOrm } from '../typeorm/typeorm.js';
 
 export class UsersRepository {
     private repository: Repository<Models.Users>;
@@ -29,10 +29,26 @@ export class UsersRepository {
     }
 
     /**
-     * ガチャ日をリセットする
+     * ガチャ回数をpickLeft回に再セットする
      * @param uid user id
+     * @param pickLeft 再セットするピック数
      */
-    public async resetGacha(uid: string): Promise<void> {
-        await this.repository.save({ id: uid, gachaDate: null });
+    public async resetGacha(uid: string, pickLeft: number): Promise<void> {
+        await this.repository.save({ id: uid, pick_left: pickLeft });
+    }
+
+    /**
+     * ユーザの残りピック数を10増やす
+     */
+    public async addPickLeft(): Promise<void> {
+        const users = await this.repository.find();
+        const saveUsers = users.map((u) => {
+            if (u.pick_left < 70) {
+                return { ...u, pick_left: u.pick_left + 10 };
+            } else {
+                return { ...u };
+            }
+        });
+        await this.repository.save(saveUsers);
     }
 }

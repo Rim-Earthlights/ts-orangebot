@@ -1,24 +1,65 @@
 export const CONFIG = {
-    // Listen info for API Server
-    HOSTNAME: '127.0.0.1',
-    PORT: '4044',
-    // use privillage user
-    HOST_URL: 'http://exsample.com',
-    USER: 'USER',
-    // discord guild administrator user id
-    ADMIN_USER_ID: ['DISCORD_ID'],
-    COMMAND_GUILD_ID: ['COMMAND_GUILD_ID'],
-    // Discord Bot Token
-    TOKEN: 'YOUR_DISCORD_TOKEN',
-    // Forecast API Key
-    // OpenWeatherMap; see: https://openweathermap.org/
-    FORECAST_KEY: 'YOUR_FORECAST_KEY',
-    YOUTUBE_API_KEY: 'YOUTUBE_API_KEY',
-    DB: {
-        HOSTNAME: 'HOSTNAME',
-        USERNAME: 'orange',
-        DATABASE: 'orangebot',
-        PASSWORD: 'PASSWORD',
-        FLUSH: false,
+    // common settings
+    COMMON: {
+        DEV: true,
+        HOSTNAME: '0.0.0.0',
+        PORT: 4000,
+        HOST_URL: 'http://exsample.com',
+        USER: 'webUser'
     },
+    // discord app settings
+    DISCORD: {
+        // your discord bot app id
+        APP_ID: '*******************',
+        // privillage role id (rule readed member role)
+        MEMBER_ROLE_ID: '*******************',
+        // admin user id (privillage reset gacha etc...)
+        ADMIN_USER_ID: ['*******************'],
+        // register command
+        COMMAND_GUILD_ID: ['*******************'],
+        // discord bot token
+        TOKEN: '******.*********.****-*****-*****'
+    },
+    GACHA: {
+        PICKRATE: 1.00
+    },
+    // OpenWeatherMap API KEY
+    // OpenWeatherMap; see: https://openweathermap.org/
+    FORECAST: {
+        // if disabled, still empty.
+        KEY: ''
+    },
+    // YOUTUBE API KEY
+    // Google Cloud Platform; see: https://console.cloud.google.com/apis/api/youtube.googleapis.com/metrics
+    YOUTUBE: {
+        // if disabled, still empty.
+        KEY: ''
+    },
+    // OPENAI API KEY / TOKEN
+    // KEY:
+    // OpenAI > https://platform.openai.com/
+    // TOKEN:
+    // GET > https://chat.openai.com/api/auth/session and find accessToken
+    OPENAI: {
+        // if disabled, still empty.
+        KEY: '',
+        // if enable gpt-4 in your api, turn true.
+        IS_ENABLE_GPT4: false,
+        // if disabled, still empty.
+        ACCESSTOKEN:
+            ''
+    },
+    NICONICO: {
+        ENABLE: true,
+        MAIL: '',
+        PASSWORD: ''
+    },
+    DB: {
+        HOSTNAME: '127.0.0.1',
+        USERNAME: 'user',
+        DATABASE: 'database',
+        PASSWORD: 'password',
+        PORT: 3306,
+        FLUSH: false
+    }
 };

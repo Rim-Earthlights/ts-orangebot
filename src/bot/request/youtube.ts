@@ -1,6 +1,6 @@
-import { playlistItemsResponse } from '../../constant/youtube/youtube';
+import { playlistItemsResponse } from '../../constant/youtube/youtube.js';
 import axios from 'axios';
-import { CONFIG } from '../../config/config';
+import { CONFIG } from '../../config/config.js';
 
 /**
  * プレイリストの動画を抽出する
@@ -55,7 +55,7 @@ async function getPlaylistItemsResponse(playlistId: string, pageToken?: string):
     const uri = 'https://www.googleapis.com/youtube/v3/playlistItems';
 
     const params = new URLSearchParams({
-        key: CONFIG.YOUTUBE_API_KEY,
+        key: CONFIG.YOUTUBE.KEY,
         part: 'snippet',
         playlistId: playlistId,
         maxResults: '50'

@@ -10,17 +10,15 @@ import {
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import pldl, { SpotifyTrack } from 'play-dl';
-import { getRndArray } from '../../common/common';
-import { CONFIG } from '../../config/config';
-import { Playlist } from '../../model/models';
-import { MusicInfoRepository } from '../../model/repository/musicInfoRepository';
-import { MusicRepository } from '../../model/repository/musicRepository';
-import { PlaylistRepository } from '../../model/repository/playlistRepository';
-import { getPlaylistItems } from '../request/youtube';
-
-export class Music {
-    static player: { id: string; player: AudioPlayer }[] = [];
-}
+import { getRndArray } from '../../common/common.js';
+import { CONFIG } from '../../config/config.js';
+import { Playlist } from '../../model/models/index.js';
+import { MusicInfoRepository } from '../../model/repository/musicInfoRepository.js';
+import { MusicRepository } from '../../model/repository/musicRepository.js';
+import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
+import { getPlaylistItems } from '../request/youtube.js';
+import * as logger from '../../common/logger.js';
+import { Music } from '../../constant/music/music.js';
 
 /**
  * キューに音楽を追加する
@@ -232,7 +230,7 @@ export async function addYoutubeMusic(
             await playMusic(channel);
             return true;
         } catch (e) {
-            console.log(e);
+            logger.info(channel.guild.id, 'command|music-add', JSON.stringify(e));
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
                 .setTitle('エラー:')
@@ -356,7 +354,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
                 const m = addYoutubeMusic(channel, 'video', url, true);
 
                 const ytinfo = await pldl.video_info(url);
-                const musics = await repository.getAll(channel.guild.id);
+                const musics = await repository.getQueue(channel.guild.id);
                 const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
 
                 if (description.length >= 4000) {
@@ -387,7 +385,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
             const s = addSpotifyMusic(channel, url, true);
 
             const sp = await pldl.spotify(url);
-            const musics = await repository.getAll(channel.guild.id);
+            const musics = await repository.getQueue(channel.guild.id);
             const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
 
             if (description.length >= 4000) {
@@ -449,7 +447,7 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
 
     await repository.remove(channel.guild.id, music.music_id);
 
-    const newMusics = await repository.getAll(channel.guild.id);
+    const newMusics = await repository.getQueue(channel.guild.id);
 
     const description = newMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
 
@@ -568,7 +566,6 @@ export async function playMusic(channel: VoiceBasedChannel) {
     });
 
     const vc = getVoiceConnection(channel.guild.id);
-
     const connection = vc
         ? vc
         : joinVoiceChannel({
@@ -579,35 +576,49 @@ export async function playMusic(channel: VoiceBasedChannel) {
               selfMute: false
           });
 
-    const player = await updateAudioPlayer(channel.guild.id);
-    connection.subscribe(player);
-    const stream = await pldl.stream(playing.url);
+    try {
+        const player = await updateAudioPlayer(channel.guild.id);
+        const stream = await pldl.stream(playing.url);
 
-    const resource = createAudioResource(stream.stream, {
-        inputType: stream.type
-    });
+        const resource = createAudioResource(stream.stream, {
+            inputType: stream.type
+        });
 
-    if (info?.silent === 0) {
-        const slicedMusics = musics.slice(0, 4);
-        const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
+        if (info?.silent === 0) {
+            const slicedMusics = musics.slice(0, 4);
+            const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
+            const send = new EmbedBuilder()
+                .setColor('#cc66cc')
+                .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}曲` })
+                .setTitle(playing.title)
+                .setURL(playing.url)
+                .setDescription(description ? description : 'none')
+                .setThumbnail(playing.thumbnail)
+                .addFields({
+                    name: '再生キュー',
+                    value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
+                });
+            (channel as VoiceChannel).send({ embeds: [send] });
+        }
+        player.play(resource);
+        connection.subscribe(player);
+
+        await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
+        await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    } catch (e) {
+        logger.info(channel.guild.id, 'command|music-play', JSON.stringify(e));
         const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}曲` })
+            .setColor('#ff0000')
+            .setAuthor({ name: `音楽の取得に失敗した` })
             .setTitle(playing.title)
             .setURL(playing.url)
-            .setDescription(description ? description : 'none')
-            .setThumbnail(playing.thumbnail)
+            .setDescription(JSON.stringify(e))
             .addFields({
                 name: '再生キュー',
-                value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }
-
-    player.play(resource);
-
-    await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
-    await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
 
     await playMusic(channel);
 }
@@ -619,10 +630,13 @@ export async function playMusic(channel: VoiceBasedChannel) {
 export async function stopMusic(channel: VoiceBasedChannel) {
     const player = await getAudioPlayer(channel.guild.id);
 
+    const musicRepository = new MusicRepository();
+    const musics = await musicRepository.getQueue(channel.guild.id);
+
     const infoRepository = new MusicInfoRepository();
     const info = await infoRepository.get(channel.guild.id);
 
-    if (!info || info.is_loop === 0) {
+    if (!info || (musics.length <= 0 && info.is_loop === 0)) {
         await infoRepository.remove(channel.guild.id);
 
         (channel as VoiceChannel).send({ content: '全ての曲の再生が終わったよ！またね～！' });
@@ -647,11 +661,14 @@ export async function extermAudioPlayer(gid: string): Promise<boolean> {
     await infoRepository.remove(gid);
 
     const connection = getVoiceConnection(gid);
-    if (connection) {
-        connection.destroy();
+    try {
+        if (connection) {
+            connection.destroy();
+        }
         return true;
+    } catch (err) {
+        return false;
     }
-    return false;
 }
 
 /**
@@ -712,8 +729,7 @@ export async function resetAllPlayState(gid: string) {
 
 export async function pause(gid: string): Promise<void> {
     const player = await getAudioPlayer(gid);
-
-    console.log(player.state.status);
+    logger.info(gid, 'command|music-pause', player.state.status);
 
     if (player.state.status === AudioPlayerStatus.Paused) {
         player.unpause();
@@ -750,7 +766,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
             .setThumbnail(info.thumbnail)
             .addFields({
                 name: '再生キュー',
-                value: `${CONFIG.HOST_URL + ':' + CONFIG.PORT + '/music?gid=' + channel.guild.id}`
+                value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }
@@ -812,4 +828,63 @@ async function removeAudioPlayer(gid: string): Promise<void> {
     if (PlayerData) {
         Music.player = Music.player.filter((p) => p.id !== gid);
     }
+}
+
+/**
+ * 再生中の音楽の再生位置を変更する
+ * @param channel VoiceBasedChannel
+ * @param seek number 秒数
+ * @returns
+ */
+export async function seek(channel: VoiceBasedChannel, seek: number): Promise<void> {
+    const infoRepo = new MusicInfoRepository();
+
+    const playing = await infoRepo.get(channel.guild.id);
+
+    if (!playing || playing.url == undefined) {
+        return;
+    }
+
+    const vc = getVoiceConnection(channel.guild.id);
+
+    const connection = vc
+        ? vc
+        : joinVoiceChannel({
+              adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
+              channelId: channel.id,
+              guildId: channel.guild.id,
+              selfDeaf: true,
+              selfMute: false
+          });
+
+    try {
+        const player = await updateAudioPlayer(channel.guild.id);
+        connection.subscribe(player);
+        const stream = await pldl.stream(playing.url, { seek: seek });
+
+        const resource = createAudioResource(stream.stream, {
+            inputType: stream.type
+        });
+
+        player.play(resource);
+
+        await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
+        await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    } catch (e) {
+        const error = e as Error;
+        logger.info(channel.guild.id, 'command|music-play', JSON.stringify(error.message));
+        const send = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setAuthor({ name: `音楽の取得に失敗した` })
+            .setTitle(playing.title)
+            .setURL(playing.url)
+            .setDescription(JSON.stringify(error.message))
+            .addFields({
+                name: '再生キュー',
+                value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
+            });
+        (channel as VoiceChannel).send({ embeds: [send] });
+    }
+
+    await playMusic(channel);
 }

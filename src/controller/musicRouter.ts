@@ -1,7 +1,7 @@
 import Express from 'express';
-import { MusicRepository } from '../model/repository/musicRepository';
+import { MusicRepository } from '../model/repository/musicRepository.js';
 import dayjs from 'dayjs';
-import { MusicInfoRepository } from '../model/repository/musicInfoRepository';
+import { MusicInfoRepository } from '../model/repository/musicInfoRepository.js';
 
 export const musicRouter = Express.Router();
 

@@ -1,11 +1,12 @@
-import { getAsync } from '../../common/webWrapper';
-import { Forecast, FORECAST_URI } from '../../interface/forecast';
-import { Onecall, ONECALL_URI } from '../../interface/onecall';
-import { UsersRepository } from '../../model/repository/usersRepository';
+import { getAsync } from '../../common/webWrapper.js';
+import { Forecast, FORECAST_URI } from '../../interface/forecast.js';
+import { Onecall, ONECALL_URI } from '../../interface/onecall.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
 import { EmbedBuilder, Message } from 'discord.js';
-import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../../interface/geocoding';
+import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../../interface/geocoding.js';
 import url from 'url';
-import { CONFIG } from '../../config/config';
+import { CONFIG } from '../../config/config.js';
+import * as logger from '../../common/logger.js';
 
 /**
  * 現在の天気を返す.
@@ -15,7 +16,7 @@ import { CONFIG } from '../../config/config';
  */
 export async function weather(message: Message, args?: string[]) {
     try {
-        const forecastKey = CONFIG.FORECAST_KEY;
+        const forecastKey = CONFIG.FORECAST.KEY;
         if (!forecastKey) {
             throw new Error('天気情報取得用のAPIキーが登録されていません');
         }
@@ -46,7 +47,7 @@ export async function weather(message: Message, args?: string[]) {
         const geoList = response.location;
 
         if (response.error != undefined || geoList.length <= 0) {
-            console.log(' > geocoding(JP) not found');
+            logger.info(message.guild?.id, 'get-forecast', `geocoding(JP) not found.`);
 
             const geoResponse = await getAsync(
                 GEOCODING_URI,
@@ -62,22 +63,27 @@ export async function weather(message: Message, args?: string[]) {
             const geoList = <WorldGeocoding[]>geoResponse.data;
 
             if (geoList == undefined || geoList.length <= 0) {
+                logger.error(message.guild?.id, 'get-forecast', `geocoding get failed.`);
                 throw new Error('名前から場所を検索できませんでした');
             }
 
             lat = geoList[0].lat;
             lon = geoList[0].lon;
 
-            console.log('> return geocoding API');
-            console.log(`  * lat: ${lat}, lon: ${lon}`);
-            console.log(`  * name: ${geoList[0].local_names}`);
+            logger.info(
+                message.guild?.id,
+                'get-forecast | geocode',
+                `lat: ${lat}, lon: ${lon}, name: ${geoList[0].local_names}`
+            );
         } else {
             lat = geoList[0].y;
             lon = geoList[0].x;
 
-            console.log('> return geocoding API');
-            console.log(`  * lat: ${lat}, lon: ${lon}`);
-            console.log(`  * name: ${geoList[0].prefecture}${geoList[0].city}, ${geoList[0].town}`);
+            logger.info(
+                message.guild?.id,
+                'get-forecast | geocode',
+                `lat: ${lat}, lon: ${lon}, name: ${geoList[0].prefecture}${geoList[0].city} / ${geoList[0].town}`
+            );
         }
 
         const forecastResponse = await getAsync(

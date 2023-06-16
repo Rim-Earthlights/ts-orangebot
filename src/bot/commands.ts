@@ -1,8 +1,21 @@
-import { Message, EmbedBuilder, VoiceBasedChannel } from 'discord.js';
+import {
+    Message,
+    EmbedBuilder,
+    VoiceBasedChannel,
+    Interaction,
+    ChatInputCommandInteraction,
+    CacheType
+} from 'discord.js';
 import ytdl from 'ytdl-core';
-import * as BotFunctions from './function';
-import { PlaylistRepository } from '../model/repository/playlistRepository';
+import * as DotBotFunctions from './dot_function/index.js';
+import * as BotFunctions from './function/index.js';
+import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
+import * as logger from '../common/logger.js';
+import { CONFIG } from '../config/config.js';
+import { isEnableFunction } from '../common/common.js';
+import { functionNames } from '../constant/constants.js';
+import { ChatGPTModel } from '../constant/chat/chat.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -10,7 +23,8 @@ import ytpl from 'ytpl';
  * @param command 渡されたメッセージ
  */
 export async function commandSelector(message: Message) {
-    const content = message.content.replace('.', '').trimEnd().split(' ');
+    // eslint-disable-next-line no-irregular-whitespace
+    const content = message.content.replace('.', '').replace(/　/g, ' ').trimEnd().split(' ');
     const command = content[0];
     content.shift();
 
@@ -27,28 +41,103 @@ export async function commandSelector(message: Message) {
             await debug(message, content);
             break;
         }
+        case 'gpt-no-system': {
+            if (!isEnableFunction(functionNames.GPT_WITHOUT_KEY)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT_WITHOUT_KEY)`, embeds: [send] });
+                return;
+            }
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.talkWithoutPrompt(message, chat);
+            break;
+        }
+        case 'gpt': {
+            if (!isEnableFunction(functionNames.GPT)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
+                return;
+            }
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_3_16K);
+            break;
+        }
+        case 'g4': {
+            if (!isEnableFunction(functionNames.GPT) || !isEnableFunction(functionNames.ENABLE_GPT4)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT-4)`, embeds: [send] });
+                return;
+            }
+
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4);
+            break;
+        }
+        case 'erase': {
+            await DotBotFunctions.Chat.deleteChatData(message, content[0]);
+            break;
+        }
         case 'dice': {
-            await BotFunctions.Dice.roll(message, content);
+            await DotBotFunctions.Dice.roll(message, content);
             break;
         }
         case 'tenki': {
-            await BotFunctions.Forecast.weather(message, content);
+            if (!isEnableFunction(functionNames.FORECAST)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(FORECAST)`, embeds: [send] });
+                return;
+            }
+            await DotBotFunctions.Forecast.weather(message, content);
             break;
         }
         case 'luck': {
-            await BotFunctions.Gacha.pickOmikuji(message, content);
+            await DotBotFunctions.Gacha.pickOmikuji(message, content);
             break;
         }
         case 'gacha': {
-            await BotFunctions.Gacha.pickGacha(message, content);
+            await DotBotFunctions.Gacha.pickGacha(message, content);
+            break;
+        }
+        case 'g': {
+            await DotBotFunctions.Gacha.pickGacha(message, content);
+            break;
+        }
+        case 'gp': {
+            await DotBotFunctions.Gacha.showPercent(message);
+            break;
+        }
+        case 'gl': {
+            await DotBotFunctions.Gacha.pickGacha(message, ['limit']);
+            break;
+        }
+        case 'give': {
+            const uid = content[0];
+            const iid = Number(content[1]);
+
+            await DotBotFunctions.Gacha.givePresent(message, uid, iid);
             break;
         }
         case 'celo': {
-            await BotFunctions.Dice.celo(message);
+            await DotBotFunctions.Dice.celo(message);
             break;
         }
         case 'celovs': {
-            await BotFunctions.Dice.celovs(message);
+            await DotBotFunctions.Dice.celovs(message);
             break;
         }
         /**
@@ -56,6 +145,15 @@ export async function commandSelector(message: Message) {
          */
         case 'play':
         case 'pl': {
+            if (!isEnableFunction(functionNames.YOUTUBE)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(YOUTUBE)`, embeds: [send] });
+                return;
+            }
             try {
                 if (!content || content.length === 0) {
                     const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
@@ -77,7 +175,7 @@ export async function commandSelector(message: Message) {
                     return;
                 }
 
-                await BotFunctions.Music.add(channel, url, message.author.id);
+                await DotBotFunctions.Music.add(channel, url, message.author.id);
             } catch (e) {
                 const error = e as Error;
                 const send = new EmbedBuilder()
@@ -113,12 +211,12 @@ export async function commandSelector(message: Message) {
             if (!gid) {
                 return;
             }
-            await BotFunctions.Music.pause(gid);
+            await DotBotFunctions.Music.pause(gid);
             break;
         }
         case 'list': {
             if (!content || content.length === 0) {
-                const playlists = await BotFunctions.Music.getPlaylist(message.author.id);
+                const playlists = await DotBotFunctions.Music.getPlaylist(message.author.id);
 
                 if (playlists.length === 0) {
                     const send = new EmbedBuilder()
@@ -154,7 +252,7 @@ export async function commandSelector(message: Message) {
                 case 'rem': {
                     try {
                         const name = content[1];
-                        const deleted = await BotFunctions.Music.removePlaylist(message.author.id, name);
+                        const deleted = await DotBotFunctions.Music.removePlaylist(message.author.id, name);
 
                         if (!deleted) {
                             const send = new EmbedBuilder()
@@ -338,22 +436,22 @@ export async function commandSelector(message: Message) {
                 return;
             }
 
-            await BotFunctions.Music.changeNotify(channel);
+            await DotBotFunctions.Music.changeNotify(channel);
             break;
         }
         case 'mode': {
             const name = content[0];
             const channel = message.member?.voice.channel;
             if (!channel) {
-                console.log('missing channel');
+                logger.info(message.guild?.id, 'received-command/mode', `missing channel`);
                 return;
             }
             if (!name) {
-                await BotFunctions.Music.getPlayerInfo(channel);
+                await DotBotFunctions.Music.getPlayerInfo(channel);
                 return;
             }
 
-            await BotFunctions.Music.editPlayerInfo(channel, name);
+            await DotBotFunctions.Music.editPlayerInfo(channel, name);
             break;
         }
         case 'shuffle':
@@ -362,11 +460,227 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'reg': {
-            await BotFunctions.Register.save(message, content);
+            await DotBotFunctions.Register.save(message, content);
+            break;
+        }
+        case 'team': {
+            if (content.length > 0) {
+                const number = Number(content[0]);
+                if (number < 1) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`1以上の数字を入れてね`);
+
+                    message.reply({ embeds: [send] });
+                    return;
+                }
+                await DotBotFunctions.Room.team(message, number, content[1] != undefined);
+            }
+            break;
+        }
+        case 'room': {
+            if (content.length <= 0) {
+                // 初期名(お部屋: #NUM)に変更
+                const guild = message.guild!;
+                const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
+                const roomName = `お部屋: #${('000' + channelLength).slice(-3)}`;
+
+                const vc = message.member?.voice.channel;
+
+                if (!vc) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`ボイスチャンネルに入ってから使ってね`);
+
+                    message.reply({ embeds: [send] });
+                    return;
+                }
+
+                await vc.setName(roomName, '部屋名変更: ' + message.author.tag);
+                message.reply(`お部屋の名前を${roomName}に変更したよ！`);
+                return;
+            }
+            await DotBotFunctions.Room.changeRoomName(message, content.join(' '));
+            break;
+        }
+        case 'seek': {
+            if (content.length <= 0) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`時間を指定してください`);
+
+                message.reply({ embeds: [send] });
+                break;
+            }
+            let seek = 0;
+            if (content[0].includes(':')) {
+                const time = content[0].split(':');
+
+                const min = Number(time[0]);
+                const sec = Number(time[1]);
+                seek = min * 60 + sec;
+            } else {
+                seek = Number(content[0]);
+            }
+
+            const channel = message.member?.voice.channel;
+
+            if (!channel) {
+                break;
+            }
+
+            await DotBotFunctions.Music.seek(channel, seek);
+            break;
+        }
+        case 'choose':
+        case 'choice':
+        case 'ch': {
+            if (content.length <= 0) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`選択肢を入力してください`);
+
+                message.reply({ embeds: [send] });
+            }
+            const item = DotBotFunctions.Dice.choose(content);
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle(`選択結果: ${item}`)
+                .setDescription(`選択肢: ${content.join(', ')}`);
+
+            message.reply({ embeds: [send] });
+            break;
+        }
+        case 'popup-rule': {
+            const channel = message.channel;
+            if (channel) {
+                const send = new EmbedBuilder()
+                    .setColor('#ffcc00')
+                    .setTitle(`ルールを読んだ`)
+                    .setDescription('リアクションをすると全ての機能が使えるようになります');
+                const result = await channel?.send({ embeds: [send] });
+                result.react('✅');
+            }
+            const m = await channel.send('pop-up success.');
+            await m.delete();
+            break;
+        }
+        case 'add-role-all': {
+            const members = await message.guild?.members.fetch();
+            if (!members) {
+                break;
+            }
+            members.map(async (m) => {
+                if (m.user.bot) {
+                    return;
+                }
+                await m.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
+            });
+            await message.reply('add roles to all members.');
             break;
         }
         case 'restart': {
             throw new Error('再起動');
+        }
+    }
+}
+
+export async function interactionSelector(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
+    const { commandName } = interaction;
+
+    switch (commandName) {
+        case 'ping': {
+            await interaction.reply('Pong!');
+            break;
+        }
+        case 'debug': {
+            const url = interaction.options.getString('url');
+            logger.info('system', 'received command', `${url}`);
+            await interaction.reply('test.');
+            break;
+        }
+        case 'gacha': {
+            logger.info(interaction.guildId ?? undefined, 'received-command/gacha', `${interaction}`);
+            const type = interaction.options.getSubcommand();
+            switch (type) {
+                case 'pick': {
+                    await interaction.deferReply();
+                    const num = interaction.options.getNumber('num') ?? undefined;
+                    const limit = interaction.options.getBoolean('limit') ?? undefined;
+
+                    await BotFunctions.Gacha.pickGacha(interaction, limit, num);
+                    break;
+                }
+                case 'list': {
+                    await BotFunctions.Gacha.getGachaInfo(interaction);
+                    break;
+                }
+                case 'extra': {
+                    await interaction.deferReply();
+                    await BotFunctions.Gacha.extraPick(
+                        interaction,
+                        interaction.options.getNumber('num') ?? undefined,
+                        interaction.options.getString('item') ?? undefined
+                    );
+                    break;
+                }
+            }
+            break;
+        }
+        case 'gc': {
+            await interaction.deferReply();
+            const num = interaction.options.getNumber('num') ?? undefined;
+            const limit = interaction.options.getBoolean('limit') ?? undefined;
+
+            await BotFunctions.Gacha.pickGacha(interaction, limit, num);
+            break;
+        }
+        case 'gl': {
+            await interaction.deferReply();
+            await BotFunctions.Gacha.pickGacha(interaction, true);
+            break;
+        }
+        case 'gpt': {
+            if (!isEnableFunction(functionNames.GPT)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
+                return;
+            }
+            await interaction.deferReply();
+            const text = interaction.options.getString('text')!;
+            await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_3_16K);
+            break;
+        }
+        case 'g4': {
+            if (!isEnableFunction(functionNames.GPT) || !isEnableFunction(functionNames.ENABLE_GPT4)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                interaction.reply({ content: `機能が有効化されてないよ！(ENABLE_GPT4)`, embeds: [send] });
+                return;
+            }
+            await interaction.deferReply();
+            const text = interaction.options.getString('text')!;
+            await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_4);
+            break;
+        }
+        case 'erase': {
+            const last = interaction.options.getBoolean('last') ?? undefined;
+            await BotFunctions.Chat.deleteChatData(interaction, last);
+            break;
+        }
+        default: {
+            return;
         }
     }
 }
@@ -390,7 +704,7 @@ export async function ping(message: Message) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
     const channel = message.member?.voice.channel as VoiceBasedChannel;
-    await BotFunctions.Music.playMusic(channel);
+    await DotBotFunctions.Music.playMusic(channel);
 }
 
 /**
@@ -402,28 +716,52 @@ export async function help(message: Message) {
     res.push(`今動いている言語は[TypeScript]版だよ！\n`);
     res.push('コマンドはここだよ～！');
     res.push('```');
+    res.push('(?がついている引数は入力自由です)');
     res.push('===== 便利コマンド系 =====');
-    res.push(' * .tenki [地域]');
+    res.push(' * .tenki [地域] [?日数]');
     res.push('   > 天気予報を取得する');
     res.push('   > 指定した地域の天気予報を取得します');
+    res.push('   > 日数を指定するとその日数後の天気予報を取得します(6日後まで)');
     res.push(' * .dice [ダイスの振る数] [ダイスの面の数]');
     res.push('   > サイコロを振る (例: [.dice 5 6] (6面体ダイスを5個振る))');
+    res.push(' * .choose [選択肢1] [選択肢2]... / .choice ... / .ch ...');
+    res.push('   > 選択肢からランダムに選ぶ');
+    res.push('   > 選択肢をスペース区切りで入力するとランダムに選んでくれるよ');
     res.push('===== みかんちゃんと遊ぶ系 =====');
     res.push(' * .luck [?運勢]');
     res.push('   > おみくじを引く');
     res.push('     運勢を指定するとその運勢が出るまで引きます');
-    res.push(' * .gacha [?回数or等級]');
+    res.push(' * .gacha [?回数 or limit] | .g [?回数 or l]');
     res.push('   > 10連ガチャを引く');
     res.push('     回数を指定するとその回数回します');
-    res.push('     等級を指定するとその等級が出るまで回します');
-    res.push('     等級か回数を指定した場合はプレゼントの対象外です');
+    res.push('     limitを指定するとガチャの上限まで引きます');
     res.push(' * .celovs');
     res.push('   > チンチロリンで遊ぶ');
     res.push('     みかんちゃんとチンチロリンで遊べます');
     res.push('     3回まで投げて出た目で勝負します');
+    res.push(' * .gpt [text] / /gpt [text]');
+    res.push('   > おしゃべり(ChatGPT)');
+    res.push('     みかんちゃんとChatGPTを使ったおしゃべりができます');
+    res.push(' * .g4 [text] / /g4 [text]');
+    res.push('   > おしゃべり(GPT-4)');
+    res.push('     みかんちゃんとChatGPTを使ったおしゃべりができます');
+    res.push('     (GPT-4なのでレスポンスは非常に遅いです)');
+    res.push('===== お部屋管理系 =====');
+    res.push(' * .team [チーム数] [?move]');
+    res.push('   > チーム分けを行います');
+    res.push('    moveを指定するとチーム分け後にメンバーを移動します');
+    res.push(' * .room [名前]');
+    res.push('   > お部屋の名前を変更します');
+    res.push('===== れもんちゃん系 =====');
+    res.push(' * .speak [ボイス番号] [?速度]');
+    res.push('   > 読み上げを開始します');
+    res.push('    読み上げ番号は`http://rim-linq.net:4044/speakers`で確認できます');
+    res.push('    速度は(0.1 - 5.0 | 整数可)で指定できます');
+    res.push(' * .discon');
+    res.push('   > 読み上げを終了します');
     res.push('===== 音楽再生系 =====');
     res.push(' * .play [URL] / .pl [URL]');
-    res.push('   > Youtube の音楽を再生します。プレイリストも可能');
+    res.push('   > Youtube の音楽を再生します. プレイリストも可能');
     res.push(' * .interrupt [URL] | .pi [URL]');
     res.push('   > 曲を1番目に割り込んで予約する');
     res.push(' * .interrupt [予約番号] | .pi [予約番号]');
@@ -436,9 +774,9 @@ export async function help(message: Message) {
     res.push('   > 予約している曲を削除する');
     res.push(' * .rem all | .rm all');
     res.push('   > 予約している曲を全て削除し、音楽再生を中止する');
-    res.push(' * .silent | .sil');
-    res.push('   > 音楽再生の通知を切り替えます。');
-    res.push('   > offの場合は次の曲に変わっても通知しなくなりますが、自動シャッフル時にのみ通知されます');
+    res.push(' * .silent | .si');
+    res.push('   > 音楽再生の通知を切り替えます');
+    res.push('   > offの場合は次の曲に変わっても通知しなくなりますが, 自動シャッフル時にのみ通知されます');
     res.push('===== プレイリスト系 =====');
     res.push(' * .list');
     res.push('   > 登録されているプレイリストの一覧を表示します');
@@ -482,7 +820,7 @@ export async function play(message: Message, args?: string[]) {
         return;
     }
 
-    await BotFunctions.Music.add(channel, url, message.author.id);
+    await DotBotFunctions.Music.add(channel, url, message.author.id);
 }
 
 /**
@@ -501,7 +839,7 @@ export async function stop(message: Message) {
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
-    await BotFunctions.Music.stopMusic(channel);
+    await DotBotFunctions.Music.stopMusic(channel);
 }
 
 export async function rem(message: Message, args?: string[]) {
@@ -527,7 +865,7 @@ export async function rem(message: Message, args?: string[]) {
         message.reply({ content: `ボイスチャンネルに入ってから使って～！`, embeds: [send] });
         return;
     }
-    await BotFunctions.Music.removeId(channel, channel.guild.id, num);
+    await DotBotFunctions.Music.removeId(channel, channel.guild.id, num);
 }
 
 export async function interrupt(message: Message, args?: string[]) {
@@ -552,8 +890,8 @@ export async function interrupt(message: Message, args?: string[]) {
         return;
     }
 
-    if (num !== undefined) {
-        await BotFunctions.Music.interruptIndex(channel, num);
+    if (!Number.isNaN(num)) {
+        await DotBotFunctions.Music.interruptIndex(channel, num);
         return;
     }
 
@@ -564,7 +902,7 @@ export async function interrupt(message: Message, args?: string[]) {
         return;
     }
 
-    await BotFunctions.Music.interruptMusic(channel, url);
+    await DotBotFunctions.Music.interruptMusic(channel, url);
 }
 
 export async function queue(message: Message) {
@@ -572,7 +910,7 @@ export async function queue(message: Message) {
     if (!channel) {
         return;
     }
-    await BotFunctions.Music.showQueue(channel);
+    await DotBotFunctions.Music.showQueue(channel);
     return;
 }
 
@@ -581,7 +919,7 @@ export async function shuffle(message: Message) {
     if (!channel) {
         return;
     }
-    BotFunctions.Music.shuffleMusic(channel);
+    DotBotFunctions.Music.shuffleMusic(channel);
 }
 
 export async function exterm(message: Message) {
@@ -589,5 +927,5 @@ export async function exterm(message: Message) {
         return;
     }
 
-    await BotFunctions.Music.extermAudioPlayer(message.guild.id);
+    await DotBotFunctions.Music.extermAudioPlayer(message.guild.id);
 }

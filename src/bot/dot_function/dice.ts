@@ -1,6 +1,6 @@
 import { EmbedBuilder, Message } from 'discord.js';
-import { arrayEquals, getRndNumber } from '../../common/common';
-import { DiceRole, DICE_ROLE } from '../../constant/dice/dice';
+import { arrayEquals, getRndNumber } from '../../common/common.js';
+import { DiceRole, DICE_ROLE } from '../../constant/dice/dice.js';
 
 /**
  * サイコロを振る
@@ -220,4 +220,13 @@ export function judge(t: DiceRole, v: DiceRole) {
         }
     }
     return 0;
+}
+
+/**
+ * アイテムをランダムに選ぶ
+ * @param items
+ */
+export function choose(items: string[]) {
+    const rnd = getRndNumber(0, items.length - 1);
+    return items[rnd];
 }
