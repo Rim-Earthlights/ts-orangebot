@@ -75,10 +75,6 @@ export async function addSpotifyMusic(
     loop?: boolean,
     shuffle?: boolean
 ): Promise<boolean> {
-    const repository = new MusicRepository();
-    const player = await getAudioPlayer(channel.guild.id);
-    const status = player.state.status;
-
     if (pldl.is_expired()) {
         console.log('token expire');
         await pldl.refreshToken();
@@ -86,49 +82,12 @@ export async function addSpotifyMusic(
 
     const sp = (await pldl.spotify(url)) as SpotifyTrack;
 
-    await repository.add(
-        channel.guild.id,
-        {
-            guild_id: channel.guild.id,
-            type: 'spotify',
-            title: sp.name,
-            url: sp.url,
-            thumbnail: sp.thumbnail?.url
-        },
-        !!interrupt
-    );
+    const searched = await pldl.search(`${sp.name}`, {
+        limit: 1
+    });
 
-    const musics = await repository.getQueue(channel.guild.id);
-
-    if (status === AudioPlayerStatus.Playing) {
-        const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
-
-        if (description.length >= 4000) {
-            const sliced = musics.slice(0, 20);
-            const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
-
-            const send = new EmbedBuilder()
-                .setColor('#cc66cc')
-                .setAuthor({ name: `追加: ${sp.name}` })
-                .setTitle('キュー(先頭の20曲のみ表示しています): ')
-                .setDescription(description);
-
-            (channel as VoiceChannel).send({ embeds: [send] });
-            return true;
-        }
-
-        const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setAuthor({ name: `追加: ${sp.name}` })
-            .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description ? description : 'none');
-
-        (channel as VoiceChannel).send({ embeds: [send] });
-        return true;
-    }
-    await initPlayerInfo(channel, !!loop, !!shuffle);
-    await playMusic(channel);
-    return false;
+    await addYoutubeMusic(channel, 'video', searched[0].url, false, loop, shuffle);
+    return true;
 }
 
 export async function addYoutubeMusic(
@@ -150,7 +109,6 @@ export async function addYoutubeMusic(
             channel.guild.id,
             {
                 guild_id: channel.guild.id,
-                type: 'youtube',
                 title: ytinfo.video_details.title,
                 url: ytinfo.video_details.url,
                 thumbnail: ytinfo.video_details.thumbnails[0].url
@@ -437,7 +395,6 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
         channel.guild.id,
         {
             guild_id: channel.guild.id,
-            type: music.type,
             title: music.title,
             url: music.url,
             thumbnail: music.thumbnail
@@ -577,6 +534,10 @@ export async function playMusic(channel: VoiceBasedChannel) {
           });
 
     try {
+        if (pldl.is_expired()) {
+            await pldl.refreshToken();
+        }
+
         const player = await updateAudioPlayer(channel.guild.id);
         const stream = await pldl.stream(playing.url);
 
