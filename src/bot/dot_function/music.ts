@@ -148,7 +148,8 @@ export async function addYoutubeMusic(
                     .setColor('#cc66cc')
                     .setAuthor({ name: `追加: ${ytinfo.video_details.title}` })
                     .setTitle('キュー(先頭の20曲のみ表示しています): ')
-                    .setDescription(description);
+                    .setDescription(description)
+                    .setThumbnail(ytinfo.video_details.thumbnails[0].url);
 
                 (channel as VoiceChannel).send({ embeds: [send] });
                 return true;
@@ -158,7 +159,8 @@ export async function addYoutubeMusic(
                 .setColor('#cc66cc')
                 .setAuthor({ name: `追加: ${ytinfo.video_details.title}` })
                 .setTitle(`キュー(全${musics.length}曲): `)
-                .setDescription(description ? description : 'none');
+                .setDescription(description ? description : 'none')
+                .setThumbnail(ytinfo.video_details.thumbnails[0].url);
 
             (channel as VoiceChannel).send({ embeds: [send] });
             return true;
