@@ -291,8 +291,6 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
     const repository = new MusicInfoRepository();
     const info = await repository.get(channel.guild.id);
 
-    console.log(JSON.stringify(info));
-
     if (!info) {
         if (loop) {
             await repository.save({ guild_id: channel.guild.id, is_loop: 1 });
