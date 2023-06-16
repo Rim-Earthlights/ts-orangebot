@@ -76,16 +76,10 @@ export async function add(
  */
 export async function search(channel: VoiceBasedChannel, word: string): Promise<boolean> {
     const searched = await pldl.search(word, { limit: 5 });
+    const sorted = searched.sort((s) => s.views).reverse();
 
-    const mv = searched.find((s) => s.title?.includes('MV'));
-
-    if (mv) {
-        await addYoutubeMusic(channel, 'video', mv.url, false, undefined, undefined);
-        return true;
-    } else {
-        await addYoutubeMusic(channel, 'video', searched[0].url, false, undefined, undefined);
-        return true;
-    }
+    await addYoutubeMusic(channel, 'video', sorted[0].url, false, undefined, undefined);
+    return true;
 }
 
 export async function addSpotifyMusic(
@@ -406,7 +400,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
  */
 export async function interruptIndex(channel: VoiceBasedChannel, index: number): Promise<boolean> {
     const repository = new MusicRepository();
-    const musics = await repository.getAll(channel.guild.id);
+    const musics = await repository.getQueue(channel.guildId);
     const music = musics.find((m) => m.music_id === index);
 
     if (!music) {
@@ -475,7 +469,7 @@ export async function remove(gid: string, musicId?: number): Promise<boolean> {
  */
 export async function removeId(channel: VoiceBasedChannel, gid: string, musicId: number): Promise<void> {
     const repository = new MusicRepository();
-    const musics = await repository.getAll(gid);
+    const musics = await repository.getQueue(gid);
     await repository.remove(gid, musicId);
 
     const description = musics

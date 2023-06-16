@@ -19,7 +19,7 @@
     <div class="state">
         <p>現在の曲: <%- current.title %></p>
         <p>URL: <a href="<%- current.url %>"><%- current.url %></a></p>
-        <p>ループ: <%- current.is_loop %> | シャッフル: <%- current.is_shuffle %></p>
+        <p>ループ: <%- current.is_loop ? '有効' : '無効' %> | シャッフル: <%- current.is_shuffle ? '有効' : '無効' %></p>
     </div>
     <table class="table table-striped">
         <thead>
