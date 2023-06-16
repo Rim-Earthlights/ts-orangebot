@@ -76,7 +76,18 @@ export async function add(
  */
 export async function search(channel: VoiceBasedChannel, word: string): Promise<boolean> {
     const searched = await pldl.search(word, { limit: 5 });
-    const sorted = searched.sort((s) => s.views).reverse();
+
+    const sorted = searched
+        .sort(function (a, b) {
+            if (a.views > b.views) {
+                return 1;
+            } else if (a.views < b.views) {
+                return -1;
+            } else {
+                return 0;
+            }
+        })
+        .reverse();
 
     await addYoutubeMusic(channel, 'video', sorted[0].url, false, undefined, undefined);
     return true;
