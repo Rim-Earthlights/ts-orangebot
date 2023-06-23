@@ -106,7 +106,7 @@ export async function addSpotifyMusic(
 
     const sp = (await pldl.spotify(url)) as SpotifyTrack;
 
-    const searched = await pldl.search(`${sp.name}`, {
+    const searched = await pldl.search(`${sp.name} ${sp.artists.join(' ')}`, {
         limit: 1
     });
 
