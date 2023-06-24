@@ -206,6 +206,7 @@ async function pickNormal(message: Message, gnum = '10') {
         }
     } else {
         await users.save({ id: message.author.id, user_name: message.author.tag, pick_left: 10 });
+        num = 10;
     }
 
     for (let i = 0; i < num; i++) {
