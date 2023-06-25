@@ -19,6 +19,8 @@ import { Gacha as OldGacha } from './bot/dot_function/index.js';
 import { Gacha } from './bot/function/index.js';
 import { initJob } from './job/job.js';
 import { switchFunctionByAPIKey } from './common/common.js';
+import { UsersRepository } from './model/repository/usersRepository.js';
+import { Users } from './model/models/users.js';
 
 dotenv.config();
 
@@ -211,6 +213,9 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
     await interactionSelector(interaction);
 });
 
+/**
+ * リアクション追加イベント
+ */
 DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
     if (reaction.partial) {
         try {
@@ -244,6 +249,17 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
 
         // add user role
         await u?.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
+
+        // register user
+        const userRepository = new UsersRepository();
+        const userEntity = await userRepository.get(user.id);
+        if (!userEntity) {
+            const saveUser: Partial<Users> = {
+                id: user.id,
+                user_name: user.username
+            };
+            await userRepository.save(saveUser);
+        }
 
         const message = await reaction.message.reply(`読んでくれてありがと～！ロールを付与したよ！`);
         setTimeout(async () => {

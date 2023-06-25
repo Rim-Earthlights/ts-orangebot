@@ -16,6 +16,7 @@ import { CONFIG } from '../config/config.js';
 import { isEnableFunction } from '../common/common.js';
 import { functionNames } from '../constant/constants.js';
 import { ChatGPTModel } from '../constant/chat/chat.js';
+import { UsersRepository } from '../model/repository/usersRepository.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -627,7 +628,16 @@ export async function commandSelector(message: Message) {
                 if (m.user.bot) {
                     return;
                 }
+                if (m.roles.cache.has(CONFIG.DISCORD.MEMBER_ROLE_ID)) {
+                    return;
+                }
                 await m.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
+
+                const userRepository = new UsersRepository();
+                const user = await userRepository.get(m.id);
+                if (!user) {
+                    await userRepository.save({ id: m.id, user_name: m.user.username });
+                }
             });
             await message.reply('add roles to all members.');
             break;
