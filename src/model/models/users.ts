@@ -30,6 +30,12 @@ export class Users extends BaseEntity {
     @Column({ type: 'int', nullable: false, default: 0 })
     pick_left!: number;
 
+    @Column({ type: 'int', nullable: false, default: 3 })
+    voice_id!: number;
+
+    @Column({ type: 'float', nullable: false, default: 1.0 })
+    voice_speed!: number;
+
     @DeleteDateColumn({ type: 'datetime', nullable: true })
     deleted_at: Date | null = null;
 
