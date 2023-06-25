@@ -812,8 +812,10 @@ export async function help(message: Message) {
     res.push(' * .room [名前]');
     res.push('   > お部屋の名前を変更します');
     res.push('===== れもんちゃん系 =====');
-    res.push(' * .speak [ボイス番号] [?速度]');
+    res.push(' * .speak');
     res.push('   > 読み上げを開始します');
+    res.push(' * .speaker-config [ボイス番号] [速度]');
+    res.push('   > 読み上げのユーザー設定を変更します');
     res.push('    読み上げ番号は`http://rim-linq.net:4044/speakers`で確認できます');
     res.push('    速度は(0.1 - 5.0 | 整数可)で指定できます');
     res.push(' * .discon');
