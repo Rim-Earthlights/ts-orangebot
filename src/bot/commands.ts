@@ -261,7 +261,7 @@ export async function commandSelector(message: Message) {
             if (!gid) {
                 return;
             }
-            await DotBotFunctions.Music.pause(gid);
+            await DotBotFunctions.Music.pause(message.channel as VoiceBasedChannel);
             break;
         }
         case 'list': {

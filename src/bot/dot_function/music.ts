@@ -18,7 +18,7 @@ import { MusicRepository } from '../../model/repository/musicRepository.js';
 import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
 import { getPlaylistItems } from '../request/youtube.js';
 import * as logger from '../../common/logger.js';
-import { Music } from '../../constant/music/music.js';
+import { Music, PlayerData } from '../../constant/music/music.js';
 
 /**
  * キューに音楽を追加する
@@ -123,8 +123,8 @@ export async function addYoutubeMusic(
     shuffle?: boolean
 ): Promise<boolean> {
     const repository = new MusicRepository();
-    const player = await getAudioPlayer(channel.guild.id);
-    const status = player.state.status;
+    const p = await updateAudioPlayer(channel);
+    const status = p.player.state.status;
 
     if (type === 'video') {
         const ytinfo = await pldl.video_info(url);
@@ -546,23 +546,12 @@ export async function playMusic(channel: VoiceBasedChannel) {
         thumbnail: playing.thumbnail
     });
 
-    const vc = getVoiceConnection(channel.guild.id);
-    const connection = vc
-        ? vc
-        : joinVoiceChannel({
-              adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
-              channelId: channel.id,
-              guildId: channel.guild.id,
-              selfDeaf: true,
-              selfMute: false
-          });
-
     try {
         if (pldl.is_expired()) {
             await pldl.refreshToken();
         }
 
-        const player = await updateAudioPlayer(channel.guild.id);
+        const p = await updateAudioPlayer(channel);
         const stream = await pldl.stream(playing.url);
 
         const resource = createAudioResource(stream.stream, {
@@ -585,11 +574,10 @@ export async function playMusic(channel: VoiceBasedChannel) {
                 });
             (channel as VoiceChannel).send({ embeds: [send] });
         }
-        player.play(resource);
-        connection.subscribe(player);
+        p.player.play(resource);
 
-        await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
-        await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+        await entersState(p.player, AudioPlayerStatus.Playing, 10 * 1000);
+        await entersState(p.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
     } catch (e) {
         logger.info(channel.guild.id, 'command|music-play', JSON.stringify(e));
         const send = new EmbedBuilder()
@@ -613,7 +601,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
  * @param channel 送信するchannel
  */
 export async function stopMusic(channel: VoiceBasedChannel) {
-    const player = await getAudioPlayer(channel.guild.id);
+    const p = await updateAudioPlayer(channel);
 
     const musicRepository = new MusicRepository();
     const musics = await musicRepository.getQueue(channel.guild.id);
@@ -631,7 +619,7 @@ export async function stopMusic(channel: VoiceBasedChannel) {
         connection?.destroy();
         return;
     }
-    player.stop();
+    p.player.stop();
 }
 
 /**
@@ -712,15 +700,15 @@ export async function resetAllPlayState(gid: string) {
     await repository.resetPlayState(gid);
 }
 
-export async function pause(gid: string): Promise<void> {
-    const player = await getAudioPlayer(gid);
-    logger.info(gid, 'command|music-pause', player.state.status);
+export async function pause(channel: VoiceBasedChannel): Promise<void> {
+    const p = await updateAudioPlayer(channel);
+    logger.info(channel.guild.id, 'command|music-pause', p.player.state.status);
 
-    if (player.state.status === AudioPlayerStatus.Paused) {
-        player.unpause();
+    if (p.player.state.status === AudioPlayerStatus.Paused) {
+        p.player.unpause();
     }
-    if (player.state.status === AudioPlayerStatus.Playing) {
-        player.pause();
+    if (p.player.state.status === AudioPlayerStatus.Playing) {
+        p.player.pause();
     }
 }
 
@@ -785,33 +773,34 @@ export async function changeNotify(channel: VoiceBasedChannel): Promise<void> {
     (channel as VoiceChannel).send({ content: `サイレントモードを変更したよ！`, embeds: [send] });
 }
 
-async function getAudioPlayer(gid: string): Promise<AudioPlayer> {
-    let PlayerData = Music.player.find((p) => p.id === gid);
-
-    if (!PlayerData) {
-        PlayerData = { id: gid, player: createAudioPlayer() };
-        Music.player.push(PlayerData);
-    }
-    return PlayerData.player;
-}
-
-async function updateAudioPlayer(gid: string): Promise<AudioPlayer> {
-    const PlayerData = Music.player.find((p) => p.id === gid);
+async function updateAudioPlayer(channel: VoiceBasedChannel): Promise<PlayerData> {
+    const PlayerData = Music.player.find((p) => p.guild_id === channel.guild.id);
 
     if (PlayerData) {
         const index = Music.player.findIndex((p) => p === PlayerData);
-        Music.player[index].player = createAudioPlayer();
-        return Music.player[index].player;
+        return Music.player[index];
     }
-    const p = { id: gid, player: createAudioPlayer() };
+    const p: PlayerData = {
+        guild_id: channel.guild.id,
+        channel,
+        connection: joinVoiceChannel({
+            adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
+            channelId: channel.id,
+            guildId: channel.guild.id,
+            selfDeaf: true,
+            selfMute: false
+        }),
+        player: createAudioPlayer()
+    };
+    p.connection.subscribe(p.player);
     Music.player.push(p);
-    return p.player;
+    return p;
 }
 
 async function removeAudioPlayer(gid: string): Promise<void> {
-    const PlayerData = Music.player.find((p) => p.id === gid);
+    const PlayerData = Music.player.find((p) => p.guild_id === gid);
     if (PlayerData) {
-        Music.player = Music.player.filter((p) => p.id !== gid);
+        Music.player = Music.player.filter((p) => p.guild_id !== gid);
     }
 }
 
@@ -830,31 +819,18 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
         return;
     }
 
-    const vc = getVoiceConnection(channel.guild.id);
-
-    const connection = vc
-        ? vc
-        : joinVoiceChannel({
-              adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
-              channelId: channel.id,
-              guildId: channel.guild.id,
-              selfDeaf: true,
-              selfMute: false
-          });
-
     try {
-        const player = await updateAudioPlayer(channel.guild.id);
-        connection.subscribe(player);
+        const p = await updateAudioPlayer(channel);
         const stream = await pldl.stream(playing.url, { seek: seek });
 
         const resource = createAudioResource(stream.stream, {
             inputType: stream.type
         });
 
-        player.play(resource);
+        p.player.play(resource);
 
-        await entersState(player, AudioPlayerStatus.Playing, 10 * 1000);
-        await entersState(player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+        await entersState(p.player, AudioPlayerStatus.Playing, 10 * 1000);
+        await entersState(p.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
     } catch (e) {
         const error = e as Error;
         logger.info(channel.guild.id, 'command|music-play', JSON.stringify(error.message));
@@ -870,6 +846,4 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }
-
-    await playMusic(channel);
 }
