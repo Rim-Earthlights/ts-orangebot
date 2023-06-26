@@ -846,6 +846,4 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
             });
         (channel as VoiceChannel).send({ embeds: [send] });
     }
-
-    await playMusic(channel);
 }
