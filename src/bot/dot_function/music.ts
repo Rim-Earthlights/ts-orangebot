@@ -106,11 +106,7 @@ export async function addSpotifyMusic(
 
     const sp = (await pldl.spotify(url)) as SpotifyTrack;
 
-    const searched = await pldl.search(`${sp.name} ${sp.artists.join(' ')}`, {
-        limit: 1
-    });
-
-    await addYoutubeMusic(channel, 'video', searched[0].url, false, loop, shuffle);
+    await search(channel, `${sp.name} ${sp.artists.join(' ')}`);
     return true;
 }
 
@@ -552,7 +548,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
         }
 
         const p = await updateAudioPlayer(channel);
-        const stream = await pldl.stream(playing.url);
+        const stream = await pldl.stream(playing.url, { discordPlayerCompatibility: true });
 
         const resource = createAudioResource(stream.stream, {
             inputType: stream.type
@@ -821,7 +817,7 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
 
     try {
         const p = await updateAudioPlayer(channel);
-        const stream = await pldl.stream(playing.url, { seek: seek });
+        const stream = await pldl.stream(playing.url, { seek: seek, discordPlayerCompatibility: true });
 
         const resource = createAudioResource(stream.stream, {
             inputType: stream.type
