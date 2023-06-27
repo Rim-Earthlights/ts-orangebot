@@ -19,7 +19,7 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
 
     // ChatGPTが初期化されていない場合は初期化
     const chat = await initalize(message.guild.id, 'default', model);
-    if (chat.type == 'proxy') {
+    if (chat.type === 'proxy') {
         chat.parentMessageId = [];
         chat.type = 'default';
     }
@@ -73,7 +73,7 @@ export async function talkWithoutPrompt(message: Message, content: string) {
     // ChatGPTが初期化されていない場合は初期化
     const chat = await initalize(message.guild.id, 'proxy', ChatGPTModel.GPT_3);
 
-    if (chat.type == 'default') {
+    if (chat.type === 'default') {
         chat.parentMessageId = [];
         chat.type = 'proxy';
     }

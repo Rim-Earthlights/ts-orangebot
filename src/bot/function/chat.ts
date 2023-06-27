@@ -24,7 +24,7 @@ export const talk = async (
     // ChatGPT初期化
     const chat = await initalize(interaction.guild.id, 'default', model);
 
-    if (chat.type == 'proxy') {
+    if (chat.type === 'proxy') {
         chat.parentMessageId = [];
         chat.type = 'default';
     }

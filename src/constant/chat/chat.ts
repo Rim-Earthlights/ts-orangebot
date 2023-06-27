@@ -60,7 +60,7 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
             'init-gpt',
             `Model: ${model}, Token: ${getMaxTokens(model ? model : ChatGPTModel.GPT_3)}`
         );
-        return GPT.chat[idx];
+        return GPT.chat[idx - 1];
     }
     if (type && chat.type !== type) {
         chat.type = type ? type : 'default';
