@@ -205,7 +205,7 @@ export async function wordSelector(message: Message) {
             return;
         }
         const dice = match[0].split('d');
-        await BotFunctions.Dice.roll(message);
+        await BotFunctions.Dice.roll(message, dice);
         return;
     }
     message.reply('ごめんなさい、わからなかった……');

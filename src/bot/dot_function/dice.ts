@@ -79,6 +79,10 @@ export async function roll(message: Message, args?: string[]) {
     message.reply({ content: `${diceMax}面ダイスを${diceNum}個ね！まかせて！`, embeds: [send] });
 }
 
+/**
+ * チンチロリンであそぶ
+ * @param message
+ */
 export async function celo(message: Message) {
     const celo = getCelo(3);
     const description = [];
@@ -98,6 +102,10 @@ export async function celo(message: Message) {
     message.reply({ content: `サイコロあそび！ちんちろりーん！`, embeds: [send] });
 }
 
+/**
+ * チンチロリンで勝負する
+ * @param message
+ */
 export async function celovs(message: Message) {
     const celoYou = getCelo(3);
     const celoEnemy = getCelo(3);
@@ -202,6 +210,12 @@ export function getRole(): DiceRole {
     return { ...DICE_ROLE.DICE_MENASHI, dice };
 }
 
+/**
+ * 出た目で勝負を判定する
+ * @param t
+ * @param v
+ * @returns
+ */
 export function judge(t: DiceRole, v: DiceRole) {
     const rank = t.rank - v.rank;
     if (rank !== 0) {

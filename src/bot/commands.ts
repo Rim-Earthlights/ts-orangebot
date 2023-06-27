@@ -1,11 +1,4 @@
-import {
-    Message,
-    EmbedBuilder,
-    VoiceBasedChannel,
-    Interaction,
-    ChatInputCommandInteraction,
-    CacheType
-} from 'discord.js';
+import { Message, EmbedBuilder, VoiceBasedChannel, ChatInputCommandInteraction, CacheType } from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
 import * as BotFunctions from './function/index.js';
@@ -532,7 +525,10 @@ export async function commandSelector(message: Message) {
         case 'room': {
             if (content.length <= 0) {
                 // 初期名(お部屋: #NUM)に変更
-                const guild = message.guild!;
+                const guild = message.guild;
+                if (!guild) {
+                    return;
+                }
                 const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
                 const roomName = `お部屋: #${('000' + channelLength).slice(-3)}`;
 
@@ -713,6 +709,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                 return;
             }
             await interaction.deferReply();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
             await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_3_16K);
             break;
@@ -728,6 +725,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                 return;
             }
             await interaction.deferReply();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
             await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_4);
             break;

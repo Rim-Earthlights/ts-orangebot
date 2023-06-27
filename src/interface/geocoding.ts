@@ -1,4 +1,6 @@
-export const GEOCODING_URI = 'http://api.openweathermap.org/geo/1.0/direct';
+export const JP_GEOCODING_URI = 'http://geoapi.heartrails.com/api/json';
+export const JP_LOCATION_URI = 'http://geoapi.heartrails.com/api/json?method=searchByGeoLocation';
+export const WW_GEOCODING_URI = 'http://api.openweathermap.org/geo/1.0/direct';
 
 export interface WorldGeocoding {
     name: string;

@@ -12,9 +12,9 @@ import { UsersRepository } from '../../model/repository/usersRepository.js';
 import * as Models from '../../model/models/index.js';
 import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
-import { GachaPercents } from '../../constant/gacha/gacha.js';
+import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
 
-export class Gacha {
+export class GachaList {
     static allItemList: Models.Item[] = [];
 }
 
@@ -65,7 +65,7 @@ export async function getGachaOnce(): Promise<Gacha> {
  * @returns
  */
 async function convertGacha(rare: string): Promise<Gacha> {
-    const allItems = Gacha.allItemList;
+    const allItems = GachaList.allItemList;
     const itemList = allItems.filter((i) => i.rare === rare);
     const weightList = getWeight(itemList);
 
@@ -88,7 +88,11 @@ async function convertGacha(rare: string): Promise<Gacha> {
  * @param limit 全て引くかどうか
  * @param num 引く回数
  */
-export const pickGacha = async (interaction: ChatInputCommandInteraction<CacheType>, limit?: boolean, num?: number) => {
+export const pickGacha = async (
+    interaction: ChatInputCommandInteraction<CacheType>,
+    limit?: boolean,
+    num?: number
+): Promise<void> => {
     await pickNormal(interaction, num, limit ?? false);
 };
 
@@ -96,7 +100,7 @@ export const pickGacha = async (interaction: ChatInputCommandInteraction<CacheTy
  * ガチャ情報の取得
  * @param interaction
  */
-export const getGachaInfo = async (interaction: ChatInputCommandInteraction<CacheType>) => {
+export const getGachaInfo = async (interaction: ChatInputCommandInteraction<CacheType>): Promise<void> => {
     await getPresent(interaction);
 };
 
@@ -106,7 +110,11 @@ export const getGachaInfo = async (interaction: ChatInputCommandInteraction<Cach
  * @param num 引く回数
  * @param word 検索ワード
  */
-export const extraPick = async (interaction: ChatInputCommandInteraction<CacheType>, num?: number, word?: string) => {
+export const extraPick = async (
+    interaction: ChatInputCommandInteraction<CacheType>,
+    num?: number,
+    word?: string
+): Promise<void> => {
     await pickExtra(interaction, num, word);
 };
 
@@ -116,7 +124,11 @@ export const extraPick = async (interaction: ChatInputCommandInteraction<CacheTy
  * @param args
  * @returns
  */
-async function pickExtra(interaction: ChatInputCommandInteraction<CacheType>, num?: number, word?: string) {
+async function pickExtra(
+    interaction: ChatInputCommandInteraction<CacheType>,
+    num?: number,
+    word?: string
+): Promise<void> {
     const gachaList: Gacha[] = [];
 
     if (num) {
@@ -190,7 +202,11 @@ async function pickExtra(interaction: ChatInputCommandInteraction<CacheType>, nu
  * @param interaction
  * @returns
  */
-async function pickNormal(interaction: ChatInputCommandInteraction<CacheType>, gnum = 10, limit: boolean) {
+async function pickNormal(
+    interaction: ChatInputCommandInteraction<CacheType>,
+    gnum = 10,
+    limit: boolean
+): Promise<void> {
     if (interaction.channel?.type !== ChannelType.GuildText && interaction.channel?.type !== ChannelType.GuildVoice) {
         return;
     }
@@ -341,7 +357,7 @@ async function pickNormal(interaction: ChatInputCommandInteraction<CacheType>, g
  * プレゼント一覧を取得する
  * @param interaction
  */
-export async function getPresent(interaction: ChatInputCommandInteraction<CacheType>, uid?: string) {
+export async function getPresent(interaction: ChatInputCommandInteraction<CacheType>, uid?: string): Promise<void> {
     let getUid: string;
     if (interaction.channel?.type !== ChannelType.GuildText && interaction.channel?.type !== ChannelType.GuildVoice) {
         return;
@@ -391,7 +407,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
  * プレゼントを使用する
  *
  */
-export async function usePresent(interaction: ChatInputCommandInteraction<CacheType>, args: string[]) {
+export async function usePresent(interaction: ChatInputCommandInteraction<CacheType>, args: string[]): Promise<void> {
     if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(interaction.user.id)) {
         interaction.editReply({
             content: `プレゼントの使用権限がないよ！`
@@ -430,7 +446,7 @@ export async function usePresent(interaction: ChatInputCommandInteraction<CacheT
  * @param itemId
  * @returns
  */
-export async function givePresent(message: Message, uid: string, itemId: number) {
+export async function givePresent(message: Message, uid: string, itemId: number): Promise<void> {
     if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
         message.reply({
             content: `プレゼントを渡す権限がないよ！`
@@ -463,7 +479,7 @@ export async function givePresent(message: Message, uid: string, itemId: number)
  * @param message 受け取ったメッセージング情報
  * @returns
  */
-export async function pickOmikuji(message: Message, args?: string[]) {
+export async function pickOmikuji(message: Message, args?: string[]): Promise<void> {
     const omikujis: Omikuji[] = [];
 
     if (args != undefined && args.length > 0) {
@@ -570,19 +586,4 @@ function getOmikujiOnce(): Omikuji {
         luck,
         description
     };
-}
-
-export interface Gacha {
-    item_id: number;
-    name: string;
-    icon: string | null;
-    rare: string;
-    rank: number;
-    is_present: boolean;
-    reroll: number;
-}
-
-export interface Omikuji {
-    luck: string;
-    description: string;
 }

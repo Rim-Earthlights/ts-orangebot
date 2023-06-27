@@ -1,12 +1,18 @@
-import { getAsync } from '../../common/webWrapper.js';
 import { Forecast, FORECAST_URI } from '../../interface/forecast.js';
 import { Onecall, ONECALL_URI } from '../../interface/onecall.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
 import { EmbedBuilder, Message } from 'discord.js';
-import { Geocoding, GEOCODING_URI, WorldGeocoding } from '../../interface/geocoding.js';
+import {
+    Geocoding,
+    JP_GEOCODING_URI,
+    JP_LOCATION_URI,
+    WW_GEOCODING_URI,
+    WorldGeocoding
+} from '../../interface/geocoding.js';
 import url from 'url';
 import { CONFIG } from '../../config/config.js';
 import * as logger from '../../common/logger.js';
+import axios from 'axios';
 
 /**
  * 現在の天気を返す.
@@ -32,14 +38,13 @@ export async function weather(message: Message, args?: string[]) {
             day = day + addDay;
         }
 
-        const geoResponse = await getAsync(
-            'http://geoapi.heartrails.com/api/json',
-            new url.URLSearchParams({
+        const geoResponse = await axios.get(JP_GEOCODING_URI, {
+            params: new url.URLSearchParams({
                 method: 'suggest',
                 keyword: cityName,
                 matching: 'like'
             })
-        );
+        });
 
         let lat: number, lon: number;
 
@@ -49,16 +54,15 @@ export async function weather(message: Message, args?: string[]) {
         if (response.error != undefined || geoList.length <= 0) {
             await logger.info(message.guild?.id, 'get-forecast', `geocoding(JP) not found.`);
 
-            const geoResponse = await getAsync(
-                GEOCODING_URI,
-                new url.URLSearchParams({
+            const geoResponse = await axios.get(WW_GEOCODING_URI, {
+                params: new url.URLSearchParams({
                     q: cityName,
                     limit: '5',
                     appid: forecastKey,
                     lang: 'ja',
                     unit: 'metric'
                 })
-            );
+            });
 
             const geoList = <WorldGeocoding[]>geoResponse.data;
 
@@ -86,20 +90,18 @@ export async function weather(message: Message, args?: string[]) {
             );
         }
 
-        const forecastResponse = await getAsync(
-            FORECAST_URI,
-            new url.URLSearchParams({
+        const forecastResponse = await axios.get(FORECAST_URI, {
+            params: new url.URLSearchParams({
                 lat: lat.toString(),
                 lon: lon.toString(),
                 appid: forecastKey,
                 lang: 'ja',
                 units: 'metric'
             })
-        );
+        });
 
-        const onecallResponse = await getAsync(
-            ONECALL_URI,
-            new url.URLSearchParams({
+        const onecallResponse = await axios.get(ONECALL_URI, {
+            params: new url.URLSearchParams({
                 lat: lat.toString(),
                 lon: lon.toString(),
                 exclude: 'current,minutely,hourly',
@@ -107,7 +109,7 @@ export async function weather(message: Message, args?: string[]) {
                 units: 'metric',
                 lang: 'ja'
             })
-        );
+        });
 
         const forecast = <Forecast>forecastResponse.data;
         const onecall = <Onecall>onecallResponse.data;
@@ -169,13 +171,12 @@ async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<strin
     const description = [];
 
     if (forecast.sys.country === 'JP') {
-        const geores = await getAsync(
-            'http://geoapi.heartrails.com/api/json?method=searchByGeoLocation',
-            new URLSearchParams({
+        const geores = await axios.get(JP_LOCATION_URI, {
+            params: new URLSearchParams({
                 x: forecast.coord.lon.toString(),
                 y: forecast.coord.lat.toString()
             })
-        );
+        });
         const data = geores.data;
 
         // 情報の整形
@@ -229,13 +230,12 @@ async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
     // 情報の整形
     const description = [];
 
-    const geores = await getAsync(
-        'http://geoapi.heartrails.com/api/json?method=searchByGeoLocation',
-        new URLSearchParams({
+    const geores = await axios.get(JP_LOCATION_URI, {
+        params: new URLSearchParams({
             x: onecall.lon.toString(),
             y: onecall.lat.toString()
         })
-    );
+    });
     const data = geores.data;
 
     if (!data.response.error) {

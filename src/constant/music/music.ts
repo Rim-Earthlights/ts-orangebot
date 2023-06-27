@@ -1,6 +1,9 @@
 import { AudioPlayer, VoiceConnection } from '@discordjs/voice';
 import { VoiceBasedChannel } from 'discord.js';
 
+/**
+ * 音楽プレイヤー
+ */
 export class Music {
     static player: PlayerData[] = [];
 }

@@ -1,3 +1,6 @@
+/**
+ * サイコロ情報
+ */
 export interface DiceRole {
     role: string;
     rank: number;
@@ -5,6 +8,9 @@ export interface DiceRole {
     power?: number;
 }
 
+/**
+ * サイコロの役
+ */
 export const DICE_ROLE = {
     DICE_SHONBEN: { role: 'ションベン', rank: -2 },
     DICE_HIFUMI: { role: '一二三', rank: -1 },

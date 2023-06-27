@@ -1,6 +1,3 @@
-/**
- * ChatGPT
- */
 import * as logger from '../../common/logger.js';
 import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { EmbedBuilder, Message } from 'discord.js';

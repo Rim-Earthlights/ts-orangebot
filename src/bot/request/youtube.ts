@@ -67,6 +67,9 @@ async function getPlaylistItemsResponse(playlistId: string, pageToken?: string):
     return (await axios.get(uri, { params })).data;
 }
 
+/**
+ * プレイリストの動画情報
+ */
 export interface YoutubePlaylists {
     videoId: string;
     title: string;

@@ -1,6 +1,3 @@
-/**
- * ChatGPT
- */
 import * as logger from '../../common/logger.js';
 import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
@@ -11,11 +8,7 @@ import { ChatGPTModel, initalize } from '../../constant/chat/chat.js';
 /**
  * ChatGPTで会話する
  */
-export const talk = async (
-    interaction: ChatInputCommandInteraction<CacheType>,
-    content: string,
-    model: ChatGPTModel
-) => {
+export async function talk(interaction: ChatInputCommandInteraction<CacheType>, content: string, model: ChatGPTModel) {
     // サーバー内のテキストチャンネル以外は無視
     if (!interaction.guild) {
         return;
@@ -64,12 +57,12 @@ export const talk = async (
             await interaction.editReply({ embeds: [send] });
         }
     }
-};
+}
 
 /**
  * ChatGPTの会話データの削除
  */
-export const deleteChatData = async (interaction: ChatInputCommandInteraction<CacheType>, lastFlag?: boolean) => {
+export async function deleteChatData(interaction: ChatInputCommandInteraction<CacheType>, lastFlag?: boolean) {
     // サーバー内のテキストチャンネル以外は無視
     if (!interaction.guild) {
         return;
@@ -91,4 +84,4 @@ export const deleteChatData = async (interaction: ChatInputCommandInteraction<Ca
     }
     chat.parentMessageId = [];
     await interaction.reply('会話データを削除したよ～！');
-};
+}

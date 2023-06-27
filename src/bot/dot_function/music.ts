@@ -1,5 +1,4 @@
 import {
-    AudioPlayer,
     AudioPlayerStatus,
     createAudioPlayer,
     createAudioResource,
@@ -50,7 +49,7 @@ export async function add(
             return true;
         }
         case 'sp_track': {
-            await addSpotifyMusic(channel, url, false, loop, shuffle);
+            await addSpotifyMusic(channel, url);
             return true;
         }
         default: {
@@ -92,13 +91,13 @@ export async function search(channel: VoiceBasedChannel, word: string): Promise<
     return true;
 }
 
-export async function addSpotifyMusic(
-    channel: VoiceBasedChannel,
-    url: string,
-    interrupt?: boolean,
-    loop?: boolean,
-    shuffle?: boolean
-): Promise<boolean> {
+/**
+ * Spotifyの音楽情報を取得し、Youtubeで検索してキューに追加する
+ * @param channel
+ * @param url
+ * @returns
+ */
+export async function addSpotifyMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
     if (pldl.is_expired()) {
         console.log('token expire');
         await pldl.refreshToken();
@@ -110,6 +109,16 @@ export async function addSpotifyMusic(
     return true;
 }
 
+/**
+ * Youtubeの音楽情報を取得し、キューに追加する
+ * @param channel
+ * @param type
+ * @param url url or movie id
+ * @param interrupt
+ * @param loop
+ * @param shuffle
+ * @returns
+ */
 export async function addYoutubeMusic(
     channel: VoiceBasedChannel,
     type: 'video' | 'playlist',
@@ -226,6 +235,11 @@ export async function addYoutubeMusic(
     return false;
 }
 
+/**
+ * プレイヤーの再生設定を取得する
+ * @param channel
+ * @returns
+ */
 export async function getPlayerInfo(channel: VoiceBasedChannel): Promise<void> {
     const repository = new MusicInfoRepository();
     const info = await repository.get(channel.guild.id);
@@ -246,6 +260,12 @@ export async function getPlayerInfo(channel: VoiceBasedChannel): Promise<void> {
     });
 }
 
+/**
+ * プレイヤーの再生設定を変更する
+ * @param channel
+ * @param name
+ * @returns
+ */
 export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): Promise<void> {
     const repository = new MusicInfoRepository();
     const info = await repository.get(channel.guild.id);
@@ -283,6 +303,13 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
     }
 }
 
+/**
+ * プレイヤーの再生設定を初期化する
+ * @param channel
+ * @param loop
+ * @param shuffle
+ * @returns
+ */
 export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean, shuffle?: boolean): Promise<void> {
     const repository = new MusicInfoRepository();
     const info = await repository.get(channel.guild.id);
@@ -360,7 +387,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
             break;
         }
         case 'sp_track': {
-            const s = addSpotifyMusic(channel, url, true);
+            const s = addSpotifyMusic(channel, url);
 
             const sp = await pldl.spotify(url);
             const musics = await repository.getQueue(channel.guild.id);
@@ -686,16 +713,30 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
     return true;
 }
 
+/**
+ * 音楽の再生状態を更新する
+ * @param gid
+ * @param musicId
+ * @param state
+ */
 export async function updatePlayState(gid: string, musicId: number, state: boolean) {
     const repository = new MusicRepository();
     await repository.updatePlayState(gid, musicId, state);
 }
 
+/**
+ * 全ての音楽の再生状態をリセットする
+ * @param gid
+ */
 export async function resetAllPlayState(gid: string) {
     const repository = new MusicRepository();
     await repository.resetPlayState(gid);
 }
 
+/**
+ * 音楽を一時停止/再開する
+ * @param channel
+ */
 export async function pause(channel: VoiceBasedChannel): Promise<void> {
     const p = await updateAudioPlayer(channel);
     await logger.info(channel.guild.id, 'command|music-pause', p.player.state.status);
@@ -742,16 +783,32 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
     return;
 }
 
+/**
+ * 全てのプレイリストを取得する
+ * @param userId
+ * @returns
+ */
 export async function getPlaylist(userId: string): Promise<Playlist[]> {
     const repository = new PlaylistRepository();
     return await repository.getAll(userId);
 }
 
+/**
+ * プレイリストを削除する
+ * @param userId
+ * @param name
+ * @returns
+ */
 export async function removePlaylist(userId: string, name: string): Promise<boolean> {
     const repository = new PlaylistRepository();
     return await repository.remove(userId, name);
 }
 
+/**
+ * 音楽の通知状態を変更する
+ * @param channel
+ * @returns
+ */
 export async function changeNotify(channel: VoiceBasedChannel): Promise<void> {
     const infoRepository = new MusicInfoRepository();
     const info = await infoRepository.get(channel.guild.id);
@@ -769,6 +826,11 @@ export async function changeNotify(channel: VoiceBasedChannel): Promise<void> {
     (channel as VoiceChannel).send({ content: `サイレントモードを変更したよ！`, embeds: [send] });
 }
 
+/**
+ * プレイヤーを更新/初期化する
+ * @param channel
+ * @returns
+ */
 async function updateAudioPlayer(channel: VoiceBasedChannel): Promise<PlayerData> {
     const PlayerData = Music.player.find((p) => p.guild_id === channel.guild.id);
 
@@ -793,6 +855,10 @@ async function updateAudioPlayer(channel: VoiceBasedChannel): Promise<PlayerData
     return p;
 }
 
+/**
+ * プレイヤーを削除する
+ * @param gid
+ */
 async function removeAudioPlayer(gid: string): Promise<void> {
     const PlayerData = Music.player.find((p) => p.guild_id === gid);
     if (PlayerData) {

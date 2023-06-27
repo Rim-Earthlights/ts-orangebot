@@ -1,36 +1,12 @@
-/**
- * ガチャ関連処理
- * おみくじもここで処理している
- */
-
 import dayjs from 'dayjs';
-import { ChannelType, EmbedBuilder, Message, MessageType } from 'discord.js';
-import { getRndNumber } from '../../common/common.js';
+import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { CONFIG } from '../../config/config.js';
 import { GachaRepository } from '../../model/repository/gachaRepository.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
-import * as Models from '../../model/models/index.js';
 import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
-import * as Logger from '../../common/logger.js';
 import { getGachaOnce } from '../function/gacha.js';
-import { GachaPercents } from '../../constant/gacha/gacha.js';
-
-export class Gacha {
-    static allItemList: Models.Item[] = [];
-}
-
-function getWeight(list: Models.Item[]): Models.Item[] {
-    const weightList = [];
-
-    for (const gacha of list) {
-        for (let i = 0; i < gacha.weight; i++) {
-            weightList.push(gacha);
-        }
-    }
-
-    return weightList;
-}
+import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
 
 /**
  * ガチャを引く
@@ -586,19 +562,4 @@ function getOmikujiOnce(): Omikuji {
         luck,
         description
     };
-}
-
-export interface Gacha {
-    item_id: number;
-    name: string;
-    icon: string | null;
-    rare: string;
-    rank: number;
-    is_present: boolean;
-    reroll: number;
-}
-
-export interface Omikuji {
-    luck: string;
-    description: string;
 }

@@ -1,13 +1,5 @@
-/**
- * お部屋関連処理
- */
-
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
-
-export async function initRoom(): Promise<void> {
-    return;
-}
 
 /**
  * お部屋の名前を変更する

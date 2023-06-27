@@ -1,5 +1,8 @@
 import { Client, GatewayIntentBits, Partials } from 'discord.js';
 
+/**
+ * 有効化する機能
+ */
 export enum functionNames {
     GPT = 'gpt',
     ENABLE_GPT4 = 'enable_gpt4',

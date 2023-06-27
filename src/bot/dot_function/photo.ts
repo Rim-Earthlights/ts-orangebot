@@ -1,6 +1,3 @@
-import axios from 'axios';
-import { getAsync } from '../../common/webWrapper.js';
-
 export async function get() {
     // TODO: 画像の取得先をAPI経由で取得する
     const pictures = [
