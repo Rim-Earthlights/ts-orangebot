@@ -59,7 +59,7 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
 
     const systemContent = {
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
-        user: message.member?.nickname ?? message.member?.displayName ?? 'system'
+        user: message.member?.nickname ?? message.author.username ?? 'system'
     };
 
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
