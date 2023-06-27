@@ -2,30 +2,11 @@
  * ChatGPT
  */
 import * as logger from '../../common/logger.js';
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
-import { CONFIG } from '../../config/config.js';
 import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
-import { ChatGPTModel, GPT, getMaxTokens } from '../../constant/chat/chat.js';
-
-const ChatGPT = new ChatGPTAPI({
-    apiKey: CONFIG.OPENAI.KEY
-});
-
-const proxyGPT = new ChatGPTUnofficialProxyAPI({
-    accessToken: CONFIG.OPENAI.ACCESSTOKEN,
-    apiReverseProxyUrl: 'https://ai.fakeopen.com/api/conversation'
-});
-
-/**
- * ChatGPTの初期化
- * @param gid
- */
-async function initalize(gid: string, mode: 'normal' | 'custom' = 'normal') {
-    GPT.chat.push({ guild: gid, parentMessageId: [], mode, timestamp: dayjs() });
-}
+import { ChatGPTModel, initalize } from '../../constant/chat/chat.js';
 
 /**
  * ChatGPTで会話する
@@ -37,19 +18,10 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
     }
 
     // ChatGPTが初期化されていない場合は初期化
-    let chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-    if (!chat) {
-        await initalize(message.guild.id);
-
-        chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-        if (!chat) {
-            logger.error('system', 'ChatGPT', 'ChatGPT initialization failed');
-            return;
-        }
-    }
-    if (chat.mode == 'custom') {
+    const chat = await initalize(message.guild.id, 'default', model);
+    if (chat.type == 'proxy') {
         chat.parentMessageId = [];
-        chat.mode = 'normal';
+        chat.type = 'default';
     }
 
     let parentMessageId: string | undefined = undefined;
@@ -65,7 +37,7 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
     try {
-        const response = await ChatGPT.sendMessage(sendContent, {
+        const response = await chat.GPT.sendMessage(sendContent, {
             parentMessageId: parentMessageId,
             systemMessage: CHATBOT_TEMPLATE,
             completionParams: { model: model }
@@ -99,19 +71,11 @@ export async function talkWithoutPrompt(message: Message, content: string) {
     }
 
     // ChatGPTが初期化されていない場合は初期化
-    let chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-    if (!chat) {
-        await initalize(message.guild.id, 'custom');
+    const chat = await initalize(message.guild.id, 'proxy', ChatGPTModel.GPT_3);
 
-        chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-        if (!chat) {
-            logger.error('system', 'ChatGPT', 'ChatGPT initialization failed');
-            return;
-        }
-    }
-    if (chat.mode == 'normal') {
+    if (chat.type == 'default') {
         chat.parentMessageId = [];
-        chat.mode = 'custom';
+        chat.type = 'proxy';
     }
 
     let parentMessageId: string | undefined = undefined;
@@ -126,7 +90,7 @@ export async function talkWithoutPrompt(message: Message, content: string) {
     }]\n${content}`;
 
     try {
-        const response = await proxyGPT.sendMessage(sendContent, {
+        const response = await chat.GPT.sendMessage(sendContent, {
             conversationId: conversationId,
             parentMessageId: parentMessageId
         });
@@ -156,17 +120,8 @@ export async function deleteChatData(message: Message, idx?: string) {
         return;
     }
 
-    // ChatGPTが初期化されていない場合は初期化
-    let chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-    if (!chat) {
-        await initalize(message.guild.id);
-
-        chat = GPT.chat.find((c) => c.guild === message.guild?.id);
-        if (!chat) {
-            logger.error('system', 'ChatGPT', 'ChatGPT initialization failed');
-            return;
-        }
-    }
+    // ChatGPT初期化
+    const chat = await initalize(message.guild.id);
 
     if (idx != undefined) {
         const eraseData = chat.parentMessageId[chat.parentMessageId.length - 1];

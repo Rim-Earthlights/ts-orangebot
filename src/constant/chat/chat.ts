@@ -1,4 +1,7 @@
+import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
 import dayjs from 'dayjs';
+import { CONFIG } from '../../config/config.js';
+import * as logger from '../../common/logger.js';
 
 export enum ChatGPTModel {
     GPT_3 = 'gpt-3.5-turbo',
@@ -7,6 +10,11 @@ export enum ChatGPTModel {
     GPT_4_32K = 'gpt-4-32k'
 }
 
+/**
+ * ChatGPTのMaxTokenを返す
+ * @param model
+ * @returns
+ */
 export const getMaxTokens = (model: ChatGPTModel): number => {
     switch (model) {
         case ChatGPTModel.GPT_3:
@@ -20,15 +28,60 @@ export const getMaxTokens = (model: ChatGPTModel): number => {
     }
 };
 
+/**
+ * ChatGPTの初期化
+ * @param gid
+ */
+export async function initalize(gid: string, type?: 'default' | 'proxy', model?: ChatGPTModel): Promise<GPTChatData> {
+    const getGPT = (): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
+        if (!type || type === 'default') {
+            return new ChatGPTAPI({
+                apiKey: CONFIG.OPENAI.KEY,
+                maxModelTokens: getMaxTokens(model ? model : ChatGPTModel.GPT_3)
+            });
+        }
+        return new ChatGPTUnofficialProxyAPI({
+            accessToken: CONFIG.OPENAI.ACCESSTOKEN,
+            apiReverseProxyUrl: 'https://ai.fakeopen.com/api/conversation'
+        });
+    };
+
+    const chat = GPT.chat.find((c) => c.guild === gid);
+    if (!chat) {
+        const idx = GPT.chat.push({
+            guild: gid,
+            GPT: getGPT(),
+            type: type ? type : 'default',
+            parentMessageId: [],
+            timestamp: dayjs()
+        });
+        await logger.info(
+            gid,
+            'init-gpt',
+            `Model: ${model}, Token: ${getMaxTokens(model ? model : ChatGPTModel.GPT_3)}`
+        );
+        return GPT.chat[idx];
+    }
+    if (type && chat.type !== type) {
+        chat.type = type ? type : 'default';
+        chat.GPT = getGPT();
+    }
+
+    return chat;
+}
+
 export class GPT {
-    static chat: {
-        guild: string;
-        parentMessageId: {
-            cid?: string;
-            id: string;
-            message: string;
-        }[];
-        mode: 'normal' | 'custom';
-        timestamp: dayjs.Dayjs;
-    }[] = [];
+    static chat: GPTChatData[] = [];
+}
+
+export interface GPTChatData {
+    guild: string;
+    GPT: ChatGPTAPI | ChatGPTUnofficialProxyAPI;
+    type: 'default' | 'proxy';
+    parentMessageId: {
+        cid?: string;
+        id: string;
+        message: string;
+    }[];
+    timestamp: dayjs.Dayjs;
 }

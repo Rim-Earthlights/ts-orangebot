@@ -2,25 +2,11 @@
  * ChatGPT
  */
 import * as logger from '../../common/logger.js';
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
-import { CONFIG } from '../../config/config.js';
 import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
-import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember, Message } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
-import { ChatGPTModel, GPT, getMaxTokens } from '../../constant/chat/chat.js';
-
-const ChatGPT = new ChatGPTAPI({
-    apiKey: CONFIG.OPENAI.KEY
-});
-
-/**
- * ChatGPTの初期化
- * @param gid
- */
-const initalize = async (gid: string, mode: 'normal' | 'custom' = 'normal') => {
-    GPT.chat.push({ guild: gid, parentMessageId: [], mode, timestamp: dayjs() });
-};
+import { ChatGPTModel, initalize } from '../../constant/chat/chat.js';
 
 /**
  * ChatGPTで会話する
@@ -35,20 +21,12 @@ export const talk = async (
         return;
     }
 
-    // ChatGPTが初期化されていない場合は初期化
-    let chat = GPT.chat.find((c) => c.guild === interaction.guild?.id);
-    if (!chat) {
-        await initalize(interaction.guild.id);
+    // ChatGPT初期化
+    const chat = await initalize(interaction.guild.id, 'default', model);
 
-        chat = GPT.chat.find((c) => c.guild === interaction.guild?.id);
-        if (!chat) {
-            logger.error('system', 'ChatGPT', 'ChatGPT initialization failed');
-            return;
-        }
-    }
-    if (chat.mode == 'custom') {
+    if (chat.type == 'proxy') {
         chat.parentMessageId = [];
-        chat.mode = 'normal';
+        chat.type = 'default';
     }
 
     let parentMessageId: string | undefined = undefined;
@@ -64,7 +42,7 @@ export const talk = async (
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
     try {
-        const response = await ChatGPT.sendMessage(sendContent, {
+        const response = await chat.GPT.sendMessage(sendContent, {
             parentMessageId: parentMessageId,
             systemMessage: CHATBOT_TEMPLATE,
             completionParams: { model: model }
@@ -97,17 +75,8 @@ export const deleteChatData = async (interaction: ChatInputCommandInteraction<Ca
         return;
     }
 
-    // ChatGPTが初期化されていない場合は初期化
-    let chat = GPT.chat.find((c) => c.guild === interaction.guild?.id);
-    if (!chat) {
-        await initalize(interaction.guild.id);
-
-        chat = GPT.chat.find((c) => c.guild === interaction.guild?.id);
-        if (!chat) {
-            logger.error('system', 'ChatGPT', 'ChatGPT initialization failed');
-            return;
-        }
-    }
+    // ChatGPT初期化
+    const chat = await initalize(interaction.guild.id);
 
     if (lastFlag) {
         const eraseData = chat.parentMessageId[chat.parentMessageId.length - 1];
