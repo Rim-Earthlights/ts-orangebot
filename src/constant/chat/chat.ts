@@ -25,7 +25,7 @@ export const getMaxTokens = (model: ChatGPTModel): number => {
         case ChatGPTModel.GPT_3_16K:
             return 16384;
         case ChatGPTModel.GPT_4:
-            return 4096;
+            return 8192;
         case ChatGPTModel.GPT_4_32K:
             return 32768;
     }
@@ -40,7 +40,8 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
         if (!type || type === 'default') {
             return new ChatGPTAPI({
                 apiKey: CONFIG.OPENAI.KEY,
-                maxModelTokens: getMaxTokens(model ? model : ChatGPTModel.GPT_3)
+                maxModelTokens: getMaxTokens(model ? model : ChatGPTModel.GPT_3),
+                maxResponseTokens: 2000
             });
         }
         return new ChatGPTUnofficialProxyAPI({
