@@ -15,7 +15,7 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
 
         if (vc.members.size <= 0) {
             await vc.delete();
-            logger.info(vc.guild.id, 'leftVoiceChannel', `delete ch: ${voiceState.channel?.name}`);
+            await logger.info(vc.guild.id, 'leftVoiceChannel', `delete ch: ${voiceState.channel?.name}`);
         } else {
             const bot = vc.members.filter((m) => m.user.bot);
             if (vc.members.size === bot.size) {

@@ -205,7 +205,7 @@ async function pickNormal(message: Message, gnum = '10') {
             return;
         }
     } else {
-        await users.save({ id: message.author.id, user_name: message.author.tag, pick_left: 10 });
+        await users.save({ id: message.author.id, user_name: message.author.username, pick_left: 10 });
         num = 10;
     }
 
@@ -274,7 +274,7 @@ async function pickNormal(message: Message, gnum = '10') {
 
     await users.save({
         id: message.author.id,
-        user_name: message.author.tag,
+        user_name: message.author.username,
         last_pick_date: dayjs().toDate(),
         pick_left: pickLeft
     });
@@ -391,7 +391,7 @@ export async function usePresent(message: Message, args: string[]) {
                 .setColor('#ff9900')
                 .setTitle('プレゼントを使用したよ！')
                 .setDescription(
-                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).tag}\nプレゼント: ${
+                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).username}\nプレゼント: ${
                         result.items.name
                     }`
                 );
@@ -428,7 +428,9 @@ export async function givePresent(message: Message, uid: string, itemId: number)
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle('プレゼントを渡したよ！')
-            .setDescription(`ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).tag}\nプレゼント: ${result.items.name}`);
+            .setDescription(
+                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).username}\nプレゼント: ${result.items.name}`
+            );
 
         await message.reply({
             embeds: [send]
