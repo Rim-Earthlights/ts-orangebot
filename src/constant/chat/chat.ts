@@ -3,6 +3,9 @@ import dayjs from 'dayjs';
 import { CONFIG } from '../../config/config.js';
 import * as logger from '../../common/logger.js';
 
+/**
+ * ChatGPTのモデル
+ */
 export enum ChatGPTModel {
     GPT_3 = 'gpt-3.5-turbo',
     GPT_3_16K = 'gpt-3.5-turbo-16k',
@@ -70,10 +73,16 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
     return chat;
 }
 
+/**
+ * GPTクラス
+ */
 export class GPT {
     static chat: GPTChatData[] = [];
 }
 
+/**
+ * GPTの会話データ
+ */
 export interface GPTChatData {
     guild: string;
     GPT: ChatGPTAPI | ChatGPTUnofficialProxyAPI;

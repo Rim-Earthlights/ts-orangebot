@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { CONFIG } from '../config/config.js';
 import { ENABLE_FUNCTION, functionNames } from '../constant/constants.js';
 
@@ -50,6 +51,9 @@ export function arrayEquals(t: number[], v: number[]): boolean {
     return true;
 }
 
+/**
+ * APIキーの有無で機能を切り替える
+ */
 export function switchFunctionByAPIKey() {
     if (CONFIG.FORECAST.KEY) {
         ENABLE_FUNCTION.find((f) => f.name === functionNames.FORECAST)!.enable = true;
@@ -68,6 +72,11 @@ export function switchFunctionByAPIKey() {
     }
 }
 
+/**
+ * 機能が有効かどうかを返す
+ * @param name
+ * @returns
+ */
 export function isEnableFunction(name: functionNames) {
     return ENABLE_FUNCTION.find((f) => f.name === name)!.enable;
 }

@@ -1,6 +1,12 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
 
+/**
+ * ユーザー情報を更新する
+ * @param message
+ * @param args
+ * @returns
+ */
 export async function save(message: Message, args?: string[]): Promise<void> {
     if (!args || args.length <= 1) {
         return;

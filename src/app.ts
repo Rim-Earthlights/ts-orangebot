@@ -15,12 +15,11 @@ import { TypeOrm } from './model/typeorm/typeorm.js';
 import * as logger from './common/logger.js';
 import { ItemRepository } from './model/repository/itemRepository.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
-import { Gacha as OldGacha } from './bot/dot_function/index.js';
-import { Gacha } from './bot/function/index.js';
 import { initJob } from './job/job.js';
 import { switchFunctionByAPIKey } from './common/common.js';
 import { UsersRepository } from './model/repository/usersRepository.js';
 import { Users } from './model/models/users.js';
+import { GachaList } from './bot/function/gacha.js';
 
 dotenv.config();
 
@@ -152,8 +151,7 @@ DISCORD_CLIENT.once('ready', async () => {
         .then(async () => {
             // DBの初期化と再構築
             await new ItemRepository().init(GACHA_LIST);
-            OldGacha.Gacha.allItemList = await new ItemRepository().getAll();
-            Gacha.Gacha.allItemList = await new ItemRepository().getAll();
+            GachaList.allItemList = await new ItemRepository().getAll();
             await logger.info('system', 'db-init', 'success');
         })
         .catch((e) => {

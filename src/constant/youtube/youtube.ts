@@ -1,3 +1,6 @@
+/**
+ * プレイリスト取得APIのレスポンス
+ */
 export interface playlistItemsResponse {
     kind: 'youtube#playlistItemListResponse';
     etag: string;
