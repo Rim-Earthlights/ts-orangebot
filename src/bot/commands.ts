@@ -493,7 +493,7 @@ export async function commandSelector(message: Message) {
             const name = content[0];
             const channel = message.member?.voice.channel;
             if (!channel) {
-                logger.info(message.guild?.id, 'received-command/mode', `missing channel`);
+                await logger.info(message.guild?.id, 'received-command/mode', `missing channel`);
                 return;
             }
             if (!name) {
@@ -548,7 +548,7 @@ export async function commandSelector(message: Message) {
                     return;
                 }
 
-                await vc.setName(roomName, '部屋名変更: ' + message.author.tag);
+                await vc.setName(roomName, '部屋名変更: ' + message.author.username);
                 message.reply(`お部屋の名前を${roomName}に変更したよ！`);
                 return;
             }
@@ -657,12 +657,12 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         }
         case 'debug': {
             const url = interaction.options.getString('url');
-            logger.info('system', 'received command', `${url}`);
+            await logger.info('system', 'received command', `${url}`);
             await interaction.reply('test.');
             break;
         }
         case 'gacha': {
-            logger.info(interaction.guildId ?? undefined, 'received-command/gacha', `${interaction}`);
+            await logger.info(interaction.guildId ?? undefined, 'received-command/gacha', `${interaction}`);
             const type = interaction.options.getSubcommand();
             switch (type) {
                 case 'pick': {

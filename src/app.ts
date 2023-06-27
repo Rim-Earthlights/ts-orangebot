@@ -154,14 +154,14 @@ DISCORD_CLIENT.once('ready', async () => {
             await new ItemRepository().init(GACHA_LIST);
             OldGacha.Gacha.allItemList = await new ItemRepository().getAll();
             Gacha.Gacha.allItemList = await new ItemRepository().getAll();
-            logger.info('system', 'db-init', 'success');
+            await logger.info('system', 'db-init', 'success');
         })
         .catch((e) => {
             logger.error('system', 'db-init', e);
         });
     // 定時バッチ処理 (cron)
     await initJob();
-    logger.info(undefined, 'ready', `discord bot logged in: ${DISCORD_CLIENT.user?.tag}`);
+    await logger.info(undefined, 'ready', `discord bot logged in: ${DISCORD_CLIENT.user?.username}`);
 });
 
 /**
@@ -179,10 +179,10 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         return;
     }
 
-    logger.info(
+    await logger.info(
         message.guild ? message.guild.id : 'dm',
         'message-received',
-        [`cid: ${message.channel.id}`, `author: ${message.author.tag}`, `content: ${message.content}`].join('\n')
+        [`cid: ${message.channel.id}`, `author: ${message.author.username}`, `content: ${message.content}`].join('\n')
     );
 
     // mention to bot
@@ -205,10 +205,12 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) {
         return;
     }
-    logger.info(
+    await logger.info(
         interaction.guild ? interaction.guild.id : 'dm',
         'message-received',
-        [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.tag}`, `content: ${interaction}`].join('\n')
+        [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.username}`, `content: ${interaction}`].join(
+            '\n'
+        )
     );
     await interactionSelector(interaction);
 });
@@ -286,25 +288,27 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
     }
 
     if (newState.channelId === null) {
-        logger.info(
+        await logger.info(
             oldState.guild.id,
             'leftVoiceChannel',
-            `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).tag}`
+            `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).username}`
         );
         await leftVoiceChannel(guild, oldState);
     } else if (oldState.channelId === null) {
-        logger.info(
+        await logger.info(
             oldState.guild.id,
             'joinVoiceChannel',
-            `ch: ${newState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).tag}`
+            `ch: ${newState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
         );
         await joinVoiceChannel(guild, newState);
     } else {
-        logger.info(
+        await logger.info(
             oldState.guild.id,
             'moveVoiceChannel',
             `ch: ${oldState.channel?.name} -> ${newState.channel?.name}, user: ${
-                (await DISCORD_CLIENT.users.fetch(oldState.id)).tag
+                (
+                    await DISCORD_CLIENT.users.fetch(oldState.id)
+                ).username
             }`
         );
         //left

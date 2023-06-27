@@ -9,7 +9,7 @@ export async function initJob() {
      * 毎日0時に実行されるタスク
      */
     cron.schedule('0 0 * * *', async () => {
-        logger.info('system', 'Cron job: 0 0 * * *');
+        await logger.info('system', 'Cron job: 0 0 * * *');
         const user = new UsersRepository();
         await user.addPickLeft();
     });
@@ -18,15 +18,15 @@ export async function initJob() {
      * 1分毎に実行されるタスク
      */
     cron.schedule('* * * * *', async () => {
-        GPT.chat.map((c) => {
+        GPT.chat.map(async (c) => {
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
                 c.timestamp = dayjs();
                 c.parentMessageId = [];
-                logger.info('system', 'Cron job: * * * * *', `${c.guild}: ChatGPT data deleted`);
+                await logger.info('system', 'Cron job: * * * * *', `${c.guild}: ChatGPT data deleted`);
             }
         });
         GPT.chat = GPT.chat.filter((c) => c.parentMessageId.length !== 0);
     });
 
-    logger.info('system', 'Cron job', 'Initialized');
+    await logger.info('system', 'Cron job', 'Initialized');
 }

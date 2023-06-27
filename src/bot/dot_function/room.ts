@@ -30,7 +30,7 @@ export async function changeRoomName(message: Message, roomName: string): Promis
     }
     const vc = message.member?.voice.channel;
 
-    await vc.setName(roomName, '部屋名変更: ' + message.author.tag);
+    await vc.setName(roomName, '部屋名変更: ' + message.author.username);
 
     message.reply(`お部屋の名前を${roomName}に変更したよ！`);
 }

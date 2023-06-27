@@ -210,7 +210,7 @@ export async function addYoutubeMusic(
             await playMusic(channel);
             return true;
         } catch (e) {
-            logger.info(channel.guild.id, 'command|music-add', JSON.stringify(e));
+            await logger.info(channel.guild.id, 'command|music-add', JSON.stringify(e));
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
                 .setTitle('エラー:')
@@ -575,7 +575,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
         await entersState(p.player, AudioPlayerStatus.Playing, 10 * 1000);
         await entersState(p.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
     } catch (e) {
-        logger.info(channel.guild.id, 'command|music-play', JSON.stringify(e));
+        await logger.info(channel.guild.id, 'command|music-play', JSON.stringify(e));
         const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setAuthor({ name: `音楽の取得に失敗した` })
@@ -698,7 +698,7 @@ export async function resetAllPlayState(gid: string) {
 
 export async function pause(channel: VoiceBasedChannel): Promise<void> {
     const p = await updateAudioPlayer(channel);
-    logger.info(channel.guild.id, 'command|music-pause', p.player.state.status);
+    await logger.info(channel.guild.id, 'command|music-pause', p.player.state.status);
 
     if (p.player.state.status === AudioPlayerStatus.Paused) {
         p.player.unpause();
@@ -829,7 +829,7 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
         await entersState(p.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
     } catch (e) {
         const error = e as Error;
-        logger.info(channel.guild.id, 'command|music-play', JSON.stringify(error.message));
+        await logger.info(channel.guild.id, 'command|music-play', JSON.stringify(error.message));
         const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setAuthor({ name: `音楽の取得に失敗した` })

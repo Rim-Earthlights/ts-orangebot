@@ -47,7 +47,7 @@ export async function weather(message: Message, args?: string[]) {
         const geoList = response.location;
 
         if (response.error != undefined || geoList.length <= 0) {
-            logger.info(message.guild?.id, 'get-forecast', `geocoding(JP) not found.`);
+            await logger.info(message.guild?.id, 'get-forecast', `geocoding(JP) not found.`);
 
             const geoResponse = await getAsync(
                 GEOCODING_URI,
@@ -70,7 +70,7 @@ export async function weather(message: Message, args?: string[]) {
             lat = geoList[0].lat;
             lon = geoList[0].lon;
 
-            logger.info(
+            await logger.info(
                 message.guild?.id,
                 'get-forecast | geocode',
                 `lat: ${lat}, lon: ${lon}, name: ${geoList[0].local_names}`
@@ -79,7 +79,7 @@ export async function weather(message: Message, args?: string[]) {
             lat = geoList[0].y;
             lon = geoList[0].x;
 
-            logger.info(
+            await logger.info(
                 message.guild?.id,
                 'get-forecast | geocode',
                 `lat: ${lat}, lon: ${lon}, name: ${geoList[0].prefecture}${geoList[0].city} / ${geoList[0].town}`

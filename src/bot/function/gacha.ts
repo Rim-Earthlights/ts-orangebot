@@ -221,7 +221,7 @@ async function pickNormal(interaction: ChatInputCommandInteraction<CacheType>, g
             return;
         }
     } else {
-        await users.save({ id: interaction.user.id, user_name: interaction.user.tag, pick_left: 10 });
+        await users.save({ id: interaction.user.id, user_name: interaction.user.username, pick_left: 10 });
     }
 
     for (let i = 0; i < num; i++) {
@@ -289,7 +289,7 @@ async function pickNormal(interaction: ChatInputCommandInteraction<CacheType>, g
 
     await users.save({
         id: interaction.user.id,
-        user_name: interaction.user.tag,
+        user_name: interaction.user.username,
         last_pick_date: dayjs().toDate(),
         pick_left: pickLeft
     });
@@ -407,7 +407,7 @@ export async function usePresent(interaction: ChatInputCommandInteraction<CacheT
                 .setColor('#ff9900')
                 .setTitle('プレゼントを使用したよ！')
                 .setDescription(
-                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).tag}\nプレゼント: ${
+                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).username}\nプレゼント: ${
                         result.items.name
                     }`
                 );
@@ -444,7 +444,9 @@ export async function givePresent(message: Message, uid: string, itemId: number)
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle('プレゼントを渡したよ！')
-            .setDescription(`ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).tag}\nプレゼント: ${result.items.name}`);
+            .setDescription(
+                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).username}\nプレゼント: ${result.items.name}`
+            );
 
         message.reply({
             embeds: [send]
