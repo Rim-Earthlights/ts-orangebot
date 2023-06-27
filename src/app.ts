@@ -180,7 +180,15 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     await logger.info(
         message.guild ? message.guild.id : 'dm',
         'message-received',
-        [`cid: ${message.channel.id}`, `author: ${message.author.username}`, `content: ${message.content}`].join('\n')
+        [
+            `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
+            `cid: ${message.channel.id}, cname: ${
+                message.channel.type !== ChannelType.DM ? message.channel.name : 'dm'
+            }`,
+            `author: ${message.author.username}`,
+            `content: ${message.content}`,
+            message.attachments ? message.attachments.map((a) => `attachments: ${a.url}`) : undefined
+        ].join('\n')
     );
 
     // mention to bot

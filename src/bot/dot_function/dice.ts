@@ -1,4 +1,4 @@
-import { EmbedBuilder, Message } from 'discord.js';
+import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { arrayEquals, getRndNumber } from '../../common/common.js';
 import { DiceRole, DICE_ROLE } from '../../constant/dice/dice.js';
 
@@ -77,6 +77,34 @@ export async function roll(message: Message, args?: string[]) {
         });
 
     message.reply({ content: `${diceMax}面ダイスを${diceNum}個ね！まかせて！`, embeds: [send] });
+}
+
+/**
+ * 全員で100面ダイスを振る
+ * @param message
+ * @returns
+ */
+export async function rollAll(message: Message): Promise<void> {
+    if (message.channel.type === ChannelType.GuildVoice || message.channel.type === ChannelType.GuildStageVoice) {
+        const result: string[] = [];
+        message.channel.members.map((m) => {
+            result.push(`${m.user.username}: ${getRndNumber(1, 100)}`);
+        });
+        const send = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle(`結果:`)
+            .setDescription(result.join('\n'))
+            .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/dice.jpg');
+        message.reply({ embeds: [send] });
+    } else {
+        const send = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle('失敗')
+            .setDescription('ユーザーリストが取得できない');
+
+        message.reply({ content: `ボイスチャンネルで実行してね！`, embeds: [send] });
+        return;
+    }
 }
 
 /**

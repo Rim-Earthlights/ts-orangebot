@@ -86,6 +86,10 @@ export async function commandSelector(message: Message) {
             await DotBotFunctions.Dice.roll(message, content);
             break;
         }
+        case 'dall': {
+            await DotBotFunctions.Dice.rollAll(message);
+            break;
+        }
         case 'tenki': {
             if (!isEnableFunction(functionNames.FORECAST)) {
                 const send = new EmbedBuilder()
