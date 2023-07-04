@@ -186,9 +186,9 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
             `cid: ${message.channel.id}, cname: ${
                 message.channel.type !== ChannelType.DM ? message.channel.name : 'dm'
             }`,
-            `author: ${message.author.username}`,
+            `author : ${message.author.username}`,
             `content: ${message.content}`,
-            ...message.attachments.map((a) => `file: ${a.url}`)
+            ...message.attachments.map((a) => `file   : ${a.url}`)
         ].join('\n')
     );
 

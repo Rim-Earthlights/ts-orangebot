@@ -606,6 +606,9 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'popup-rule': {
+            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+                return;
+            }
             const channel = message.channel;
             if (channel) {
                 const send = new EmbedBuilder()
@@ -620,6 +623,9 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'add-role-all': {
+            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+                return;
+            }
             const members = await message.guild?.members.fetch();
             if (!members) {
                 break;

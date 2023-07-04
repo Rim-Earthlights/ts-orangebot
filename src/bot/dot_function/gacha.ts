@@ -7,6 +7,7 @@ import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { getGachaOnce } from '../function/gacha.js';
 import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
+import * as logger from '../../common/logger.js';
 
 /**
  * ガチャを引く
@@ -269,6 +270,11 @@ async function pickNormal(message: Message, gnum = '10') {
             );
         await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
+            await logger.info(
+                message.guild?.id,
+                'get-gacha',
+                [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join('\n')
+            );
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
@@ -288,6 +294,11 @@ async function pickNormal(message: Message, gnum = '10') {
             );
         await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
+            await logger.info(
+                message.guild?.id,
+                'get-gacha',
+                [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join('\n')
+            );
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
