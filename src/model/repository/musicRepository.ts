@@ -16,7 +16,13 @@ export class MusicRepository {
      * @param gid
      */
     public async getAll(gid: string): Promise<Models.Music[]> {
-        await logger.info(gid, `repository/music: getAll`);
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: `repository/music: getAll`
+        });
         return await this.repository.find({
             where: { guild_id: gid },
             order: { music_id: 'ASC' }
@@ -28,7 +34,13 @@ export class MusicRepository {
      * @param gid
      */
     public async getQueue(gid: string): Promise<Models.Music[]> {
-        await logger.info(gid, `repository/music: getQueue`);
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: `repository/music: getQueue`
+        });
         return await this.repository.find({
             where: { guild_id: gid, is_play: 0 },
             order: { music_id: 'ASC' }
@@ -39,13 +51,25 @@ export class MusicRepository {
      * 音楽を保存する
      */
     public async saveAll(gid: string, musics: Models.Music[]): Promise<Models.Music[]> {
-        await logger.info(gid, `repository/music: saveAll`);
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: `repository/music: saveAll`
+        });
         await this.remove(gid);
         return await this.repository.save(musics);
     }
 
     public async save(music: DeepPartial<Models.Music>): Promise<boolean> {
-        await logger.info(music.guild_id, `repository/music: save`);
+        await logger.put({
+            guild_id: music.guild_id,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: `repository/music: save`
+        });
         const result = await this.repository.save(music);
         return Boolean(result);
     }
@@ -76,7 +100,13 @@ export class MusicRepository {
      * @returns Promise<boolean>
      */
     public async add(gid: string, music: DeepPartial<Models.Music>, interrupt: boolean): Promise<boolean> {
-        await logger.info(gid, `repository/music: add`);
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: `repository/music: add`
+        });
         if (interrupt) {
             const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
             if (!getMusic) {
@@ -101,7 +131,14 @@ export class MusicRepository {
      */
     public async remove(gid: string, musicId?: number): Promise<boolean> {
         let result;
-        await logger.info(gid, 'repository/music: remove', `queue: ${gid}, ${musicId ? musicId : 'all'}`);
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: 'repository/music: remove',
+            message: `queue: ${gid}, ${musicId ? musicId : 'all'}`
+        });
         if (musicId !== undefined) {
             result = await this.repository
                 .createQueryBuilder()
@@ -120,7 +157,13 @@ export class MusicRepository {
     }
 
     public async resetPlayState(gid: string): Promise<boolean> {
-        await logger.info(gid, 'repository/music: update', `reset playstate.`);
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: 'repository/music: resetPlayState'
+        });
         const result = await this.repository.update({ guild_id: gid }, { is_play: 0 });
         if (result.affected) {
             return true;
@@ -136,7 +179,14 @@ export class MusicRepository {
         }
 
         await this.save({ ...music, is_play: state ? 1 : 0 });
-        await logger.info(gid, 'repository/music: update', `update playstate: ${music.title} / ${state}`);
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: 'repository/music: updatePlayState',
+            message: `update playstate: ${music.title} / ${state}`
+        });
         return true;
     }
 }

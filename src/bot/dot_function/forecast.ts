@@ -52,7 +52,14 @@ export async function weather(message: Message, args?: string[]) {
         const geoList = response.location;
 
         if (response.error != undefined || geoList.length <= 0) {
-            await logger.info(message.guild?.id, 'get-forecast', `geocoding(JP) not found.`);
+            await logger.put({
+                guild_id: message.guild?.id,
+                channel_id: message.channel.id,
+                user_id: message.id,
+                level: 'info',
+                event: 'get-forecast',
+                message: `geocoding(JP) not found.`
+            });
 
             const geoResponse = await axios.get(WW_GEOCODING_URI, {
                 params: new url.URLSearchParams({
@@ -67,27 +74,39 @@ export async function weather(message: Message, args?: string[]) {
             const geoList = <WorldGeocoding[]>geoResponse.data;
 
             if (geoList == undefined || geoList.length <= 0) {
-                logger.error(message.guild?.id, 'get-forecast', `geocoding get failed.`);
+                await logger.put({
+                    guild_id: message.guild?.id,
+                    channel_id: message.channel.id,
+                    user_id: message.id,
+                    level: 'error',
+                    event: 'get-forecast',
+                    message: `geocoding get failed.`
+                });
                 throw new Error('名前から場所を検索できませんでした');
             }
 
             lat = geoList[0].lat;
             lon = geoList[0].lon;
 
-            await logger.info(
-                message.guild?.id,
-                'get-forecast | geocode',
-                `lat: ${lat}, lon: ${lon}, name: ${geoList[0].local_names}`
-            );
+            await logger.put({
+                guild_id: message.guild?.id,
+                channel_id: message.channel.id,
+                user_id: message.id,
+                level: 'info',
+                event: 'get-forecast | geocode',
+                message: `lat: ${lat}, lon: ${lon}, name: ${geoList[0].local_names}`
+            });
         } else {
             lat = geoList[0].y;
             lon = geoList[0].x;
-
-            await logger.info(
-                message.guild?.id,
-                'get-forecast | geocode',
-                `lat: ${lat}, lon: ${lon}, name: ${geoList[0].prefecture}${geoList[0].city} / ${geoList[0].town}`
-            );
+            await logger.put({
+                guild_id: message.guild?.id,
+                channel_id: message.channel.id,
+                user_id: message.id,
+                level: 'info',
+                event: 'get-forecast | geocode',
+                message: `lat: ${lat}, lon: ${lon}, name: ${geoList[0].prefecture}${geoList[0].city} / ${geoList[0].town}`
+            });
         }
 
         const forecastResponse = await axios.get(FORECAST_URI, {

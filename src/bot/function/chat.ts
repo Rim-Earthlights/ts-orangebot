@@ -42,13 +42,16 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
         });
         chat.parentMessageId.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
-        await logger.info(
-            interaction.guild.id,
-            'ChatGPT',
-            `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail?.usage)}\nModel: ${
+        await logger.put({
+            guild_id: interaction.guild?.id,
+            channel_id: interaction.channel?.id,
+            user_id: interaction.user.id,
+            level: 'info',
+            event: 'ChatGPT',
+            message: `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail?.usage)}\nModel: ${
                 response.detail?.model
             }\nResponse: \n${response.text}`
-        );
+        });
         await interaction.editReply(response.text);
     } catch (err) {
         const error = err as AxiosError;

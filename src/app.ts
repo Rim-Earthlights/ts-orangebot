@@ -129,10 +129,30 @@ const rest = new REST({ version: '10' }).setToken(CONFIG.DISCORD.TOKEN);
 
 CONFIG.DISCORD.COMMAND_GUILD_ID.map((gid) => {
     rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: [] })
-        .then(() => logger.info(gid, 'rem-command', 'successfully remove command.'))
+        .then(
+            async () =>
+                await logger.put({
+                    guild_id: gid,
+                    channel_id: undefined,
+                    user_id: undefined,
+                    level: 'system',
+                    event: 'reg-command|delete',
+                    message: 'successfully delete command.'
+                })
+        )
         .catch(console.error);
     rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: commands })
-        .then(() => logger.info(gid, 'reg-command', 'successfully add command.'))
+        .then(
+            async () =>
+                await logger.put({
+                    guild_id: gid,
+                    channel_id: undefined,
+                    user_id: undefined,
+                    level: 'system',
+                    event: 'reg-command|add',
+                    message: 'successfully add command.'
+                })
+        )
         .catch(console.error);
 });
 
@@ -152,14 +172,35 @@ DISCORD_CLIENT.once('ready', async () => {
             // DBの初期化と再構築
             await new ItemRepository().init(GACHA_LIST);
             GachaList.allItemList = await new ItemRepository().getAll();
-            await logger.info('system', 'db-init', 'success');
+            await logger.put({
+                guild_id: undefined,
+                channel_id: undefined,
+                user_id: undefined,
+                level: 'system',
+                event: 'db-init',
+                message: 'success'
+            });
         })
-        .catch((e) => {
-            logger.error('system', 'db-init', e);
+        .catch(async (e) => {
+            await logger.put({
+                guild_id: undefined,
+                channel_id: undefined,
+                user_id: undefined,
+                level: 'error',
+                event: 'db-init',
+                message: e.message
+            });
         });
     // 定時バッチ処理 (cron)
     await initJob();
-    await logger.info(undefined, 'ready', `discord bot logged in: ${DISCORD_CLIENT.user?.username}`);
+    await logger.put({
+        guild_id: undefined,
+        channel_id: undefined,
+        user_id: undefined,
+        level: 'system',
+        event: 'ready',
+        message: `discord bot logged in: ${DISCORD_CLIENT.user?.username}`
+    });
 });
 
 /**
@@ -177,10 +218,13 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         return;
     }
 
-    await logger.info(
-        message.guild ? message.guild.id : 'dm',
-        'message-received',
-        [
+    await logger.put({
+        guild_id: message.guild ? message.guild.id : 'dm',
+        channel_id: message.channel.id,
+        user_id: message.author.id,
+        level: 'info',
+        event: 'message-received',
+        message: [
             ``,
             `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
             `cid: ${message.channel.id}, cname: ${
@@ -190,7 +234,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
             `content: ${message.content}`,
             ...message.attachments.map((a) => `file   : ${a.url}`)
         ].join('\n')
-    );
+    });
 
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
@@ -212,13 +256,18 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) {
         return;
     }
-    await logger.info(
-        interaction.guild ? interaction.guild.id : 'dm',
-        'message-received',
-        [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.username}`, `content: ${interaction}`].join(
-            '\n'
-        )
-    );
+    await logger.put({
+        guild_id: interaction.guild ? interaction.guild.id : 'dm',
+        channel_id: interaction.channel?.id,
+        user_id: interaction.user.id,
+        level: 'info',
+        event: 'interaction-received',
+        message: [
+            `cid: ${interaction.channel?.id}`,
+            `author: ${interaction.user.username}`,
+            `content: ${interaction}`
+        ].join('\n')
+    });
     await interactionSelector(interaction);
 });
 
@@ -245,9 +294,18 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
     }
     if (reaction.message.channel.type === ChannelType.GuildText) {
         await reaction.users.remove(user.id);
+        await logger.put({
+            guild_id: reaction.message.guild?.id,
+            channel_id: reaction.message.channel.id,
+            user_id: user.id,
+            level: 'info',
+            event: 'reaction-add',
+            message: `rule accepted: ${user.username}`
+        });
 
         const u = reaction.message.guild?.members.cache.get(user.id);
         const role = u?.roles.cache.find((role) => role.id === CONFIG.DISCORD.MEMBER_ROLE_ID);
+        console.log(u?.roles);
         if (role) {
             const message = await reaction.message.reply(`もうロールが付いてるみたい！`);
             setTimeout(async () => {
@@ -295,29 +353,38 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
     }
 
     if (newState.channelId === null) {
-        await logger.info(
-            oldState.guild.id,
-            'leftVoiceChannel',
-            `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).username}`
-        );
+        await logger.put({
+            guild_id: oldState.guild.id,
+            channel_id: oldState.channel?.id,
+            user_id: oldState.id,
+            level: 'info',
+            event: 'leftVoiceChannel',
+            message: `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).username}`
+        });
         await leftVoiceChannel(guild, oldState);
     } else if (oldState.channelId === null) {
-        await logger.info(
-            oldState.guild.id,
-            'joinVoiceChannel',
-            `ch: ${newState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
-        );
+        await logger.put({
+            guild_id: newState.guild.id,
+            channel_id: newState.channel?.id,
+            user_id: newState.id,
+            level: 'info',
+            event: 'joinVoiceChannel',
+            message: `ch: ${newState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
+        });
         await joinVoiceChannel(guild, newState);
     } else {
-        await logger.info(
-            oldState.guild.id,
-            'moveVoiceChannel',
-            `ch: ${oldState.channel?.name} -> ${newState.channel?.name}, user: ${
+        await logger.put({
+            guild_id: newState.guild.id,
+            channel_id: newState.channel?.id,
+            user_id: newState.id,
+            level: 'info',
+            event: 'moveVoiceChannel',
+            message: `ch: ${oldState.channel?.name} -> ${newState.channel?.name}, user: ${
                 (
-                    await DISCORD_CLIENT.users.fetch(oldState.id)
+                    await DISCORD_CLIENT.users.fetch(newState.id)
                 ).username
             }`
-        );
+        });
         //left
         await leftVoiceChannel(guild, oldState);
         // joined
