@@ -127,35 +127,6 @@ const commands = [
 
 const rest = new REST({ version: '10' }).setToken(CONFIG.DISCORD.TOKEN);
 
-CONFIG.DISCORD.COMMAND_GUILD_ID.map((gid) => {
-    rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: [] })
-        .then(
-            async () =>
-                await logger.put({
-                    guild_id: gid,
-                    channel_id: undefined,
-                    user_id: undefined,
-                    level: 'system',
-                    event: 'reg-command|delete',
-                    message: 'successfully delete command.'
-                })
-        )
-        .catch(console.error);
-    rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: commands })
-        .then(
-            async () =>
-                await logger.put({
-                    guild_id: gid,
-                    channel_id: undefined,
-                    user_id: undefined,
-                    level: 'system',
-                    event: 'reg-command|add',
-                    message: 'successfully add command.'
-                })
-        )
-        .catch(console.error);
-});
-
 DISCORD_CLIENT.login(CONFIG.DISCORD.TOKEN);
 
 /**
@@ -166,7 +137,7 @@ DISCORD_CLIENT.once('ready', async () => {
     switchFunctionByAPIKey();
 
     // DBの初期化
-    TypeOrm.dataSource
+    await TypeOrm.dataSource
         .initialize()
         .then(async () => {
             // DBの初期化と再構築
@@ -193,6 +164,36 @@ DISCORD_CLIENT.once('ready', async () => {
         });
     // 定時バッチ処理 (cron)
     await initJob();
+
+    CONFIG.DISCORD.COMMAND_GUILD_ID.map((gid) => {
+        rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: [] })
+            .then(
+                async () =>
+                    await logger.put({
+                        guild_id: gid,
+                        channel_id: undefined,
+                        user_id: undefined,
+                        level: 'system',
+                        event: 'reg-command|delete',
+                        message: 'successfully delete command.'
+                    })
+            )
+            .catch(console.error);
+        rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: commands })
+            .then(
+                async () =>
+                    await logger.put({
+                        guild_id: gid,
+                        channel_id: undefined,
+                        user_id: undefined,
+                        level: 'system',
+                        event: 'reg-command|add',
+                        message: 'successfully add command.'
+                    })
+            )
+            .catch(console.error);
+    });
+
     await logger.put({
         guild_id: undefined,
         channel_id: undefined,
