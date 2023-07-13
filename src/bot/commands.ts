@@ -60,7 +60,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL as ChatGPTModel);
             break;
         }
         case 'g4': {
@@ -75,7 +75,7 @@ export async function commandSelector(message: Message) {
             }
 
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL as ChatGPTModel);
             break;
         }
         case 'erase': {
@@ -742,7 +742,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.deferReply();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL);
+            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL as ChatGPTModel);
             break;
         }
         case 'g4': {
@@ -758,7 +758,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.deferReply();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL);
+            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL as ChatGPTModel);
             break;
         }
         case 'erase': {

@@ -1,5 +1,3 @@
-import { ChatGPTModel } from '../constant/chat/chat';
-
 export const CONFIG = {
     // common settings
     COMMON: {
@@ -46,9 +44,9 @@ export const CONFIG = {
         // if disabled, still empty.
         KEY: '',
         // default model
-        DEFAULT_MODEL: ChatGPTModel.GPT_4,
+        DEFAULT_MODEL: 'gpt-4',
         // G4 command model
-        G4_MODEL: ChatGPTModel.GPT_4_32K,
+        G4_MODEL: 'gpt-4-32k',
         // if disabled, still empty.
         ACCESSTOKEN:
             ''
