@@ -1,5 +1,5 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { TypeOrm } from '../typeorm/typeorm';
+import { TypeOrm } from '../typeorm/typeorm.js';
 import * as Models from '../models/index.js';
 
 export class LogRepository {
