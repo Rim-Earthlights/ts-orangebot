@@ -5,7 +5,6 @@ import { Client, GatewayIntentBits, Partials } from 'discord.js';
  */
 export enum functionNames {
     GPT = 'gpt',
-    ENABLE_GPT4 = 'enable_gpt4',
     GPT_WITHOUT_KEY = 'gpt_without_key',
     FORECAST = 'forecast',
     YOUTUBE = 'youtube'
@@ -18,7 +17,6 @@ interface functions {
 export const ENABLE_FUNCTION: functions[] = [
     { name: functionNames.FORECAST, enable: false },
     { name: functionNames.GPT, enable: false },
-    { name: functionNames.ENABLE_GPT4, enable: false },
     { name: functionNames.GPT_WITHOUT_KEY, enable: false },
     { name: functionNames.YOUTUBE, enable: false }
 ];

@@ -64,9 +64,6 @@ export function switchFunctionByAPIKey() {
     if (CONFIG.OPENAI.KEY) {
         ENABLE_FUNCTION.find((f) => f.name === functionNames.GPT)!.enable = true;
     }
-    if (CONFIG.OPENAI.IS_ENABLE_GPT4) {
-        ENABLE_FUNCTION.find((f) => f.name === functionNames.ENABLE_GPT4)!.enable = true;
-    }
     if (CONFIG.OPENAI.ACCESSTOKEN) {
         ENABLE_FUNCTION.find((f) => f.name === functionNames.GPT_WITHOUT_KEY)!.enable = true;
     }

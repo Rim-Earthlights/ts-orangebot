@@ -60,22 +60,22 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_3_16K);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL);
             break;
         }
         case 'g4': {
-            if (!isEnableFunction(functionNames.GPT) || !isEnableFunction(functionNames.ENABLE_GPT4)) {
+            if (!isEnableFunction(functionNames.GPT)) {
                 const send = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle(`エラー`)
                     .setDescription(`機能が有効化されていません。`);
 
-                message.reply({ content: `機能が有効化されてないよ！(GPT-4)`, embeds: [send] });
+                message.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
                 return;
             }
 
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL);
             break;
         }
         case 'erase': {
@@ -721,23 +721,23 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.deferReply();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_3_16K);
+            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL);
             break;
         }
         case 'g4': {
-            if (!isEnableFunction(functionNames.GPT) || !isEnableFunction(functionNames.ENABLE_GPT4)) {
+            if (!isEnableFunction(functionNames.GPT)) {
                 const send = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle(`エラー`)
                     .setDescription(`機能が有効化されていません。`);
 
-                interaction.reply({ content: `機能が有効化されてないよ！(ENABLE_GPT4)`, embeds: [send] });
+                interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
                 return;
             }
             await interaction.deferReply();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_4);
+            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL);
             break;
         }
         case 'erase': {
