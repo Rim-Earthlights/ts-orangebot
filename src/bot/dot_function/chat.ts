@@ -41,13 +41,16 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
         });
         chat.parentMessageId.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
-        await logger.info(
-            message.guild.id,
-            'ChatGPT',
-            `ParentId: ${parentMessageId}, ResponseId: ${response.id}\nUsage: ${JSON.stringify(
+        await logger.put({
+            guild_id: message.guild?.id,
+            channel_id: message.channel.id,
+            user_id: message.author.id,
+            level: 'info',
+            event: 'ChatGPT',
+            message: `ParentId: ${parentMessageId}, ResponseId: ${response.id}\nUsage: ${JSON.stringify(
                 response.detail?.usage
             )}\nModel: ${response.detail?.model}\nResponse: \n${response.text}`
-        );
+        });
         await message.reply(response.text);
     } catch (err) {
         const error = err as AxiosError;
@@ -93,11 +96,14 @@ export async function talkWithoutPrompt(message: Message, content: string) {
         });
         chat.parentMessageId.push({ cid: response.conversationId, id: response.id, message: content });
         chat.timestamp = dayjs();
-        await logger.info(
-            message.guild.id,
-            'ChatGPT-NoPrompt',
-            `ConversationId: ${conversationId}, ParentId: ${parentMessageId}\nResponse: \n${response.text}`
-        );
+        await logger.put({
+            guild_id: message.guild?.id,
+            channel_id: message.channel.id,
+            user_id: message.id,
+            level: 'info',
+            event: 'ChatGPT-NoPrompt',
+            message: `ConversationId: ${conversationId}, ParentId: ${parentMessageId}\nResponse: \n${response.text}`
+        });
         await message.reply(response.text);
     } catch (err) {
         const error = err as AxiosError;

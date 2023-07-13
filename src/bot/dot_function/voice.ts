@@ -14,7 +14,14 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
         const vc = voiceState.channel as VoiceChannel;
 
         if (vc.members.size <= 0) {
-            await logger.info(vc.guild.id, 'leftVoiceChannel', `delete ch: ${voiceState.channel?.name}`);
+            await logger.put({
+                guild_id: vc.guild?.id,
+                channel_id: vc.id,
+                user_id: undefined,
+                level: 'info',
+                event: 'leftVoiceChannel',
+                message: `delete ch: ${voiceState.channel?.name}`
+            });
             await vc.delete();
         } else {
             const bot = vc.members.filter((m) => m.user.bot);
@@ -46,7 +53,14 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 type: ChannelType.GuildVoice,
                 parent: parent
             });
-            await logger.info(vc.guild.id, 'joinVoiceChannel', `create ch: ${vc.name}`);
+            await logger.put({
+                guild_id: vc.guild?.id,
+                channel_id: vc.id,
+                user_id: undefined,
+                level: 'info',
+                event: 'joinVoiceChannel',
+                message: `create ch: ${vc.name}`
+            });
             (voiceState.channel as VoiceChannel).members.map(async (m) => {
                 await m.voice.setChannel(vc.id);
             });

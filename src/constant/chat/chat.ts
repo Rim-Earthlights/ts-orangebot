@@ -59,11 +59,14 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
             parentMessageId: [],
             timestamp: dayjs()
         });
-        await logger.info(
-            gid,
-            'init-gpt',
-            `Model: ${model}, Token: ${getMaxTokens(model ? model : ChatGPTModel.GPT_3)}`
-        );
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: 'init-gpt',
+            message: `Model: ${model}, Token: ${getMaxTokens(model ? model : ChatGPTModel.GPT_3)}`
+        });
         return GPT.chat[idx - 1];
     }
     if (type && chat.type !== type) {

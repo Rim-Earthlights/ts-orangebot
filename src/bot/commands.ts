@@ -490,7 +490,14 @@ export async function commandSelector(message: Message) {
             const name = content[0];
             const channel = message.member?.voice.channel;
             if (!channel) {
-                await logger.info(message.guild?.id, 'received-command/mode', `missing channel`);
+                await logger.put({
+                    guild_id: message.guild?.id,
+                    channel_id: message.channel?.id,
+                    user_id: message.author.id,
+                    level: 'error',
+                    event: 'received-command/mode',
+                    message: `missing channel`
+                });
                 return;
             }
             if (!name) {
@@ -663,12 +670,26 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         }
         case 'debug': {
             const url = interaction.options.getString('url');
-            await logger.info('system', 'received command', `${url}`);
+            await logger.put({
+                guild_id: interaction.guild?.id,
+                channel_id: interaction.channel?.id,
+                user_id: interaction.user.id,
+                level: 'info',
+                event: 'received-command/debug',
+                message: `${url}`
+            });
             await interaction.reply('test.');
             break;
         }
         case 'gacha': {
-            await logger.info(interaction.guildId ?? undefined, 'received-command/gacha', `${interaction}`);
+            await logger.put({
+                guild_id: interaction.guild?.id,
+                channel_id: interaction.channel?.id,
+                user_id: interaction.user.id,
+                level: 'info',
+                event: 'received-command/gacha',
+                message: `${interaction}`
+            });
             const type = interaction.options.getSubcommand();
             switch (type) {
                 case 'pick': {

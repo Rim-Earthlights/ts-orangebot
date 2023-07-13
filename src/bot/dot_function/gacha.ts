@@ -270,11 +270,16 @@ async function pickNormal(message: Message, gnum = '10') {
             );
         await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
-            await logger.info(
-                message.guild?.id,
-                'get-gacha',
-                [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join('\n')
-            );
+            await logger.put({
+                guild_id: message.guild?.id,
+                channel_id: message.channel.id,
+                user_id: message.id,
+                level: 'info',
+                event: 'get-gacha',
+                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join(
+                    '\n'
+                )
+            });
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
@@ -294,11 +299,16 @@ async function pickNormal(message: Message, gnum = '10') {
             );
         await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
-            await logger.info(
-                message.guild?.id,
-                'get-gacha',
-                [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join('\n')
-            );
+            await logger.put({
+                guild_id: message.guild?.id,
+                channel_id: message.channel.id,
+                user_id: message.id,
+                level: 'info',
+                event: 'get-gacha',
+                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join(
+                    '\n'
+                )
+            });
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
                 .setTitle('プレゼントだ～！おめでと～！！')
