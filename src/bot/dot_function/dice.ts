@@ -86,14 +86,23 @@ export async function roll(message: Message, args?: string[]) {
  */
 export async function rollAll(message: Message): Promise<void> {
     if (message.channel.type === ChannelType.GuildVoice || message.channel.type === ChannelType.GuildStageVoice) {
-        const result: string[] = [];
+        const result: { username: string; rnd: number }[] = [];
         message.channel.members.map((m) => {
-            result.push(`${m.user.username}: ${getRndNumber(1, 100)}`);
+            result.push({ username: m.nickname ?? m.user.username, rnd: getRndNumber(1, 100) });
         });
+
+        result.sort((a, b) => b.rnd - a.rnd);
+
         const send = new EmbedBuilder()
             .setColor('#0099ff')
             .setTitle(`結果:`)
-            .setDescription(result.join('\n'))
+            .setDescription(
+                result
+                    .map((r) => {
+                        return `${r.username}: ${r.rnd}`;
+                    })
+                    .join('\n')
+            )
             .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/dice.jpg');
         message.reply({ embeds: [send] });
     } else {
