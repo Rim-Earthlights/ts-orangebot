@@ -2,6 +2,7 @@ import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
 import dayjs from 'dayjs';
 import { CONFIG } from '../../config/config.js';
 import * as logger from '../../common/logger.js';
+import { CHATBOT_TEMPLATE } from '../constants.js';
 
 /**
  * ChatGPTのモデル
@@ -36,27 +37,13 @@ export const getMaxTokens = (model: ChatGPTModel): number => {
  * @param gid
  */
 export async function initalize(gid: string, type?: 'default' | 'proxy', model?: ChatGPTModel): Promise<GPTChatData> {
-    const getGPT = (): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
-        if (!type || type === 'default') {
-            return new ChatGPTAPI({
-                apiKey: CONFIG.OPENAI.KEY,
-                maxModelTokens: getMaxTokens(model ? model : ChatGPTModel.GPT_3),
-                maxResponseTokens: 2000
-            });
-        }
-        return new ChatGPTUnofficialProxyAPI({
-            accessToken: CONFIG.OPENAI.ACCESSTOKEN,
-            apiReverseProxyUrl: 'https://ai.fakeopen.com/api/conversation'
-        });
-    };
-
     const chat = GPT.chat.find((c) => c.guild === gid);
     if (!chat) {
-        const idx = GPT.chat.push({
+        GPT.chat.push({
             guild: gid,
-            GPT: getGPT(),
+            GPT: getGPT(type ? type : 'default', model ? model : ChatGPTModel.GPT_3),
             type: type ? type : 'default',
-            parentMessageId: [],
+            messages: [],
             timestamp: dayjs()
         });
         await logger.put({
@@ -67,15 +54,34 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
             event: 'init-gpt',
             message: `Model: ${model}, Token: ${getMaxTokens(model ? model : ChatGPTModel.GPT_3)}`
         });
-        return GPT.chat[idx - 1];
+        console.log();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return GPT.chat.find((c) => c.guild === gid)!;
     }
     if (type && chat.type !== type) {
         chat.type = type ? type : 'default';
-        chat.GPT = getGPT();
+        chat.GPT = getGPT(type, model ? model : ChatGPTModel.GPT_3);
     }
-
     return chat;
 }
+
+const getGPT = (type: 'default' | 'proxy', model: ChatGPTModel): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
+    if (!type || type === 'default') {
+        return new ChatGPTAPI({
+            apiKey: CONFIG.OPENAI.KEY,
+            maxModelTokens: getMaxTokens(model),
+            completionParams: {
+                model: model
+            },
+            systemMessage: CHATBOT_TEMPLATE
+        });
+    }
+    return new ChatGPTUnofficialProxyAPI({
+        accessToken: CONFIG.OPENAI.ACCESSTOKEN,
+        apiReverseProxyUrl: 'https://ai.fakeopen.com/api/conversation',
+        model: model
+    });
+};
 
 /**
  * GPTクラス
@@ -91,7 +97,7 @@ export interface GPTChatData {
     guild: string;
     GPT: ChatGPTAPI | ChatGPTUnofficialProxyAPI;
     type: 'default' | 'proxy';
-    parentMessageId: {
+    messages: {
         cid?: string;
         id: string;
         message: string;

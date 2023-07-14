@@ -1,5 +1,4 @@
 import * as logger from '../../common/logger.js';
-import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
@@ -18,13 +17,13 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
     const chat = await initalize(interaction.guild.id, 'default', model);
 
     if (chat.type === 'proxy') {
-        chat.parentMessageId = [];
+        chat.messages = [];
         chat.type = 'default';
     }
 
     let parentMessageId: string | undefined = undefined;
-    if (chat.parentMessageId.length > 0) {
-        parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
+    if (chat.messages.length > 0) {
+        parentMessageId = chat.messages[chat.messages.length - 1].id;
     }
 
     const systemContent = {
@@ -36,11 +35,9 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
 
     try {
         const response = await chat.GPT.sendMessage(sendContent, {
-            parentMessageId: parentMessageId,
-            systemMessage: CHATBOT_TEMPLATE,
-            completionParams: { model: model }
+            parentMessageId: parentMessageId
         });
-        chat.parentMessageId.push({ id: response.id, message: content });
+        chat.messages.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
         await logger.put({
             guild_id: interaction.guild?.id,
@@ -75,8 +72,8 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
     const chat = await initalize(interaction.guild.id);
 
     if (lastFlag) {
-        const eraseData = chat.parentMessageId[chat.parentMessageId.length - 1];
-        chat.parentMessageId.splice(chat.parentMessageId.length - 1, 1);
+        const eraseData = chat.messages[chat.messages.length - 1];
+        chat.messages.splice(chat.messages.length - 1, 1);
 
         const send = new EmbedBuilder()
             .setColor('#00cc00')
@@ -85,6 +82,6 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
         await interaction.reply({ embeds: [send] });
         return;
     }
-    chat.parentMessageId = [];
+    chat.messages = [];
     await interaction.reply('会話データを削除したよ～！');
 }

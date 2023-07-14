@@ -28,7 +28,7 @@ export async function initJob() {
         GPT.chat.map(async (c) => {
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
                 c.timestamp = dayjs();
-                c.parentMessageId = [];
+                c.messages = [];
                 await logger.put({
                     guild_id: undefined,
                     channel_id: undefined,
@@ -39,7 +39,7 @@ export async function initJob() {
                 });
             }
         });
-        GPT.chat = GPT.chat.filter((c) => c.parentMessageId.length !== 0);
+        GPT.chat = GPT.chat.filter((c) => c.messages.length !== 0);
     });
     await logger.put({
         guild_id: undefined,

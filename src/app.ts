@@ -306,7 +306,14 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
 
         const u = reaction.message.guild?.members.cache.get(user.id);
         const role = u?.roles.cache.find((role) => role.id === CONFIG.DISCORD.MEMBER_ROLE_ID);
-        console.log(u?.roles);
+        await logger.put({
+            guild_id: reaction.message.guild?.id,
+            channel_id: reaction.message.channel.id,
+            user_id: user.id,
+            level: 'info',
+            event: 'role-check',
+            message: u?.roles.cache.map((role) => role.name).join(',')
+        });
         if (role) {
             const message = await reaction.message.reply(`もうロールが付いてるみたい！`);
             setTimeout(async () => {
@@ -359,7 +366,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             channel_id: oldState.channel?.id,
             user_id: oldState.id,
             level: 'info',
-            event: 'leftVoiceChannel',
+            event: 'vc-left',
             message: `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).username}`
         });
         await leftVoiceChannel(guild, oldState);
@@ -369,7 +376,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             channel_id: newState.channel?.id,
             user_id: newState.id,
             level: 'info',
-            event: 'joinVoiceChannel',
+            event: 'vc-join',
             message: `ch: ${newState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
         });
         await joinVoiceChannel(guild, newState);
@@ -379,7 +386,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             channel_id: newState.channel?.id,
             user_id: newState.id,
             level: 'info',
-            event: 'moveVoiceChannel',
+            event: 'vc-move',
             message: `ch: ${oldState.channel?.name} -> ${newState.channel?.name}, user: ${
                 (
                     await DISCORD_CLIENT.users.fetch(newState.id)

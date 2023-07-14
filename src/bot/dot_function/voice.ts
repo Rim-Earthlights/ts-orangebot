@@ -19,7 +19,7 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 channel_id: vc.id,
                 user_id: undefined,
                 level: 'info',
-                event: 'leftVoiceChannel',
+                event: 'vc-left',
                 message: `delete ch: ${voiceState.channel?.name}`
             });
             await vc.delete();
@@ -58,7 +58,7 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 channel_id: vc.id,
                 user_id: undefined,
                 level: 'info',
-                event: 'joinVoiceChannel',
+                event: 'vc-join',
                 message: `create ch: ${vc.name}`
             });
             (voiceState.channel as VoiceChannel).members.map(async (m) => {

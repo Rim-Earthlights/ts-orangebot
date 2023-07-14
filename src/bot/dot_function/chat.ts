@@ -1,5 +1,4 @@
 import * as logger from '../../common/logger.js';
-import { CHATBOT_TEMPLATE } from '../../constant/constants.js';
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
@@ -17,13 +16,13 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
     // ChatGPTが初期化されていない場合は初期化
     const chat = await initalize(message.guild.id, 'default', model);
     if (chat.type === 'proxy') {
-        chat.parentMessageId = [];
+        chat.messages = [];
         chat.type = 'default';
     }
 
     let parentMessageId: string | undefined = undefined;
-    if (chat.parentMessageId.length > 0) {
-        parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
+    if (chat.messages.length > 0) {
+        parentMessageId = chat.messages[chat.messages.length - 1].id;
     }
 
     const systemContent = {
@@ -35,11 +34,9 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
 
     try {
         const response = await chat.GPT.sendMessage(sendContent, {
-            parentMessageId: parentMessageId,
-            systemMessage: CHATBOT_TEMPLATE,
-            completionParams: { model: model }
+            parentMessageId: parentMessageId
         });
-        chat.parentMessageId.push({ id: response.id, message: content });
+        chat.messages.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
         await logger.put({
             guild_id: message.guild?.id,
@@ -74,15 +71,15 @@ export async function talkWithoutPrompt(message: Message, content: string) {
     const chat = await initalize(message.guild.id, 'proxy', ChatGPTModel.GPT_3);
 
     if (chat.type === 'default') {
-        chat.parentMessageId = [];
+        chat.messages = [];
         chat.type = 'proxy';
     }
 
     let parentMessageId: string | undefined = undefined;
     let conversationId: string | undefined = undefined;
-    if (chat.parentMessageId.length > 0) {
-        conversationId = chat.parentMessageId[chat.parentMessageId.length - 1].cid;
-        parentMessageId = chat.parentMessageId[chat.parentMessageId.length - 1].id;
+    if (chat.messages.length > 0) {
+        conversationId = chat.messages[chat.messages.length - 1].cid;
+        parentMessageId = chat.messages[chat.messages.length - 1].id;
     }
 
     const sendContent = `日時:[${dayjs().format('YYYY/MM/DD HH:mm:ss')}] 名前:[${
@@ -94,7 +91,7 @@ export async function talkWithoutPrompt(message: Message, content: string) {
             conversationId: conversationId,
             parentMessageId: parentMessageId
         });
-        chat.parentMessageId.push({ cid: response.conversationId, id: response.id, message: content });
+        chat.messages.push({ cid: response.conversationId, id: response.id, message: content });
         chat.timestamp = dayjs();
         await logger.put({
             guild_id: message.guild?.id,
@@ -127,8 +124,8 @@ export async function deleteChatData(message: Message, idx?: string) {
     const chat = await initalize(message.guild.id);
 
     if (idx != undefined) {
-        const eraseData = chat.parentMessageId[chat.parentMessageId.length - 1];
-        chat.parentMessageId.splice(chat.parentMessageId.length - 1, 1);
+        const eraseData = chat.messages[chat.messages.length - 1];
+        chat.messages.splice(chat.messages.length - 1, 1);
 
         const send = new EmbedBuilder()
             .setColor('#00cc00')
@@ -137,6 +134,6 @@ export async function deleteChatData(message: Message, idx?: string) {
         await message.reply({ embeds: [send] });
         return;
     }
-    chat.parentMessageId = [];
+    chat.messages = [];
     await message.reply('会話データを削除したよ～！');
 }
