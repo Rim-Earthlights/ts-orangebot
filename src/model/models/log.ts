@@ -28,7 +28,7 @@ export class Log extends BaseEntity {
     @Column({ type: 'varchar', width: 255, nullable: false })
     event!: string;
 
-    @Column({ type: 'varchar', width: 255, nullable: true })
+    @Column({ type: 'text', nullable: true })
     message: string | null = null;
 
     @DeleteDateColumn({ type: 'datetime', nullable: true })
