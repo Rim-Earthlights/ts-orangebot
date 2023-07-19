@@ -106,11 +106,15 @@ const commands = [
     new SlashCommandBuilder().setName('gl').setDescription('/gacha limitの短縮形コマンドです.'),
     new SlashCommandBuilder()
         .setName('gpt')
-        .setDescription('ChatGPTとおしゃべりします')
+        .setDescription('GPT-4(8K)でおしゃべりします')
+        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('g3')
+        .setDescription('GPT-3(16K)でおしゃべりします, GPT-3なので軽いです')
         .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
     new SlashCommandBuilder()
         .setName('g4')
-        .setDescription('GPT-4でおしゃべりします(非常にレスポンスが遅いので注意)')
+        .setDescription('GPT-4(32K)でおしゃべりします. 非常に遅いです')
         .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
     new SlashCommandBuilder()
         .setName('erase')
