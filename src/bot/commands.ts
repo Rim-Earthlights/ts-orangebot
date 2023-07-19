@@ -685,6 +685,9 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'restart': {
+            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+                return;
+            }
             throw new Error('再起動');
         }
     }
@@ -845,7 +848,7 @@ export async function debug(message: Message, args?: string[]) {
  * @param message
  */
 export async function help(message: Message) {
-    message.reply(HELP_COMMANDS);
+    HELP_COMMANDS.map((c) => message.channel.send({ embeds: [c] }));
     return;
 }
 

@@ -33,6 +33,12 @@ export async function save(message: Message, args?: string[]): Promise<void> {
             break;
         }
         case 'name': {
+            const userId = message.author.id;
+            await message.guild?.members.fetch(userId).then(async (member) => {
+                await member.setNickname(regName[0]);
+            });
+            const send = new EmbedBuilder().setColor('#ff9900').setTitle(`登録`).setDescription(`名前: ${regName}`);
+            message.reply({ content: `${regName}さんって言うんだね！覚えたよ～！`, embeds: [send] });
             break;
         }
         case 'birth': {
