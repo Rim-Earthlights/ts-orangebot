@@ -1,3 +1,10 @@
+enum ChatGPTModel {
+    GPT_3 = 'gpt-3.5-turbo',
+    GPT_3_16K = 'gpt-3.5-turbo-16k',
+    GPT_4 = 'gpt-4',
+    GPT_4_32K = 'gpt-4-32k'
+};
+
 export const CONFIG = {
     // common settings
     COMMON: {
@@ -44,9 +51,11 @@ export const CONFIG = {
         // if disabled, still empty.
         KEY: '',
         // default model
-        DEFAULT_MODEL: 'gpt-4',
+        DEFAULT_MODEL: ChatGPTModel.GPT_4,
+        // G3 command model
+        G3_MODEL: ChatGPTModel.GPT_3_16K,
         // G4 command model
-        G4_MODEL: 'gpt-4-32k',
+        G4_MODEL: ChatGPTModel.GPT_4_32K,
         // if disabled, still empty.
         ACCESSTOKEN:
             ''

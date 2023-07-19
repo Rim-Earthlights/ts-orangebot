@@ -60,7 +60,21 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL as ChatGPTModel);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL);
+            break;
+        }
+        case 'g3': {
+            if (!isEnableFunction(functionNames.GPT)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
+                return;
+            }
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G3_MODEL);
             break;
         }
         case 'g4': {
@@ -610,6 +624,22 @@ export async function commandSelector(message: Message) {
                 .setDescription(`選択肢: ${content.join(', ')}`);
 
             message.reply({ embeds: [send] });
+            break;
+        }
+        case 'double-up': {
+            do {
+                const result = DotBotFunctions.Pachi.denchu();
+                const send = new EmbedBuilder()
+                    .setColor('#ff9900')
+                    .setTitle(`結果: ${result.status}`)
+                    .setDescription(`${result.message.join('\n')}`);
+
+                message.channel.send({ embeds: [send] });
+                if (!result.status) {
+                    break;
+                }
+                // eslint-disable-next-line no-constant-condition
+            } while (true);
             break;
         }
         case 'popup-rule': {
