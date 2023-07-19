@@ -14,21 +14,23 @@ export enum ChatGPTModel {
     GPT_4_32K = 'gpt-4-32k'
 }
 
-/**
- * ChatGPTのMaxTokenを返す
- * @param model
- * @returns
- */
-export const getMaxTokens = (model: ChatGPTModel): number => {
-    switch (model) {
+type GPTModel = {
+    modelName: string;
+    maxTokens: number;
+};
+
+export const getGPTModel = (modelName: ChatGPTModel): GPTModel => {
+    switch (modelName) {
         case ChatGPTModel.GPT_3:
-            return 4096;
+            return { modelName: 'gpt-3.5-turbo', maxTokens: 4096 };
         case ChatGPTModel.GPT_3_16K:
-            return 16384;
+            return { modelName: 'gpt-3.5-turbo-16k', maxTokens: 16384 };
         case ChatGPTModel.GPT_4:
-            return 8192;
+            return { modelName: 'gpt-4', maxTokens: 8192 };
         case ChatGPTModel.GPT_4_32K:
-            return 32768;
+            return { modelName: 'gpt-4', maxTokens: 32768 };
+        default:
+            return { modelName: 'gpt-3.5-turbo', maxTokens: 4096 };
     }
 };
 
@@ -36,16 +38,17 @@ export const getMaxTokens = (model: ChatGPTModel): number => {
  * ChatGPTの初期化
  * @param gid
  */
-export async function initalize(gid: string, type?: 'default' | 'proxy', model?: ChatGPTModel): Promise<GPTChatData> {
-    const maxTokens = getMaxTokens(model ? model : ChatGPTModel.GPT_3);
-    if (model === ChatGPTModel.GPT_4_32K) {
-        model = ChatGPTModel.GPT_4;
-    }
+export async function initalize(
+    gid: string,
+    type?: 'default' | 'proxy',
+    modelName?: ChatGPTModel
+): Promise<GPTChatData> {
+    const model = getGPTModel(modelName ?? ChatGPTModel.GPT_3);
     const chat = GPT.chat.find((c) => c.guild === gid);
     if (!chat) {
         GPT.chat.push({
             guild: gid,
-            GPT: getGPT(type ? type : 'default', model ? model : ChatGPTModel.GPT_3),
+            GPT: getGPT(type ? type : 'default', model),
             type: type ? type : 'default',
             messages: [],
             timestamp: dayjs()
@@ -56,7 +59,7 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
             user_id: undefined,
             level: 'info',
             event: 'init-gpt',
-            message: `Model: ${model}, Token: ${maxTokens}`
+            message: `Model: ${modelName}, Token: ${model.maxTokens}`
         });
         console.log();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -64,22 +67,18 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
     }
     if (type && chat.type !== type) {
         chat.type = type ? type : 'default';
-        chat.GPT = getGPT(type, model ? model : ChatGPTModel.GPT_3);
+        chat.GPT = getGPT(type ? type : 'default', model);
     }
     return chat;
 }
 
-const getGPT = (type: 'default' | 'proxy', model: ChatGPTModel): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
-    const maxTokens = getMaxTokens(model ? model : ChatGPTModel.GPT_3);
-    if (model === ChatGPTModel.GPT_4_32K) {
-        model = ChatGPTModel.GPT_4;
-    }
+const getGPT = (type: 'default' | 'proxy', model: GPTModel): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
     if (!type || type === 'default') {
         return new ChatGPTAPI({
             apiKey: CONFIG.OPENAI.KEY,
-            maxModelTokens: maxTokens,
+            maxModelTokens: model.maxTokens,
             completionParams: {
-                model: model
+                model: model.modelName
             },
             systemMessage: CHATBOT_TEMPLATE
         });
@@ -87,7 +86,7 @@ const getGPT = (type: 'default' | 'proxy', model: ChatGPTModel): ChatGPTAPI | Ch
     return new ChatGPTUnofficialProxyAPI({
         accessToken: CONFIG.OPENAI.ACCESSTOKEN,
         apiReverseProxyUrl: 'https://ai.fakeopen.com/api/conversation',
-        model: model
+        model: model.modelName
     });
 };
 
