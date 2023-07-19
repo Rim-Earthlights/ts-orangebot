@@ -63,7 +63,7 @@ export const HELP_COMMANDS = [
                 value: '天気予報を取得する\n指定した地域の天気予報を取得します\n日数を指定するとその日数後の天気予報を取得します(6日後まで)'
             },
             {
-                name: '.reg [pref | birth] [登録名]',
+                name: '.reg [pref | name | birth] [登録名]',
                 value: [
                     'ユーザー情報を登録します',
                     'pref: 都道府県を登録します (例: [.reg pref 東京都])',
