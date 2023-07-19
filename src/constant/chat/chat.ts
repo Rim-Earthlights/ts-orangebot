@@ -37,6 +37,10 @@ export const getMaxTokens = (model: ChatGPTModel): number => {
  * @param gid
  */
 export async function initalize(gid: string, type?: 'default' | 'proxy', model?: ChatGPTModel): Promise<GPTChatData> {
+    const maxTokens = getMaxTokens(model ? model : ChatGPTModel.GPT_3);
+    if (model === ChatGPTModel.GPT_4_32K) {
+        model = ChatGPTModel.GPT_4;
+    }
     const chat = GPT.chat.find((c) => c.guild === gid);
     if (!chat) {
         GPT.chat.push({
@@ -52,7 +56,7 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
             user_id: undefined,
             level: 'info',
             event: 'init-gpt',
-            message: `Model: ${model}, Token: ${getMaxTokens(model ? model : ChatGPTModel.GPT_3)}`
+            message: `Model: ${model}, Token: ${maxTokens}`
         });
         console.log();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -66,10 +70,14 @@ export async function initalize(gid: string, type?: 'default' | 'proxy', model?:
 }
 
 const getGPT = (type: 'default' | 'proxy', model: ChatGPTModel): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
+    const maxTokens = getMaxTokens(model ? model : ChatGPTModel.GPT_3);
+    if (model === ChatGPTModel.GPT_4_32K) {
+        model = ChatGPTModel.GPT_4;
+    }
     if (!type || type === 'default') {
         return new ChatGPTAPI({
             apiKey: CONFIG.OPENAI.KEY,
-            maxModelTokens: getMaxTokens(model),
+            maxModelTokens: maxTokens,
             completionParams: {
                 model: model
             },
