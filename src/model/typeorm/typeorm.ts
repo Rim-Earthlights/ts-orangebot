@@ -23,7 +23,9 @@ export class TypeOrm {
             Models.Item,
             Models.Guild,
             Models.ItemRank,
-            Models.Log
+            Models.Log,
+            Models.Role,
+            Models.Color
         ] // 利用するエンティティ。パスでの指定も可能
     });
 }
