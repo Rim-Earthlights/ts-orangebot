@@ -1,4 +1,4 @@
-import { DeepPartial, Like, MoreThanOrEqual, Repository } from 'typeorm';
+import { DeepPartial, MoreThanOrEqual, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
 import { TypeOrm } from '../typeorm/typeorm.js';
 
