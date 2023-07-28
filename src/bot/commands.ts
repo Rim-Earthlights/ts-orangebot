@@ -10,6 +10,9 @@ import { isEnableFunction } from '../common/common.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { ChatGPTModel } from '../constant/chat/chat.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
+import { RoleRepository } from '../model/repository/roleRepository.js';
+import { RoleType } from '../model/models/role.js';
+import { ColorRepository } from '../model/repository/colorRepository.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -682,6 +685,44 @@ export async function commandSelector(message: Message) {
                 await m.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
             });
             await message.reply('add roles to all members.');
+            break;
+        }
+        case 'role': {
+            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+                return;
+            }
+            if (content.length <= 0) return;
+
+            const type = content[0] as RoleType | undefined;
+            const name = content[1];
+            const role_id = content[2];
+
+            if (!type || !name || !role_id) {
+                return;
+            }
+
+            const roleRepository = new RoleRepository();
+            await roleRepository.addRole({ type, name, role_id });
+
+            break;
+        }
+        case 'color': {
+            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+                return;
+            }
+            if (content.length <= 0) return;
+
+            const color_code = content[0]
+            const color_name = content[1];
+            const role_id = content[2];
+
+            if (!color_code || !color_name || !role_id) {
+                return;
+            }
+
+            const colorRepository = new ColorRepository();
+            await colorRepository.addColor({ color_code, color_name, role_id });
+
             break;
         }
         case 'restart': {

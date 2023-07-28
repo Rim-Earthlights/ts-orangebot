@@ -20,6 +20,7 @@ import { switchFunctionByAPIKey } from './common/common.js';
 import { UsersRepository } from './model/repository/usersRepository.js';
 import { Users } from './model/models/users.js';
 import { GachaList } from './bot/function/gacha.js';
+import { reactionSelector } from './bot/reactions.js';
 
 dotenv.config();
 
@@ -280,72 +281,7 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
  * リアクション追加イベント
  */
 DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
-    if (reaction.partial) {
-        try {
-            await reaction.fetch();
-        } catch (error) {
-            console.error('Something went wrong when fetching the message:', error);
-            return;
-        }
-    }
-
-    if (reaction.message.author?.id !== DISCORD_CLIENT.user?.id || user.bot) {
-        return;
-    }
-
-    const title = reaction.message.embeds.find((e) => e.title === 'ルールを読んだ');
-    if (!title) {
-        return;
-    }
-    if (reaction.message.channel.type === ChannelType.GuildText) {
-        await reaction.users.remove(user.id);
-        await logger.put({
-            guild_id: reaction.message.guild?.id,
-            channel_id: reaction.message.channel.id,
-            user_id: user.id,
-            level: 'info',
-            event: 'reaction-add',
-            message: `rule accepted: ${user.username}`
-        });
-
-        const u = reaction.message.guild?.members.cache.get(user.id);
-        const role = u?.roles.cache.find((role) => role.id === CONFIG.DISCORD.MEMBER_ROLE_ID);
-        await logger.put({
-            guild_id: reaction.message.guild?.id,
-            channel_id: reaction.message.channel.id,
-            user_id: user.id,
-            level: 'info',
-            event: 'role-check',
-            message: u?.roles.cache.map((role) => role.name).join(',')
-        });
-        if (role) {
-            const message = await reaction.message.reply(`もうロールが付いてるみたい！`);
-            setTimeout(async () => {
-                await message.delete();
-            }, 3000);
-            return;
-        }
-
-        // add user role
-        await u?.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
-
-        // register user
-        const userRepository = new UsersRepository();
-        const userEntity = await userRepository.get(user.id);
-        if (!userEntity) {
-            const saveUser: Partial<Users> = {
-                id: user.id,
-                user_name: user.username
-            };
-            await userRepository.save(saveUser);
-        }
-
-        const message = await reaction.message.reply(`読んでくれてありがと～！ロールを付与したよ！`);
-        setTimeout(async () => {
-            await message.delete();
-        }, 3000);
-        return;
-    }
+    await reactionSelector(reaction, user);
 });
 
 /**
