@@ -1,5 +1,6 @@
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
+import { RoomRepository } from '../../model/repository/roomRepository.js';
 
 /**
  * お部屋の名前を変更する
@@ -22,9 +23,98 @@ export async function changeRoomName(message: Message, roomName: string): Promis
     }
     const vc = message.member?.voice.channel;
 
-    await vc.setName(roomName, '部屋名変更: ' + message.author.username);
+    const roomRepository = new RoomRepository();
+    const roomInfo = await roomRepository.getRoom(vc.id);
 
+    if (!roomInfo) {
+        return;
+    }
+
+    await roomRepository.updateRoom(vc.id, { name: roomName });
+
+    if (roomInfo.is_live) {
+        roomName = '[🔴配信] ' + roomName;
+    }
+
+    await vc.setName(roomName, '部屋名変更: ' + message.author.username);
     message.reply(`お部屋の名前を${roomName}に変更したよ！`);
+}
+
+/**
+ * お部屋の設定を変更する
+ * @param message
+ * @param mode
+ * @returns
+ */
+export async function changeRoomSetting(
+    message: Message,
+    mode: 'delete' | 'live' | 'private',
+    value?: string
+): Promise<void> {
+    const roomRepository = new RoomRepository();
+    const roomInfo = await roomRepository.getRoom(message.channel.id);
+
+    if (!roomInfo) {
+        return;
+    }
+
+    switch (mode) {
+        case 'delete': {
+            if (roomInfo.is_autodelete) {
+                roomInfo.is_autodelete = false;
+                await message.reply('自動削除フラグを外したよ！');
+            } else {
+                roomInfo.is_autodelete = true;
+                await message.reply('自動削除フラグをつけたよ！');
+            }
+
+            break;
+        }
+        case 'live': {
+            if (roomInfo.is_live) {
+                roomInfo.is_live = false;
+                const vc = message.member?.voice.channel;
+                if (vc) {
+                    roomInfo.name = value!.replace('[🔴配信] ', '');
+                    await vc.setName(value!.replace('[🔴配信] ', ''), '部屋名変更: ' + message.author.username);
+                }
+                await message.reply('配信フラグを外したよ！');
+            } else {
+                roomInfo.is_live = true;
+                const vc = message.member?.voice.channel;
+                if (vc) {
+                    roomInfo.name = value!.replace('[🔴配信] ', '');
+                    await vc.setName('[🔴配信] ' + value, '部屋名変更: ' + message.author.username);
+                }
+                await message.reply('配信フラグをつけたよ！');
+            }
+            break;
+        }
+        case 'private': {
+            roomInfo.is_private = !roomInfo.is_private;
+            const vc = message.member?.voice.channel;
+            if (vc) {
+                await vc.setName('[🅿] ' + vc.name, '部屋名変更: ' + message.author.username);
+            }
+            await message.reply('プライベートフラグをつけたよ！<未実装>');
+            break;
+        }
+    }
+
+    await roomRepository.updateRoom(message.channel.id, roomInfo);
+}
+
+/**
+ * お部屋の人数制限を設定する
+ * @param message
+ * @param limit
+ */
+export async function changeLimit(message: Message, limit: number): Promise<void> {
+    const vc = message.member?.voice.channel;
+    if (vc) {
+        await vc.setUserLimit(limit);
+    }
+    await message.reply('人数制限を変更したよ！');
 }
 
 /**

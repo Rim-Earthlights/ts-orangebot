@@ -551,32 +551,65 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'room': {
-            if (content.length <= 0) {
-                // 初期名(お部屋: #NUM)に変更
-                const guild = message.guild;
-                if (!guild) {
-                    return;
-                }
-                const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
-                const roomName = `お部屋: #${('000' + channelLength).slice(-3)}`;
+            const mode = content[0];
+            const value = content[1];
 
-                const vc = message.member?.voice.channel;
-
-                if (!vc) {
-                    const send = new EmbedBuilder()
-                        .setColor('#ff0000')
-                        .setTitle(`エラー`)
-                        .setDescription(`ボイスチャンネルに入ってから使ってね`);
-
-                    message.reply({ embeds: [send] });
-                    return;
-                }
-
-                await vc.setName(roomName, '部屋名変更: ' + message.author.username);
-                message.reply(`お部屋の名前を${roomName}に変更したよ！`);
+            if (!mode) {
                 return;
             }
-            await DotBotFunctions.Room.changeRoomName(message, content.join(' '));
+
+            switch (mode) {
+                case 'name': {
+                    let roomName;
+                    if (!value) {
+                        // 初期名(お部屋: #NUM)に変更
+                        const guild = message.guild;
+                        if (!guild) {
+                            return;
+                        }
+                        const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
+                        roomName = `お部屋: #${('000' + channelLength).slice(-3)}`;
+                    } else {
+                        roomName = value;
+                    }
+                    await DotBotFunctions.Room.changeRoomName(message, roomName);
+                    break;
+                }
+                case 'limit': {
+                    if (!value) {
+                        await DotBotFunctions.Room.changeLimit(message, 0);
+                    }
+                    await DotBotFunctions.Room.changeLimit(message, Number(value));
+                    break;
+                }
+                case 'delete': {
+                    await DotBotFunctions.Room.changeRoomSetting(message, 'delete');
+                    break;
+                }
+                case 'live': {
+                    let roomName;
+                    if (!value) {
+                        // 初期名(お部屋: #NUM)に変更
+                        const guild = message.guild;
+                        if (!guild) {
+                            return;
+                        }
+                        const vc = message.member?.voice.channel;
+                        if (!vc) {
+                            return;
+                        }
+                        roomName = vc.name;
+                    } else {
+                        roomName = value;
+                    }
+
+                    await DotBotFunctions.Room.changeRoomSetting(message, 'live', roomName);
+                    break;
+                }
+                case 'private': {
+                    break;
+                }
+            }
             break;
         }
         case 'seek': {
@@ -662,6 +695,22 @@ export async function commandSelector(message: Message) {
             await m.delete();
             break;
         }
+        case 'popup-gamelist': {
+            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+                return;
+            }
+            const channel = message.channel;
+            if (channel) {
+                const send = new EmbedBuilder()
+                    .setColor('#ffcc00')
+                    .setTitle(`ゲームの選択`)
+                    .setDescription('リアクションをすると全ての機能が使えるようになります');
+                const result = await channel?.send({ embeds: [send] });
+                result.react('✅');
+            }
+
+            break;
+        }
         case 'add-role-all': {
             if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
                 return;
@@ -712,7 +761,7 @@ export async function commandSelector(message: Message) {
             }
             if (content.length <= 0) return;
 
-            const color_code = content[0]
+            const color_code = content[0];
             const color_name = content[1];
             const role_id = content[2];
 

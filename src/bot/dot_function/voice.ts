@@ -2,6 +2,7 @@ import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'd
 import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants.js';
 import { extermAudioPlayer } from './music.js';
 import * as logger from '../../common/logger.js';
+import { RoomRepository } from '../../model/repository/roomRepository.js';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -14,15 +15,20 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
         const vc = voiceState.channel as VoiceChannel;
 
         if (vc.members.size <= 0) {
-            await logger.put({
-                guild_id: vc.guild?.id,
-                channel_id: vc.id,
-                user_id: undefined,
-                level: 'info',
-                event: 'vc-left',
-                message: `delete ch: ${voiceState.channel?.name}`
-            });
-            await vc.delete();
+            const room = new RoomRepository();
+            const roomInfo = await room.getRoom(vc.id);
+            if (!roomInfo || roomInfo.is_autodelete) {
+                await room.deleteRoom(vc.id);
+                await logger.put({
+                    guild_id: vc.guild?.id,
+                    channel_id: vc.id,
+                    user_id: undefined,
+                    level: 'info',
+                    event: 'vc-left',
+                    message: `delete ch: ${voiceState.channel?.name}`
+                });
+                await vc.delete();
+            }
         } else {
             const bot = vc.members.filter((m) => m.user.bot);
             if (vc.members.size === bot.size) {
@@ -52,6 +58,15 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 name: `お部屋: #${('000' + channelLength).slice(-3)}`,
                 type: ChannelType.GuildVoice,
                 parent: parent
+            });
+            const room = new RoomRepository();
+            await room.createRoom({
+                room_id: vc.id,
+                guild_id: vc.guild.id,
+                name: vc.name,
+                is_autodelete: true,
+                is_live: false,
+                is_private: false
             });
             await logger.put({
                 guild_id: vc.guild?.id,

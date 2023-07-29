@@ -1,9 +1,9 @@
 import { ChannelType, MessageReaction, PartialMessageReaction, PartialUser, User } from "discord.js";
-import { CONFIG } from "../config/config";
-import { Logger } from "../common/logger";
-import { UsersRepository } from "../model/repository/usersRepository";
+import { CONFIG } from "../config/config.js";
+import { Logger } from "../common/logger.js";
+import { UsersRepository } from "../model/repository/usersRepository.js";
 import { Users } from "../model/models";
-import { RoleRepository } from "../model/repository/roleRepository";
+import { RoleRepository } from "../model/repository/roleRepository.js";
 
 export const reactionSelector = async (reaction: MessageReaction | PartialMessageReaction, user: User | PartialUser) => {
     if (reaction.partial) {
@@ -22,7 +22,7 @@ export const reactionSelector = async (reaction: MessageReaction | PartialMessag
     if (!embed) return;
 
     switch (embed.title) {
-        case 'ルールを読んだ':
+        case 'ルールを読んだ': {
             if (reaction.message.channel.type === ChannelType.GuildText) {
                 await reaction.users.remove(user.id);
                 await Logger.put({
@@ -90,5 +90,20 @@ export const reactionSelector = async (reaction: MessageReaction | PartialMessag
                 return;
             }
             break;
+        }
+        case 'ゲームの選択': {
+            if (reaction.message.channel.type === ChannelType.GuildText) {
+                await reaction.users.remove(user.id);
+                await Logger.put({
+                    guild_id: reaction.message.guild?.id,
+                    channel_id: reaction.message.channel.id,
+                    user_id: user.id,
+                    level: 'info',
+                    event: 'reaction-add',
+                    message: `game selected: ${user.username} | ${reaction.emoji.name}`
+                });
+            }
+            break;
+        }
     }
 }
