@@ -86,8 +86,31 @@ export const HELP_COMMANDS = [
                     'moveを指定するとチーム分け後にメンバーを移動します'
                 ].join('\n')
             },
-            { name: '.room [?部屋名]', value: 'お部屋の名前を変更します\n部屋名の入力がない場合は初期値に戻します' },
             { name: '.choose [選択肢1] [選択肢2] ...', value: '選択肢をスペース区切りで入力するとランダムに選びます' }
+        ),
+    new EmbedBuilder()
+        .setColor('Aqua')
+        .setTitle('お部屋管理系')
+        .addFields(
+            {
+                name: '.room [?部屋名]',
+                value: 'お部屋の名前を変更します。`.room name`のみで使うと`お部屋: #(連番)`の形に戻ります'
+            },
+            {
+                name: '.room live [?変更したい名前]',
+                value: [
+                    'お部屋を配信中にします。`.room live`のみで使うと部屋名を維持したまま配信中にします。',
+                    '配信をする際はこちらを打ってから行ってください。',
+                    '例) `お部屋1`で`.room live`を実行　→　`[🔴配信] お部屋1`に変更される'
+                ].join('\n')
+            },
+            {
+                name: '.room delete',
+                value: [
+                    'お部屋の自動削除設定を変更します。自動削除がOFFになった通話部屋は0人になっても削除されません。',
+                    '削除したい時は非常にお手数ですが入り直してONに戻した後出てください……'
+                ].join('\n')
+            }
         ),
     new EmbedBuilder()
         .setColor('Aqua')
