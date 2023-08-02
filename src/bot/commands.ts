@@ -13,6 +13,7 @@ import { UsersRepository } from '../model/repository/usersRepository.js';
 import { RoleRepository } from '../model/repository/roleRepository.js';
 import { RoleType } from '../model/models/role.js';
 import { ColorRepository } from '../model/repository/colorRepository.js';
+import { getDefaultRoomName } from './dot_function/voice.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -567,8 +568,7 @@ export async function commandSelector(message: Message) {
                         if (!guild) {
                             return;
                         }
-                        const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
-                        roomName = `お部屋: #${('000' + channelLength).slice(-3)}`;
+                        roomName = getDefaultRoomName(message.guild);
                     } else {
                         roomName = value;
                     }
@@ -660,22 +660,6 @@ export async function commandSelector(message: Message) {
                 .setDescription(`選択肢: ${content.join(', ')}`);
 
             message.reply({ embeds: [send] });
-            break;
-        }
-        case 'double-up': {
-            do {
-                const result = DotBotFunctions.Pachi.denchu();
-                const send = new EmbedBuilder()
-                    .setColor('#ff9900')
-                    .setTitle(`結果: ${result.status}`)
-                    .setDescription(`${result.message.join('\n')}`);
-
-                message.channel.send({ embeds: [send] });
-                if (!result.status) {
-                    break;
-                }
-                // eslint-disable-next-line no-constant-condition
-            } while (true);
             break;
         }
         case 'popup-rule': {

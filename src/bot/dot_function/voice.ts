@@ -52,10 +52,9 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
         // lobby login
         const parent = guild.channels.cache.find((c) => c.parentId != null && c.type === ChannelType.GuildVoice)
             ?.parent as CategoryChannel;
-        const channelLength = guild.channels.cache.filter((c) => c.name.includes('お部屋:')).size + 1;
         if (parent) {
             const vc = await guild.channels.create({
-                name: `お部屋: #${('000' + channelLength).slice(-3)}`,
+                name: getDefaultRoomName(guild),
                 type: ChannelType.GuildVoice,
                 parent: parent
             });
@@ -81,4 +80,22 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
             });
         }
     }
+}
+
+/**
+ * ボイスチャンネルの名前を取得する
+ * @param guild
+ * @returns
+ */
+export function getDefaultRoomName(guild: Guild): string {
+    const rooms = guild.channels.cache.filter((c) => c.name.includes('お部屋:'));
+    if (rooms.size > 0) {
+        const channelLength =
+            guild.channels.cache
+                .filter((c) => c.name.includes('お部屋: #'))
+                .map((c) => Number(c.name.replace('お部屋: #', '')))
+                .sort((a, b) => b - a)[0] + 1;
+        return `お部屋: #${('000' + channelLength).slice(-3)}`;
+    }
+    return `お部屋: #001`;
 }
