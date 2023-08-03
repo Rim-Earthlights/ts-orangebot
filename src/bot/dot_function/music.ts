@@ -593,7 +593,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
             const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
-                .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}曲` })
+                .setAuthor({ name: `再生中の音楽情報/ 全${musics.length + 1}曲` })
                 .setTitle(playing.title)
                 .setURL(playing.url)
                 .setDescription(description ? description : 'none')
@@ -790,10 +790,22 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
         const description = slicedMusics.map((m) => m.music_id + ': ' + m.title).join('\n');
         const send = new EmbedBuilder()
             .setColor('#cc66cc')
-            .setAuthor({ name: `再生中の音楽情報/ 全${musics.length}曲` })
+            .setAuthor({ name: `再生中の音楽情報/ 全${musics.length + 1}曲` })
             .setTitle(info.title)
             .setURL(info.url)
             .setDescription(description)
+            .setThumbnail(info.thumbnail)
+            .addFields({
+                name: '再生キュー',
+                value: `${CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id}`
+            });
+        (channel as VoiceChannel).send({ embeds: [send] });
+    } else {
+        const send = new EmbedBuilder()
+            .setColor('#cc66cc')
+            .setAuthor({ name: '再生中の音楽情報/ 全1曲' })
+            .setTitle(info.title)
+            .setURL(info.url)
             .setThumbnail(info.thumbnail)
             .addFields({
                 name: '再生キュー',
