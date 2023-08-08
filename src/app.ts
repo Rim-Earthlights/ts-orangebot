@@ -2,7 +2,7 @@ import Express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { ChannelType, Message, REST, Routes, SlashCommandBuilder, User } from 'discord.js';
+import { ChannelType, Message, REST, Routes } from 'discord.js';
 import { commandSelector, interactionSelector } from './bot/commands.js';
 import { wordSelector } from './bot/mention.js';
 import dotenv from 'dotenv';
@@ -17,10 +17,9 @@ import { ItemRepository } from './model/repository/itemRepository.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { initJob } from './job/job.js';
 import { switchFunctionByAPIKey } from './common/common.js';
-import { UsersRepository } from './model/repository/usersRepository.js';
-import { Users } from './model/models/users.js';
 import { GachaList } from './bot/function/gacha.js';
 import { reactionSelector } from './bot/reactions.js';
+import { SLASH_COMMANDS } from './constant/slashCommands.js';
 
 dotenv.config();
 
@@ -65,70 +64,7 @@ app.listen(port, hostName);
  */
 console.log('==================================================');
 
-const commands = [
-    // ping command
-    new SlashCommandBuilder().setName('ping').setDescription('replies with pong'),
-    // gacha command
-    new SlashCommandBuilder()
-        .setName('gacha')
-        .setDescription('ガチャ関連機能')
-        .addSubcommand((sc) =>
-            sc
-                .setName('pick')
-                .setDescription('ガチャを引きます. 回数指定しない場合は10回引きます. ')
-                .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
-                .addBooleanOption((option) =>
-                    option
-                        .setName('limit')
-                        .setDescription('Trueにするとチケット分も全て引きます。回数指定は無視されます。')
-                        .setRequired(false)
-                )
-        )
-        .addSubcommand((sc) => sc.setName('list').setDescription('あなたのガチャ景品を表示します'))
-        .addSubcommand((sc) =>
-            sc
-                .setName('extra')
-                .setDescription('ガチャを試し引きします. 景品取得判定にはなりません.')
-                .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
-                .addStringOption((option) =>
-                    option.setName('item').setDescription('アイテム名 or 等級').setRequired(false)
-                )
-        ),
-    new SlashCommandBuilder()
-        .setName('gc')
-        .setDescription('/gachaの短縮形です. 回数指定しない場合は10回引きます.')
-        .addNumberOption((option) => option.setName('num').setDescription('回数').setRequired(false))
-        .addBooleanOption((option) =>
-            option
-                .setName('limit')
-                .setDescription('Trueにするとチケット分も全て引きます. 回数指定は無視されます.')
-                .setRequired(false)
-        ),
-    new SlashCommandBuilder().setName('gl').setDescription('/gacha limitの短縮形コマンドです.'),
-    new SlashCommandBuilder()
-        .setName('gpt')
-        .setDescription('GPT-4(8K)でおしゃべりします')
-        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
-    new SlashCommandBuilder()
-        .setName('g3')
-        .setDescription('GPT-3(16K)でおしゃべりします, GPT-3なので軽いです')
-        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
-    new SlashCommandBuilder()
-        .setName('g4')
-        .setDescription('GPT-4(32K)でおしゃべりします. 非常に遅いです')
-        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
-    new SlashCommandBuilder()
-        .setName('erase')
-        .setDescription('ChatGPTとのチャット履歴を削除します')
-        .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false))
-    // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
-    // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
-    // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
-    // new SlashCommandBuilder()
-    //     .setName('pl')
-    //     .setDescription('音楽を再生します')
-    //     .addStringOption((option) => option.setName('url').setDescription('youtube url').setRequired(true))
-].map((command) => command.toJSON());
+const commands = SLASH_COMMANDS.map((command) => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(CONFIG.DISCORD.TOKEN);
 

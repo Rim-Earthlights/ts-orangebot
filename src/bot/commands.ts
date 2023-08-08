@@ -811,6 +811,11 @@ export async function commandSelector(message: Message) {
     }
 }
 
+/**
+ * 渡されたスラッシュコマンドを処理する
+ * @param interaction
+ * @returns
+ */
 export async function interactionSelector(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
     const { commandName } = interaction;
 

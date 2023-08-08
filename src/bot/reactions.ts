@@ -1,10 +1,15 @@
 import { ChannelType, MessageReaction, PartialMessageReaction, PartialUser, User } from 'discord.js';
-import { CONFIG } from '../config/config.js';
 import { Logger } from '../common/logger.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import { Users } from '../model/models';
 import { RoleRepository } from '../model/repository/roleRepository.js';
 
+/**
+ * リアクション時の処理を行う
+ * @param reaction
+ * @param user
+ * @returns
+ */
 export const reactionSelector = async (
     reaction: MessageReaction | PartialMessageReaction,
     user: User | PartialUser
@@ -30,7 +35,6 @@ export const reactionSelector = async (
     if (user.bot) return;
 
     const embed = reaction.message.embeds.find((e) => e.title);
-
     if (!embed) return;
 
     switch (embed.title) {

@@ -19,6 +19,11 @@ type GPTModel = {
     maxTokens: number;
 };
 
+/**
+ * GPTモデル取得
+ * @param modelName
+ * @returns
+ */
 export const getGPTModel = (modelName: ChatGPTModel): GPTModel => {
     switch (modelName) {
         case ChatGPTModel.GPT_3:
@@ -48,7 +53,7 @@ export async function initalize(
     if (!chat) {
         GPT.chat.push({
             guild: gid,
-            GPT: getGPT(type ? type : 'default', model),
+            GPT: initGPT(type ? type : 'default', model),
             type: type ? type : 'default',
             messages: [],
             timestamp: dayjs()
@@ -67,12 +72,18 @@ export async function initalize(
     }
     if (type && chat.type !== type) {
         chat.type = type ? type : 'default';
-        chat.GPT = getGPT(type ? type : 'default', model);
+        chat.GPT = initGPT(type ? type : 'default', model);
     }
     return chat;
 }
 
-const getGPT = (type: 'default' | 'proxy', model: GPTModel): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
+/**
+ * GPTAPIの初期化
+ * @param type
+ * @param model
+ * @returns
+ */
+const initGPT = (type: 'default' | 'proxy', model: GPTModel): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
     if (!type || type === 'default') {
         return new ChatGPTAPI({
             apiKey: CONFIG.OPENAI.KEY,
