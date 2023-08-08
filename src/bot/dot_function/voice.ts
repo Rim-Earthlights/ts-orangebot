@@ -79,6 +79,31 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 await m.voice.setChannel(vc.id);
             });
         }
+    } else {
+        if (!voiceState.channel) {
+            return;
+        }
+
+        const room = new RoomRepository();
+        const roomInfo = await room.getRoom(voiceState.channel?.id);
+        if (!roomInfo) {
+            await logger.put({
+                guild_id: voiceState.channel?.guild?.id,
+                channel_id: voiceState.channel?.id,
+                user_id: undefined,
+                level: 'info',
+                event: 'vc-join',
+                message: `re-create ch: ${voiceState.channel?.name}`
+            });
+            await room.createRoom({
+                room_id: voiceState.channel.id,
+                guild_id: voiceState.guild.id,
+                name: voiceState.channel.name,
+                is_autodelete: true,
+                is_live: false,
+                is_private: false
+            });
+        }
     }
 }
 

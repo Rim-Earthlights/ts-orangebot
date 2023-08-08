@@ -4,13 +4,13 @@ import {
     CreateDateColumn,
     DeleteDateColumn,
     Entity,
-    PrimaryColumn,
+    PrimaryGeneratedColumn,
     UpdateDateColumn
 } from 'typeorm';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class Role extends BaseEntity {
-    @PrimaryColumn({ type: 'bigint', width: 20 })
+    @PrimaryGeneratedColumn({ type: 'bigint' })
     id!: string;
 
     @Column({ type: 'bigint', width: 20 })

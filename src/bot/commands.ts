@@ -576,8 +576,12 @@ export async function commandSelector(message: Message) {
                     break;
                 }
                 case 'limit': {
-                    if (!value) {
+                    if (!value || Number(value) <= 0) {
                         await DotBotFunctions.Room.changeLimit(message, 0);
+                    }
+                    let limit = Number(value);
+                    if (limit > 99) {
+                        limit = 99;
                     }
                     await DotBotFunctions.Room.changeLimit(message, Number(value));
                     break;
@@ -610,6 +614,22 @@ export async function commandSelector(message: Message) {
                     break;
                 }
             }
+            break;
+        }
+        case 'rn': {
+            const value = content[0];
+            let roomName;
+            if (!value) {
+                // 初期名(お部屋: #NUM)に変更
+                const guild = message.guild;
+                if (!guild) {
+                    return;
+                }
+                roomName = getDefaultRoomName(message.guild);
+            } else {
+                roomName = value;
+            }
+            await DotBotFunctions.Room.changeRoomName(message, roomName);
             break;
         }
         case 'seek': {
@@ -660,6 +680,30 @@ export async function commandSelector(message: Message) {
                 .setDescription(`選択肢: ${content.join(', ')}`);
 
             message.reply({ embeds: [send] });
+            break;
+        }
+        case 'relief': {
+            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+                return;
+            }
+            const channel = message.channel;
+            if (!channel) {
+                return;
+            }
+
+            const num = Number(content[0]);
+            if (num <= 0) {
+                return;
+            }
+
+            const userRepository = new UsersRepository();
+            await userRepository.relief(num);
+
+            const send = new EmbedBuilder()
+                .setColor('#ffcc00')
+                .setTitle(`詫び石の配布`)
+                .setDescription(`${num} 回のガチャチケットを配布しました`);
+            await channel.send({ embeds: [send] });
             break;
         }
         case 'popup-rule': {
@@ -735,7 +779,7 @@ export async function commandSelector(message: Message) {
             }
 
             const roleRepository = new RoleRepository();
-            await roleRepository.addRole({ type, name, role_id });
+            await roleRepository.addRole({ type, name, role_id, guild_id: message.guild?.id });
 
             break;
         }

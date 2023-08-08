@@ -51,4 +51,16 @@ export class UsersRepository {
         });
         await this.repository.save(saveUsers);
     }
+
+    /**
+     * 詫び石を配布する
+     */
+    public async relief(num: number): Promise<void> {
+        const users = await this.repository.find();
+        const saveUsers = users.map((u) => {
+            u.pick_left += num;
+            return { ...u };
+        });
+        await this.repository.save(saveUsers);
+    }
 }
