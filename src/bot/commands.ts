@@ -853,6 +853,27 @@ export async function commandSelector(message: Message) {
 
             break;
         }
+        case 'user-type': {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
+                return;
+            }
+            const user = content[0];
+            const type = content[1] as UsersType | undefined;
+
+            if (!user || !type) {
+                return;
+            }
+
+            const userRepository = new UsersRepository();
+            await userRepository.updateUsersType(user, type);
+
+            const send = new EmbedBuilder()
+                .setColor('#ffcc00')
+                .setTitle(`権限変更`)
+                .setDescription(`権限を変更: ${type}`);
+            await message.reply({ embeds: [send] });
+            break;
+        }
         case 'restart': {
             if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;

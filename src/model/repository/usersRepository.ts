@@ -44,6 +44,15 @@ export class UsersRepository {
     }
 
     /**
+     * ユーザーの権限を更新する
+     * @param uid
+     * @param type
+     */
+    public async updateUsersType(uid: string, type: UsersType): Promise<void> {
+        await this.repository.save({ id: uid, type });
+    }
+
+    /**
      * ガチャ回数をpickLeft回に再セットする
      * @param uid user id
      * @param pickLeft 再セットするピック数
