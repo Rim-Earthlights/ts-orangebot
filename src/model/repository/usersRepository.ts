@@ -49,7 +49,9 @@ export class UsersRepository {
      * @param type
      */
     public async updateUsersType(uid: string, type: UsersType): Promise<Models.Users | null> {
-        const user = await this.repository.save({ id: uid, type });
+        await this.repository.save({ id: uid, type });
+
+        const user = this.get(uid);
         return user;
     }
 
