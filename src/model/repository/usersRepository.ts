@@ -1,6 +1,7 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
 import { TypeOrm } from '../typeorm/typeorm.js';
+import { UsersType } from '../models/users.js';
 
 export class UsersRepository {
     private repository: Repository<Models.Users>;
@@ -26,6 +27,20 @@ export class UsersRepository {
      */
     public async save(user: DeepPartial<Models.Users>): Promise<void> {
         await this.repository.save(user);
+    }
+
+    /**
+     * ユーザーの権限を取得する
+     * @param uid
+     * @returns
+     */
+    public async getUsersType(uid: string): Promise<UsersType | null> {
+        const users = await this.repository.findOne({ where: { id: uid } });
+        if (!users) {
+            return null;
+        }
+
+        return users.type;
     }
 
     /**

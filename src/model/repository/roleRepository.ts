@@ -10,16 +10,16 @@ export class RoleRepository {
         this.repository = TypeOrm.dataSource.getRepository(Models.Role);
     }
 
-    public async getRoles(): Promise<Models.Role[]> {
-        return await this.repository.find();
+    public async getRoles(gid: string): Promise<Models.Role[]> {
+        return await this.repository.find({ where: { guild_id: gid } });
     }
 
-    public async getRoleByType(type: RoleType) {
-        return await this.repository.findOne({ where: { type } });
+    public async getRoleByType(gid: string, type: RoleType) {
+        return await this.repository.findOne({ where: { guild_id: gid, type } });
     }
 
-    public async getRoleByName(name: string): Promise<Models.Role | null> {
-        return await this.repository.findOne({ where: { name } });
+    public async getRoleByName(gid: string, name: string): Promise<Models.Role | null> {
+        return await this.repository.findOne({ where: { guild_id: gid, name } });
     }
 
     public async addRole(entities: Partial<Models.Role>): Promise<boolean> {
@@ -27,8 +27,8 @@ export class RoleRepository {
         return Boolean(result);
     }
 
-    public async deleteRole(name: string): Promise<boolean> {
-        const deleted = await this.repository.delete({ name });
+    public async deleteRole(gid: string, name: string): Promise<boolean> {
+        const deleted = await this.repository.delete({ guild_id: gid, name });
         return deleted.affected === 1;
     }
 }
