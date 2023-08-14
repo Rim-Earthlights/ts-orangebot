@@ -6,6 +6,7 @@ import {
     Entity,
     OneToMany,
     PrimaryColumn,
+    Relation,
     UpdateDateColumn
 } from 'typeorm';
 import { Gacha } from './gacha.js';
@@ -49,7 +50,7 @@ export class Users extends BaseEntity {
     created_at!: Date;
 
     @OneToMany(() => Gacha, (g) => g.user_id)
-    gacha?: Gacha[];
+    gacha?: Relation<Gacha>[];
 }
 
 export enum UsersType {

@@ -6,7 +6,8 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
-    PrimaryGeneratedColumn
+    PrimaryGeneratedColumn,
+    Relation
 } from 'typeorm';
 import { Users } from './users.js';
 import { Item } from './item.js';
@@ -36,9 +37,9 @@ export class Gacha extends BaseEntity {
 
     @ManyToOne(() => Users, (user) => user.id)
     @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
-    users!: Users;
+    users!: Relation<Users>;
 
     @ManyToOne(() => Item, (item) => item.id)
     @JoinColumn({ name: 'item_id', referencedColumnName: 'id' })
-    items!: Item;
+    items!: Relation<Item>;
 }
