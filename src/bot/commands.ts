@@ -857,20 +857,20 @@ export async function commandSelector(message: Message) {
             if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
-            const user = content[0];
+            const uid = content[0];
             const type = content[1] as UsersType | undefined;
 
-            if (!user || !type) {
+            if (!uid || !type) {
                 return;
             }
 
             const userRepository = new UsersRepository();
-            await userRepository.updateUsersType(user, type);
+            const user = await userRepository.updateUsersType(uid, type);
 
             const send = new EmbedBuilder()
                 .setColor('#ffcc00')
                 .setTitle(`権限変更`)
-                .setDescription(`権限を変更: ${type}`);
+                .setDescription(`権限を変更: ${user?.user_name} / ${type}`);
             await message.reply({ embeds: [send] });
             break;
         }
