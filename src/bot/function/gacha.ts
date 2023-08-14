@@ -5,7 +5,7 @@
 
 import dayjs from 'dayjs';
 import { CacheType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, Message, MessageType } from 'discord.js';
-import { getRndNumber } from '../../common/common.js';
+import { checkUserType, getRndNumber } from '../../common/common.js';
 import { CONFIG } from '../../config/config.js';
 import { GachaRepository } from '../../model/repository/gachaRepository.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
@@ -13,6 +13,7 @@ import * as Models from '../../model/models/index.js';
 import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
+import { UsersType } from '../../model/models/users.js';
 
 export class GachaList {
     static allItemList: Models.Item[] = [];
@@ -366,7 +367,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
     if (uid == undefined) {
         getUid = interaction.user.id;
     } else {
-        if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(interaction.user.id)) {
+        if (!checkUserType(interaction.user.id, UsersType.OWNER)) {
             interaction.reply({
                 content: `他ユーザーのプレゼントの閲覧権限がないよ！`
             });
@@ -408,7 +409,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
  *
  */
 export async function usePresent(interaction: ChatInputCommandInteraction<CacheType>, args: string[]): Promise<void> {
-    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(interaction.user.id)) {
+    if (!checkUserType(interaction.user.id, UsersType.OWNER)) {
         interaction.editReply({
             content: `プレゼントの使用権限がないよ！`
         });
@@ -447,7 +448,7 @@ export async function usePresent(interaction: ChatInputCommandInteraction<CacheT
  * @returns
  */
 export async function givePresent(message: Message, uid: string, itemId: number): Promise<void> {
-    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!checkUserType(message.author.id, UsersType.OWNER)) {
         message.reply({
             content: `プレゼントを渡す権限がないよ！`
         });
