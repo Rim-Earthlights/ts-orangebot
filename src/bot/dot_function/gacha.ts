@@ -8,6 +8,8 @@ import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { getGachaOnce } from '../function/gacha.js';
 import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
 import * as logger from '../../common/logger.js';
+import { checkUserType } from '../../common/common.js';
+import { UsersType } from '../../model/models/users.js';
 
 /**
  * ガチャを引く
@@ -40,7 +42,7 @@ export async function pickGacha(message: Message, args?: string[]) {
  * @returns
  */
 async function reset(message: Message, id?: string, num?: string) {
-    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!checkUserType(message.author.id, UsersType.OWNER)) {
         await message.reply({
             content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`
         });
@@ -331,7 +333,7 @@ export async function getPresent(message: Message, uid?: string) {
     if (uid == undefined) {
         getUid = message.author.id;
     } else {
-        if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+        if (!checkUserType(message.author.id, UsersType.OWNER)) {
             message.reply({
                 content: `他ユーザーのプレゼントの閲覧権限がないよ！`
             });
@@ -373,7 +375,7 @@ export async function getPresent(message: Message, uid?: string) {
  *
  */
 export async function usePresent(message: Message, args: string[]) {
-    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!checkUserType(message.author.id, UsersType.OWNER)) {
         await message.reply({
             content: `プレゼントの使用権限がないよ！`
         });
@@ -412,7 +414,7 @@ export async function usePresent(message: Message, args: string[]) {
  * @returns
  */
 export async function givePresent(message: Message, uid: string, itemId: number) {
-    if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+    if (!checkUserType(message.author.id, UsersType.OWNER)) {
         await message.reply({
             content: `プレゼントを渡す権限がないよ！`
         });

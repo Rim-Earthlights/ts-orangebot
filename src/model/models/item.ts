@@ -7,7 +7,8 @@ import {
     JoinColumn,
     ManyToOne,
     OneToMany,
-    PrimaryGeneratedColumn
+    PrimaryGeneratedColumn,
+    Relation
 } from 'typeorm';
 import { Gacha } from './gacha.js';
 import { ItemRank } from './itemRank.js';
@@ -48,9 +49,9 @@ export class Item extends BaseEntity {
     created_at!: Date;
 
     @OneToMany(() => Gacha, (g) => g.item_id)
-    gacha?: Gacha[];
+    gacha?: Relation<Gacha>[];
 
     @ManyToOne(() => ItemRank, (item) => item.rare)
     @JoinColumn({ name: 'rare', referencedColumnName: 'rare' })
-    item_rank!: ItemRank;
+    item_rank!: Relation<ItemRank>;
 }

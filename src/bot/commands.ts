@@ -1,4 +1,12 @@
-import { Message, EmbedBuilder, VoiceBasedChannel, ChatInputCommandInteraction, CacheType } from 'discord.js';
+import {
+    Message,
+    EmbedBuilder,
+    VoiceBasedChannel,
+    ChatInputCommandInteraction,
+    CacheType,
+    ChannelType,
+    BaseGuildVoiceChannel
+} from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
 import * as BotFunctions from './function/index.js';
@@ -6,7 +14,7 @@ import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
 import * as logger from '../common/logger.js';
 import { CONFIG } from '../config/config.js';
-import { isEnableFunction } from '../common/common.js';
+import { checkUserType, isEnableFunction } from '../common/common.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { ChatGPTModel } from '../constant/chat/chat.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
@@ -14,6 +22,7 @@ import { RoleRepository } from '../model/repository/roleRepository.js';
 import { RoleType } from '../model/models/role.js';
 import { ColorRepository } from '../model/repository/colorRepository.js';
 import { getDefaultRoomName } from './dot_function/voice.js';
+import { UsersType } from '../model/models/users.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -586,7 +595,8 @@ export async function commandSelector(message: Message) {
                     await DotBotFunctions.Room.changeLimit(message, Number(value));
                     break;
                 }
-                case 'delete': {
+                case 'delete':
+                case 'lock': {
                     await DotBotFunctions.Room.changeRoomSetting(message, 'delete');
                     break;
                 }
@@ -630,6 +640,37 @@ export async function commandSelector(message: Message) {
                 roomName = value;
             }
             await DotBotFunctions.Room.changeRoomName(message, roomName);
+            break;
+        }
+        case 'dc': {
+            if (!checkUserType(message.author.id, UsersType.ADMIN)) {
+                return;
+            }
+            const id = content[0];
+            if (!id) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`id not found or invalid`);
+
+                message.reply({ embeds: [send] });
+                return;
+            }
+
+            if (message.channel.type === ChannelType.GuildVoice) {
+                const channel = message.channel as BaseGuildVoiceChannel;
+                const member = channel.members.find((member) => member.id === id || member.user.username === id);
+                if (!member) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`id not found or invalid`);
+
+                    message.reply({ embeds: [send] });
+                    break;
+                }
+                await member.voice.disconnect();
+            }
             break;
         }
         case 'seek': {
@@ -683,7 +724,7 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'relief': {
-            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
             const channel = message.channel;
@@ -707,7 +748,7 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'popup-rule': {
-            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
             const channel = message.channel;
@@ -724,7 +765,7 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'popup-gamelist': {
-            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
             const channel = message.channel;
@@ -740,13 +781,23 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'add-role-all': {
-            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
-            const members = await message.guild?.members.fetch();
+            if (!message.guild) {
+                break;
+            }
+
+            const members = await message.guild.members.fetch();
             if (!members) {
                 break;
             }
+            const roleRepository = new RoleRepository();
+            const memberRole = await roleRepository.getRoleByName(message.guild.id, 'member');
+            if (!memberRole) {
+                break;
+            }
+
             members.map(async (m) => {
                 if (m.user.bot) {
                     return;
@@ -756,16 +807,16 @@ export async function commandSelector(message: Message) {
                 if (!user) {
                     await userRepository.save({ id: m.id, user_name: m.user.username });
                 }
-                if (m.roles.cache.has(CONFIG.DISCORD.MEMBER_ROLE_ID)) {
+                if (m.roles.cache.has(memberRole.role_id)) {
                     return;
                 }
-                await m.roles.add(CONFIG.DISCORD.MEMBER_ROLE_ID);
+                await m.roles.add(memberRole.role_id);
             });
             await message.reply('add roles to all members.');
             break;
         }
         case 'role': {
-            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
             if (content.length <= 0) return;
@@ -784,7 +835,7 @@ export async function commandSelector(message: Message) {
             break;
         }
         case 'color': {
-            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
             if (content.length <= 0) return;
@@ -802,8 +853,29 @@ export async function commandSelector(message: Message) {
 
             break;
         }
+        case 'user-type': {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
+                return;
+            }
+            const uid = content[0];
+            const type = content[1] as UsersType | undefined;
+
+            if (!uid || !type) {
+                return;
+            }
+
+            const userRepository = new UsersRepository();
+            const user = await userRepository.updateUsersType(uid, type);
+
+            const send = new EmbedBuilder()
+                .setColor('#ffcc00')
+                .setTitle(`権限変更`)
+                .setDescription(`権限を変更: ${user?.user_name} / ${type}`);
+            await message.reply({ embeds: [send] });
+            break;
+        }
         case 'restart': {
-            if (!CONFIG.DISCORD.ADMIN_USER_ID.includes(message.author.id)) {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
             }
             throw new Error('再起動');

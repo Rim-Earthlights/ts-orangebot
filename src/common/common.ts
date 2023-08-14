@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { CONFIG } from '../config/config.js';
 import { ENABLE_FUNCTION, functionNames } from '../constant/constants.js';
+import { UsersType } from '../model/models/users.js';
+import { UsersRepository } from '../model/repository/usersRepository.js';
 
 /**
  * 乱数生成機
@@ -50,6 +52,19 @@ export function arrayEquals(t: number[], v: number[]): boolean {
     }
     return true;
 }
+
+export const checkUserType = async (uid: string, type: UsersType): Promise<boolean> => {
+    const usersRepository = new UsersRepository();
+    const userType = await usersRepository.getUsersType(uid);
+
+    if (!userType) {
+        return false;
+    }
+    if (type === userType || userType === UsersType.OWNER) {
+        return true;
+    }
+    return false;
+};
 
 /**
  * APIキーの有無で機能を切り替える

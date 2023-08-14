@@ -18,10 +18,6 @@ export const CONFIG = {
     DISCORD: {
         // your discord bot app id
         APP_ID: '*******************',
-        // privillage role id (rule readed member role)
-        MEMBER_ROLE_ID: '*******************',
-        // admin user id (privillage reset gacha etc...)
-        ADMIN_USER_ID: ['*******************'],
         // register command
         COMMAND_GUILD_ID: ['*******************'],
         // discord bot token

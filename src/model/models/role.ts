@@ -35,4 +35,9 @@ export class Role extends BaseEntity {
     created_at!: Date;
 }
 
-export type RoleType = 'game' | 'user' | 'bot' | 'admin';
+export enum RoleType {
+    GAME = 'game',
+    USER = 'user',
+    BOT = 'bot',
+    ADMIN = 'admin'
+}

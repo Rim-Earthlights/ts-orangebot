@@ -58,7 +58,10 @@ export const reactionSelector = async (
                 }
 
                 const roleRepository = new RoleRepository();
-                const r = await roleRepository.getRoleByName('member');
+
+                // channelType is GuildText so guild is not null
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const r = await roleRepository.getRoleByName(reaction.message.guild!.id, 'member');
                 if (!r) {
                     console.error('role not found');
                     return;
