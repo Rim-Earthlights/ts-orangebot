@@ -15,16 +15,16 @@ export class MusicRepository {
      * 全ての音楽を取得する
      * @param gid
      */
-    public async getAll(gid: string): Promise<Models.Music[]> {
+    public async getAll(gid: string, cid: string): Promise<Models.Music[]> {
         await logger.put({
             guild_id: gid,
-            channel_id: undefined,
+            channel_id: cid,
             user_id: undefined,
             level: 'info',
             event: `repository/music: getAll`
         });
         return await this.repository.find({
-            where: { guild_id: gid },
+            where: { guild_id: gid, channel_id: cid },
             order: { music_id: 'ASC' }
         });
     }
@@ -33,7 +33,7 @@ export class MusicRepository {
      * キューの音楽を取得する
      * @param gid
      */
-    public async getQueue(gid: string): Promise<Models.Music[]> {
+    public async getQueue(gid: string, cid: string): Promise<Models.Music[]> {
         await logger.put({
             guild_id: gid,
             channel_id: undefined,
@@ -42,7 +42,7 @@ export class MusicRepository {
             event: `repository/music: getQueue`
         });
         return await this.repository.find({
-            where: { guild_id: gid, is_play: 0 },
+            where: { guild_id: gid, channel_id: cid, is_play: 0 },
             order: { music_id: 'ASC' }
         });
     }
@@ -50,15 +50,15 @@ export class MusicRepository {
     /**
      * 音楽を保存する
      */
-    public async saveAll(gid: string, musics: Models.Music[]): Promise<Models.Music[]> {
+    public async saveAll(gid: string, cid: string, musics: Models.Music[]): Promise<Models.Music[]> {
         await logger.put({
             guild_id: gid,
-            channel_id: undefined,
+            channel_id: cid,
             user_id: undefined,
             level: 'info',
             event: `repository/music: saveAll`
         });
-        await this.remove(gid);
+        await this.remove(gid, cid);
         return await this.repository.save(musics);
     }
 
@@ -74,16 +74,25 @@ export class MusicRepository {
         return Boolean(result);
     }
 
-    public async addRange(gid: string, musics: YoutubePlaylists[], type: 'youtube' | 'spotify'): Promise<boolean> {
+    public async addRange(
+        gid: string,
+        cid: string,
+        musics: YoutubePlaylists[],
+        type: 'youtube' | 'spotify'
+    ): Promise<boolean> {
         console.log(`repository/music: addAll`);
         let mid = 0;
-        const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
+        const getMusic = await this.repository.findOne({
+            where: { guild_id: gid, channel_id: cid },
+            order: { music_id: 'DESC' }
+        });
         if (getMusic) {
             mid = getMusic.music_id + 1;
         }
         const list = musics.map((m) => {
             return {
                 guild_id: gid,
+                channel_id: cid,
                 music_id: mid++,
                 type: type,
                 title: m.title,
@@ -99,16 +108,19 @@ export class MusicRepository {
      * 音楽をキューに追加する.
      * @returns Promise<boolean>
      */
-    public async add(gid: string, music: DeepPartial<Models.Music>, interrupt: boolean): Promise<boolean> {
+    public async add(gid: string, cid: string, music: DeepPartial<Models.Music>, interrupt: boolean): Promise<boolean> {
         await logger.put({
             guild_id: gid,
-            channel_id: undefined,
+            channel_id: cid,
             user_id: undefined,
             level: 'info',
             event: `repository/music: add`
         });
         if (interrupt) {
-            const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'ASC' } });
+            const getMusic = await this.repository.findOne({
+                where: { guild_id: gid, channel_id: cid },
+                order: { music_id: 'ASC' }
+            });
             if (!getMusic) {
                 const saveMusic = await this.repository.save({ ...music, music_id: 0 });
                 return !!saveMusic;
@@ -116,7 +128,10 @@ export class MusicRepository {
             const saveMusic = await this.repository.save({ ...music, music_id: getMusic.music_id - 1 });
             return !!saveMusic;
         } else {
-            const getMusic = await this.repository.findOne({ where: { guild_id: gid }, order: { music_id: 'DESC' } });
+            const getMusic = await this.repository.findOne({
+                where: { guild_id: gid, channel_id: cid },
+                order: { music_id: 'DESC' }
+            });
             if (!getMusic) {
                 const saveMusic = await this.repository.save({ ...music, music_id: 0 });
                 return !!saveMusic;
@@ -129,50 +144,44 @@ export class MusicRepository {
     /**
      * 指定したIDの音楽をキューから削除する
      */
-    public async remove(gid: string, musicId?: number): Promise<boolean> {
-        let result;
+    public async remove(gid: string, cid: string, musicId?: number): Promise<boolean> {
         await logger.put({
             guild_id: gid,
-            channel_id: undefined,
+            channel_id: cid,
             user_id: undefined,
             level: 'info',
             event: 'repository/music: remove',
             message: `queue: ${gid}, ${musicId ? musicId : 'all'}`
         });
+        const repository = await this.repository
+            .createQueryBuilder()
+            .delete()
+            .where('guild_id = :gid', { gid })
+            .andWhere('channel_id = :cid', { cid });
         if (musicId !== undefined) {
-            result = await this.repository
-                .createQueryBuilder()
-                .delete()
-                .where('guild_id = :gid', { gid: gid })
-                .andWhere('music_id = :musicId', { musicId: musicId })
-                .execute();
-        } else {
-            result = await this.repository
-                .createQueryBuilder()
-                .delete()
-                .where('guild_id = :gid', { gid: gid })
-                .execute();
+            repository.andWhere('music_id = :musicId', { musicId: musicId });
         }
+        const result = await repository.execute();
         return Boolean(result.affected);
     }
 
-    public async resetPlayState(gid: string): Promise<boolean> {
+    public async resetPlayState(gid: string, cid: string): Promise<boolean> {
         await logger.put({
             guild_id: gid,
-            channel_id: undefined,
+            channel_id: cid,
             user_id: undefined,
             level: 'info',
             event: 'repository/music: resetPlayState'
         });
-        const result = await this.repository.update({ guild_id: gid }, { is_play: 0 });
+        const result = await this.repository.update({ guild_id: gid, channel_id: cid }, { is_play: 0 });
         if (result.affected) {
             return true;
         }
         return false;
     }
 
-    public async updatePlayState(gid: string, musicId: number, state: boolean): Promise<boolean> {
-        const music = await this.repository.findOne({ where: { guild_id: gid, music_id: musicId } });
+    public async updatePlayState(gid: string, cid: string, musicId: number, state: boolean): Promise<boolean> {
+        const music = await this.repository.findOne({ where: { guild_id: gid, channel_id: cid, music_id: musicId } });
 
         if (!music) {
             return false;
@@ -181,7 +190,7 @@ export class MusicRepository {
         await this.save({ ...music, is_play: state ? 1 : 0 });
         await logger.put({
             guild_id: gid,
-            channel_id: undefined,
+            channel_id: cid,
             user_id: undefined,
             level: 'info',
             event: 'repository/music: updatePlayState',

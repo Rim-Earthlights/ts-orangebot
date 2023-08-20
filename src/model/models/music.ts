@@ -5,6 +5,9 @@ export class Music extends BaseEntity {
     @PrimaryColumn({ type: 'bigint', width: 20 })
     guild_id!: string;
 
+    @PrimaryColumn({ type: 'bigint', width: 20 })
+    channel_id!: string;
+
     @PrimaryColumn({ type: 'smallint' })
     music_id!: number;
 

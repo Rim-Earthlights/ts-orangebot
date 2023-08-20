@@ -1181,5 +1181,5 @@ export async function exterm(message: Message) {
         return;
     }
 
-    await DotBotFunctions.Music.extermAudioPlayer(message.guild.id);
+    await DotBotFunctions.Music.extermAudioPlayer(message.guild.id, message.channel.id);
 }
