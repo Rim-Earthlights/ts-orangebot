@@ -139,6 +139,7 @@ export async function addYoutubeMusic(
             channel.id,
             {
                 guild_id: channel.guild.id,
+                channel_id: channel.id,
                 title: ytinfo.video_details.title,
                 url: ytinfo.video_details.url,
                 thumbnail: ytinfo.video_details.thumbnails[0].url
@@ -451,6 +452,7 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
         channel.id,
         {
             guild_id: channel.guild.id,
+            channel_id: channel.id,
             title: music.title,
             url: music.url,
             thumbnail: music.thumbnail
