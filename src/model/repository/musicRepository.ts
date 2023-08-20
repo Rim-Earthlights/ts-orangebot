@@ -36,7 +36,7 @@ export class MusicRepository {
     public async getQueue(gid: string, cid: string): Promise<Models.Music[]> {
         await logger.put({
             guild_id: gid,
-            channel_id: undefined,
+            channel_id: cid,
             user_id: undefined,
             level: 'info',
             event: `repository/music: getQueue`

@@ -285,7 +285,11 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
 
     switch (name) {
         case 'sf': {
-            await repository.save({ guild_id: channel.guild.id, is_shuffle: info.is_shuffle === 0 ? 1 : 0 });
+            await repository.save({
+                guild_id: channel.guild.id,
+                channel_id: channel.id,
+                is_shuffle: info.is_shuffle === 0 ? 1 : 0
+            });
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
                 .setTitle(`再生設定の変更: `)
@@ -296,7 +300,11 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
             break;
         }
         case 'lp': {
-            await repository.save({ guild_id: channel.guild.id, is_loop: info.is_loop === 0 ? 1 : 0 });
+            await repository.save({
+                guild_id: channel.guild.id,
+                channel_id: channel.id,
+                is_loop: info.is_loop === 0 ? 1 : 0
+            });
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
                 .setTitle(`再生設定の変更: `)
@@ -325,16 +333,16 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
 
     if (!info) {
         if (loop) {
-            await repository.save({ guild_id: channel.guild.id, is_loop: 1 });
+            await repository.save({ guild_id: channel.guild.id, channel_id: channel.id, is_loop: 1 });
         } else {
-            await repository.save({ guild_id: channel.guild.id, is_loop: 0 });
+            await repository.save({ guild_id: channel.guild.id, channel_id: channel.id, is_loop: 0 });
         }
 
         if (shuffle) {
-            await repository.save({ guild_id: channel.guild.id, is_shuffle: 1 });
+            await repository.save({ guild_id: channel.guild.id, channel_id: channel.id, is_shuffle: 1 });
             await shuffleMusic(channel);
         } else {
-            await repository.save({ guild_id: channel.guild.id, is_shuffle: 0 });
+            await repository.save({ guild_id: channel.guild.id, channel_id: channel.id, is_shuffle: 0 });
         }
     } else {
         if (info.is_loop) {
@@ -575,6 +583,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
     await updatePlayState(playing.guild_id, channel.id, playing.music_id, true);
     await repo_info.save({
         guild_id: playing.guild_id,
+        channel_id: playing.channel_id,
         title: playing.title,
         url: playing.url,
         thumbnail: playing.thumbnail
@@ -885,7 +894,7 @@ export async function changeNotify(channel: VoiceBasedChannel): Promise<void> {
     if (!info) {
         return;
     }
-    await infoRepository.save({ guild_id: channel.guild.id, silent: info.silent ? 0 : 1 });
+    await infoRepository.save({ guild_id: channel.guild.id, channel_id: channel.id, silent: info.silent ? 0 : 1 });
 
     const send = new EmbedBuilder()
         .setColor('#cc66cc')
