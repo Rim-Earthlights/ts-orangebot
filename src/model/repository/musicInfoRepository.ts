@@ -9,15 +9,20 @@ export class MusicInfoRepository {
         this.repository = TypeOrm.dataSource.getRepository(Models.MusicInfo);
     }
 
-    public async get(gid: string): Promise<Models.MusicInfo | null> {
-        return await this.repository.findOne({ where: { guild_id: gid } });
+    public async get(gid: string, cid: string): Promise<Models.MusicInfo | null> {
+        return await this.repository.findOne({ where: { guild_id: gid, channel_id: cid } });
     }
 
     public async save(info: DeepPartial<Models.MusicInfo>): Promise<void> {
         await this.repository.save(info);
     }
 
-    public async remove(gid: string): Promise<void> {
-        await this.repository.createQueryBuilder().delete().where('guild_id = :gid', { gid: gid }).execute();
+    public async remove(gid: string, cid: string): Promise<void> {
+        await this.repository
+            .createQueryBuilder()
+            .delete()
+            .where('guild_id = :gid', { gid })
+            .andWhere('channel_id = :cid', { cid })
+            .execute();
     }
 }

@@ -33,7 +33,7 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
             const bot = vc.members.filter((m) => m.user.bot);
             if (vc.members.size === bot.size) {
                 if (vc.members.find((m) => m.id === DISCORD_CLIENT?.user?.id)) {
-                    await extermAudioPlayer(vc.guild.id);
+                    await extermAudioPlayer(vc.guild.id, vc.id);
                 }
             }
         }

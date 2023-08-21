@@ -66,11 +66,19 @@ export async function initalize(
             event: 'init-gpt',
             message: `Model: ${modelName}, Token: ${model.maxTokens}`
         });
-        console.log();
+        // chat is pushed, so it is not undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return GPT.chat.find((c) => c.guild === gid)!;
     }
     if (type && chat.type !== type) {
+        await logger.put({
+            guild_id: gid,
+            channel_id: undefined,
+            user_id: undefined,
+            level: 'info',
+            event: 'gpt: type-change',
+            message: `Model: ${modelName}, Token: ${model.maxTokens}, Type: ${type}`
+        });
         chat.type = type ? type : 'default';
         chat.GPT = initGPT(type ? type : 'default', model);
     }
@@ -102,14 +110,14 @@ const initGPT = (type: 'default' | 'proxy', model: GPTModel): ChatGPTAPI | ChatG
 };
 
 /**
- * GPTクラス
+ * GPTの会話データ
  */
-export class GPT {
-    static chat: GPTChatData[] = [];
-}
+export const GPT = {
+    chat: [] as GPTChatData[]
+};
 
 /**
- * GPTの会話データ
+ * GPTの会話データ構造体
  */
 export interface GPTChatData {
     guild: string;
