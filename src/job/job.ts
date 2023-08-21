@@ -27,19 +27,18 @@ export async function initJob() {
     cron.schedule('* * * * *', async () => {
         GPT.chat.map(async (c) => {
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
-                c.timestamp = dayjs();
-                c.messages = [];
+                const gid = c.guild;
+                GPT.chat = GPT.chat.filter((chat) => chat.guild !== c.guild);
                 await logger.put({
                     guild_id: undefined,
                     channel_id: undefined,
                     user_id: undefined,
                     level: 'system',
                     event: 'Cron job: * * * * *',
-                    message: `${c.guild}: ChatGPT data deleted`
+                    message: `${gid}: ChatGPT data deleted`
                 });
             }
         });
-        GPT.chat = GPT.chat.filter((c) => c.messages.length !== 0);
     });
     await logger.put({
         guild_id: undefined,

@@ -4,9 +4,9 @@ import { VoiceBasedChannel } from 'discord.js';
 /**
  * 音楽プレイヤー
  */
-export class Music {
-    static player: PlayerData[] = [];
-}
+export const Music = {
+    player: [] as PlayerData[]
+};
 
 export interface PlayerData {
     guild_id: string;
