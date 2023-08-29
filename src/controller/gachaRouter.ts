@@ -35,5 +35,5 @@ gachaRouter.get('/gacha', async (req: Express.Request, res: Express.Response) =>
     }
 
     const gacha = await repository.getHistory(uid, date, limit);
-    res.status(200).send(gacha);
+    res.render('./gacha.ejs', { gacha });
 });
