@@ -26,7 +26,8 @@ export class TypeOrm {
             Models.Log,
             Models.Role,
             Models.Color,
-            Models.Room
+            Models.Room,
+            Models.Speaker
         ] // 利用するエンティティ。パスでの指定も可能
     });
 }
