@@ -17,12 +17,8 @@ export class MusicInfoRepository {
         await this.repository.save(info);
     }
 
-    public async remove(gid: string, cid: string): Promise<void> {
-        await this.repository
-            .createQueryBuilder()
-            .delete()
-            .where('guild_id = :gid', { gid })
-            .andWhere('channel_id = :cid', { cid })
-            .execute();
+    public async remove(gid: string, cid: string): Promise<boolean> {
+        const deleted = await this.repository.delete({ guild_id: gid, channel_id: cid });
+        return deleted.affected === 1;
     }
 }
