@@ -105,6 +105,10 @@ export const HELP_COMMANDS = [
                 ].join('\n')
             },
             {
+                name: '.room limit [人数]',
+                value: ['お部屋に人数制限をつけます。'].join('\n')
+            },
+            {
                 name: '.room delete',
                 value: [
                     'お部屋の自動削除設定を変更します。自動削除がOFFになった通話部屋は0人になっても削除されません。',
@@ -170,7 +174,7 @@ export const HELP_COMMANDS = [
                 value: '読み上げを開始します'
             },
             {
-                name: '.speaker-config [ボイス番号] [速度]',
+                name: '.speaker-config [ボイス番号] [速度] | .spcon [ボイス番号] [速度]',
                 value: [
                     '読み上げのユーザー設定を変更します',
                     '読み上げ番号は`http://rim-linq.net:4044/speakers`で確認できます',
