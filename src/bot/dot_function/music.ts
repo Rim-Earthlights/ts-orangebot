@@ -8,7 +8,7 @@ import {
     joinVoiceChannel
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import pldl, { SpotifyTrack } from 'play-dl';
+import pldl, { SpotifyAlbum, SpotifyTrack } from 'play-dl';
 import { getRndArray } from '../../common/common.js';
 import { CONFIG } from '../../config/config.js';
 import { Playlist } from '../../model/models/index.js';
@@ -33,6 +33,10 @@ export async function add(
     shuffle?: boolean
 ): Promise<boolean> {
     // false | "so_playlist" | "so_track" | "sp_track" | "sp_album" | "sp_playlist" | "dz_track" | "dz_playlist" | "dz_album" | "yt_video" | "yt_playlist" | "search"
+    if (url.includes('intl-ja/')) {
+        url = url.replace('intl-ja/', '');
+    }
+
     const musicFlag = await pldl.validate(url);
 
     switch (musicFlag) {
@@ -48,8 +52,9 @@ export async function add(
 
             return true;
         }
-        case 'sp_track': {
-            await addSpotifyMusic(channel, url);
+        case 'sp_track':
+        case 'sp_album': {
+            await addSpotifyMusic(channel, url, musicFlag);
             return true;
         }
         default: {
@@ -76,10 +81,9 @@ export async function add(
 export async function search(channel: VoiceBasedChannel, word: string): Promise<boolean> {
     const searched = await pldl.search(word, { limit: 5 });
 
-    const mv = searched.find((s) => s.music);
-
-    if (mv) {
-        await addYoutubeMusic(channel, 'video', mv.url, false, undefined, undefined);
+    const isMv = searched.find((s) => s.title?.match(/((O|o)fficial|MV|mv|(M|m)usic)/) !== null);
+    if (isMv) {
+        await addYoutubeMusic(channel, 'video', isMv.url, false, undefined, undefined);
         return true;
     }
 
@@ -97,15 +101,31 @@ export async function search(channel: VoiceBasedChannel, word: string): Promise<
  * @param url
  * @returns
  */
-export async function addSpotifyMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
+export async function addSpotifyMusic(
+    channel: VoiceBasedChannel,
+    url: string,
+    musicFlag: 'sp_track' | 'sp_album'
+): Promise<boolean> {
     if (pldl.is_expired()) {
         console.log('token expire');
         await pldl.refreshToken();
     }
 
-    const sp = (await pldl.spotify(url)) as SpotifyTrack;
+    if (musicFlag === 'sp_album') {
+        const album = (await pldl.spotify(url)) as SpotifyAlbum;
+        const tracks = await album.all_tracks();
 
-    await search(channel, `${sp.name} ${sp.artists.join(' ')}`);
+        tracks.map(async (track) => {
+            await search(channel, `${track.name} ${track.artists.map((a) => a.name).join(' ')}`);
+            setTimeout(() => null, 100);
+        });
+
+        return true;
+    }
+
+    const sp = (await pldl.spotify(url)) as SpotifyTrack;
+    await search(channel, `${sp.name} ${sp.artists.map((a) => a.name).join(' ')}`);
+
     return true;
 }
 
@@ -404,7 +424,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
             break;
         }
         case 'sp_track': {
-            const s = addSpotifyMusic(channel, url);
+            const s = addSpotifyMusic(channel, url, musicFlag);
 
             const sp = await pldl.spotify(url);
             const musics = await repository.getQueue(channel.guild.id, channel.id);
