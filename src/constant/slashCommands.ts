@@ -80,7 +80,11 @@ export const SLASH_COMMANDS = [
                 .addBooleanOption((option) =>
                     option.setName('mode').setDescription('TrueでプライベートモードON').setRequired(true)
                 )
-        )
+        ),
+    new SlashCommandBuilder()
+        .setName('dc')
+        .setDescription('特定のユーザーをボイスチャンネルから切断します')
+        .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

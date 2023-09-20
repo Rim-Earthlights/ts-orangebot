@@ -1010,6 +1010,52 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await BotFunctions.Chat.deleteChatData(interaction, last);
             break;
         }
+        case 'dc': {
+            // required option is not null
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const user = interaction.options.getUser('user')!;
+            if (!checkUserType(interaction.user.id, UsersType.ADMIN)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`このコマンドは管理者のみ使用できます。`);
+
+                interaction.reply({ embeds: [send] });
+                return;
+            }
+            const id = user.id;
+            if (!id) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`id not found or invalid`);
+
+                interaction.reply({ embeds: [send] });
+                return;
+            }
+
+            if (interaction.channel?.type === ChannelType.GuildVoice) {
+                const channel = interaction.channel as BaseGuildVoiceChannel;
+                const member = channel.members.find((member) => member.id === id || member.user.username === id);
+                if (!member) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`id not found or invalid`);
+
+                    interaction.reply({ embeds: [send] });
+                    break;
+                }
+                await member.voice.disconnect();
+                const send = new EmbedBuilder()
+                    .setColor('#00ff00')
+                    .setTitle(`成功`)
+                    .setDescription(`${member.user.username}を切断しました`);
+
+                interaction.reply({ embeds: [send] });
+            }
+            break;
+        }
         default: {
             return;
         }
