@@ -93,7 +93,8 @@ export const reactionSelector = async (
                 if (!userEntity) {
                     const saveUser: Partial<Users> = {
                         id: user.id,
-                        user_name: user.username
+                        user_name: user.username,
+                        pick_left: 10
                     };
                     await userRepository.save(saveUser);
                 }
