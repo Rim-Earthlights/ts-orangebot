@@ -12,7 +12,6 @@ import * as DotBotFunctions from './dot_function/index.js';
 import * as BotFunctions from './function/index.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
-import * as logger from '../common/logger.js';
 import { CONFIG } from '../config/config.js';
 import { checkUserType, isEnableFunction } from '../common/common.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
@@ -23,6 +22,8 @@ import { RoleType } from '../model/models/role.js';
 import { ColorRepository } from '../model/repository/colorRepository.js';
 import { getDefaultRoomName } from './dot_function/voice.js';
 import { UsersType } from '../model/models/users.js';
+import { Logger } from '../common/logger.js';
+import { LogLevel } from '../type/types.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -517,13 +518,13 @@ export async function commandSelector(message: Message) {
             const name = content[0];
             const channel = message.member?.voice.channel;
             if (!channel) {
-                await logger.put({
+                await Logger.put({
                     guild_id: message.guild?.id,
                     channel_id: message.channel?.id,
                     user_id: message.author.id,
-                    level: 'error',
+                    level: LogLevel.ERROR,
                     event: 'received-command/mode',
-                    message: `missing channel`
+                    message: [`missing channel`]
                 });
                 return;
             }
@@ -898,25 +899,25 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         }
         case 'debug': {
             const url = interaction.options.getString('url');
-            await logger.put({
+            await Logger.put({
                 guild_id: interaction.guild?.id,
                 channel_id: interaction.channel?.id,
                 user_id: interaction.user.id,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'received-command/debug',
-                message: `${url}`
+                message: [`${url}`]
             });
             await interaction.reply('test.');
             break;
         }
         case 'gacha': {
-            await logger.put({
+            await Logger.put({
                 guild_id: interaction.guild?.id,
                 channel_id: interaction.channel?.id,
                 user_id: interaction.user.id,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'received-command/gacha',
-                message: `${interaction}`
+                message: [`${interaction}`]
             });
             const type = interaction.options.getSubcommand();
             switch (type) {

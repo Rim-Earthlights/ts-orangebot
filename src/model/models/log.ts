@@ -7,6 +7,7 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from 'typeorm';
+import { LogLevel } from '../../type/types.js';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class Log extends BaseEntity {
@@ -23,7 +24,7 @@ export class Log extends BaseEntity {
     user_id: string | null = null;
 
     @Column({ type: 'varchar', width: 255, nullable: false })
-    level!: 'info' | 'error' | 'system';
+    level!: LogLevel;
 
     @Column({ type: 'varchar', width: 255, nullable: false })
     event!: string;

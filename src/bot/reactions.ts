@@ -3,6 +3,7 @@ import { Logger } from '../common/logger.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import { Users } from '../model/models';
 import { RoleRepository } from '../model/repository/roleRepository.js';
+import { LogLevel } from '../type/types.js';
 
 /**
  * リアクション時の処理を行う
@@ -45,9 +46,9 @@ export const reactionSelector = async (
                     guild_id: reaction.message.guild?.id,
                     channel_id: reaction.message.channel.id,
                     user_id: user.id,
-                    level: 'info',
+                    level: LogLevel.INFO,
                     event: 'reaction-add',
-                    message: `rule accepted: ${user.username}`
+                    message: [`rule accepted: ${user.username}`]
                 });
 
                 const u = reaction.message.guild?.members.cache.get(user.id);
@@ -72,9 +73,9 @@ export const reactionSelector = async (
                     guild_id: reaction.message.guild?.id,
                     channel_id: reaction.message.channel.id,
                     user_id: user.id,
-                    level: 'info',
+                    level: LogLevel.INFO,
                     event: 'role-check',
-                    message: u?.roles.cache.map((role) => role.name).join(',')
+                    message: [u?.roles.cache.map((role) => role.name).join(',')]
                 });
                 if (userRole) {
                     const message = await reaction.message.reply(`もうロールが付いてるみたい！`);
@@ -98,14 +99,14 @@ export const reactionSelector = async (
                     };
                     await userRepository.save(saveUser);
                 }
-
+                const name = u?.roles.cache.find((role) => role.name === 'member')?.name;
                 await Logger.put({
                     guild_id: reaction.message.guild?.id,
                     channel_id: reaction.message.channel.id,
                     user_id: user.id,
-                    level: 'info',
+                    level: LogLevel.INFO,
                     event: 'add-role',
-                    message: u?.roles.cache.find((role) => role.name === 'member')?.name
+                    message: name ? [name] : undefined
                 });
 
                 const message = await reaction.message.reply(`読んでくれてありがと～！ロールを付与したよ！`);
@@ -123,9 +124,9 @@ export const reactionSelector = async (
                     guild_id: reaction.message.guild?.id,
                     channel_id: reaction.message.channel.id,
                     user_id: user.id,
-                    level: 'info',
+                    level: LogLevel.INFO,
                     event: 'reaction-add',
-                    message: `game selected: ${user.username} | ${reaction.emoji.name}`
+                    message: [`game selected: ${user.username} | ${reaction.emoji.name}`]
                 });
             }
             break;

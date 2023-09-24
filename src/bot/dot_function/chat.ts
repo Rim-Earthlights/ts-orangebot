@@ -1,8 +1,9 @@
-import * as logger from '../../common/logger.js';
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
 import { ChatGPTModel, initalize } from '../../constant/chat/chat.js';
+import { Logger } from '../../common/logger.js';
+import { LogLevel } from '../../type/types.js';
 
 /**
  * ChatGPTで会話する
@@ -38,15 +39,19 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
         });
         chat.messages.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
-        await logger.put({
+        await Logger.put({
             guild_id: message.guild?.id,
             channel_id: message.channel.id,
             user_id: message.author.id,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'ChatGPT',
-            message: `ParentId: ${parentMessageId}, ResponseId: ${response.id}\nUsage: ${JSON.stringify(
-                response.detail?.usage
-            )}\nModel: ${response.detail?.model}\nResponse: \n${response.text}`
+            message: [
+                `ParentId: ${parentMessageId}, ResponseId: ${response.id}`,
+                `Usage: ${JSON.stringify(response.detail?.usage)}`,
+                `Model: ${response.detail?.model}`,
+                `Response:`,
+                `${response.text}`
+            ]
         });
         await message.reply(response.text);
     } catch (err) {
@@ -93,13 +98,17 @@ export async function talkWithoutPrompt(message: Message, content: string) {
         });
         chat.messages.push({ cid: response.conversationId, id: response.id, message: content });
         chat.timestamp = dayjs();
-        await logger.put({
+        await Logger.put({
             guild_id: message.guild?.id,
             channel_id: message.channel.id,
             user_id: message.id,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'ChatGPT-NoPrompt',
-            message: `ConversationId: ${conversationId}, ParentId: ${parentMessageId}\nResponse: \n${response.text}`
+            message: [
+                `ConversationId: ${conversationId}, ParentId: ${parentMessageId}`,
+                `Response: `,
+                `${response.text}`
+            ]
         });
         await message.reply(response.text);
     } catch (err) {

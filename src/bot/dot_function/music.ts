@@ -16,8 +16,9 @@ import { MusicInfoRepository } from '../../model/repository/musicInfoRepository.
 import { MusicRepository } from '../../model/repository/musicRepository.js';
 import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
 import { getPlaylistItems } from '../request/youtube.js';
-import * as logger from '../../common/logger.js';
 import { Music, PlayerData } from '../../constant/music/music.js';
+import { Logger } from '../../common/logger.js';
+import { LogLevel } from '../../type/types.js';
 
 /**
  * キューに音楽を追加する
@@ -241,13 +242,13 @@ export async function addYoutubeMusic(
             await playMusic(channel);
             return true;
         } catch (e) {
-            await logger.put({
+            await Logger.put({
                 guild_id: channel.guild?.id,
                 channel_id: channel.id,
                 user_id: undefined,
-                level: 'error',
+                level: LogLevel.ERROR,
                 event: 'command|music-add',
-                message: JSON.stringify(e)
+                message: [JSON.stringify(e)]
             });
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
@@ -650,13 +651,13 @@ export async function playMusic(channel: VoiceBasedChannel) {
         await entersState(p.player, AudioPlayerStatus.Playing, 10 * 1000);
         await entersState(p.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
     } catch (e) {
-        await logger.put({
+        await Logger.put({
             guild_id: channel.guild?.id,
             channel_id: channel.id,
             user_id: undefined,
-            level: 'error',
+            level: LogLevel.ERROR,
             event: 'command|music-play',
-            message: JSON.stringify(e)
+            message: [JSON.stringify(e)]
         });
         const send = new EmbedBuilder()
             .setColor('#ff0000')
@@ -802,13 +803,13 @@ export async function resetAllPlayState(gid: string, cid: string) {
  */
 export async function pause(channel: VoiceBasedChannel): Promise<void> {
     const p = await updateAudioPlayer(channel);
-    await logger.put({
+    await Logger.put({
         guild_id: channel.guild?.id,
         channel_id: channel.id,
         user_id: undefined,
-        level: 'info',
+        level: LogLevel.INFO,
         event: 'command|music-pause',
-        message: p.player.state.status
+        message: [p.player.state.status]
     });
 
     if (p.player.state.status === AudioPlayerStatus.Paused) {
@@ -993,13 +994,13 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
         await entersState(p.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
     } catch (e) {
         const error = e as Error;
-        await logger.put({
+        await Logger.put({
             guild_id: channel.guild?.id,
             channel_id: channel.id,
             user_id: undefined,
-            level: 'error',
+            level: LogLevel.ERROR,
             event: 'command|music-play',
-            message: JSON.stringify(error.message)
+            message: [JSON.stringify(error.message)]
         });
         const send = new EmbedBuilder()
             .setColor('#ff0000')

@@ -1,15 +1,15 @@
 import dayjs from 'dayjs';
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
-import { CONFIG } from '../../config/config.js';
 import { GachaRepository } from '../../model/repository/gachaRepository.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
 import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { getGachaOnce } from '../function/gacha.js';
 import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
-import * as logger from '../../common/logger.js';
 import { checkUserType } from '../../common/common.js';
 import { UsersType } from '../../model/models/users.js';
+import { Logger } from '../../common/logger.js';
+import { LogLevel } from '../../type/types.js';
 
 /**
  * ガチャを引く
@@ -272,15 +272,13 @@ async function pickNormal(message: Message, gnum = '10') {
             );
         await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
-            await logger.put({
+            await Logger.put({
                 guild_id: message.guild?.id,
                 channel_id: message.channel.id,
                 user_id: message.id,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'get-gacha',
-                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join(
-                    '\n'
-                )
+                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)]
             });
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
@@ -301,15 +299,13 @@ async function pickNormal(message: Message, gnum = '10') {
             );
         await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
         if (presents.length > 0) {
-            await logger.put({
+            await Logger.put({
                 guild_id: message.guild?.id,
                 channel_id: message.channel.id,
                 user_id: message.id,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'get-gacha',
-                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)].join(
-                    '\n'
-                )
+                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)]
             });
             const send = new EmbedBuilder()
                 .setColor('#ff9900')

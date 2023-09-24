@@ -1,8 +1,9 @@
 import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'discord.js';
 import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants.js';
 import { extermAudioPlayer } from './music.js';
-import * as logger from '../../common/logger.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
+import { Logger } from '../../common/logger.js';
+import { LogLevel } from '../../type/types.js';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -19,13 +20,13 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
             const roomInfo = await room.getRoom(vc.id);
             if (!roomInfo || roomInfo.is_autodelete) {
                 await room.deleteRoom(vc.id);
-                await logger.put({
+                await Logger.put({
                     guild_id: vc.guild?.id,
                     channel_id: vc.id,
                     user_id: undefined,
-                    level: 'info',
+                    level: LogLevel.INFO,
                     event: 'vc-left',
-                    message: `delete ch: ${voiceState.channel?.name}`
+                    message: [`delete ch: ${voiceState.channel?.name}`]
                 });
                 await vc.delete();
             }
@@ -67,13 +68,13 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 is_live: false,
                 is_private: false
             });
-            await logger.put({
+            await Logger.put({
                 guild_id: vc.guild?.id,
                 channel_id: vc.id,
                 user_id: undefined,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'vc-join',
-                message: `create ch: ${vc.name}`
+                message: [`create ch: ${vc.name}`]
             });
             (voiceState.channel as VoiceChannel).members.map(async (m) => {
                 await m.voice.setChannel(vc.id);
@@ -87,13 +88,13 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
         const room = new RoomRepository();
         const roomInfo = await room.getRoom(voiceState.channel?.id);
         if (!roomInfo) {
-            await logger.put({
+            await Logger.put({
                 guild_id: voiceState.channel?.guild?.id,
                 channel_id: voiceState.channel?.id,
                 user_id: undefined,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'vc-join',
-                message: `re-create ch: ${voiceState.channel?.name}`
+                message: [`re-create ch: ${voiceState.channel?.name}`]
             });
             await room.createRoom({
                 room_id: voiceState.channel.id,

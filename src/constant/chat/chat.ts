@@ -1,8 +1,9 @@
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
 import dayjs from 'dayjs';
 import { CONFIG } from '../../config/config.js';
-import * as logger from '../../common/logger.js';
 import { CHATBOT_TEMPLATE } from '../constants.js';
+import { Logger } from '../../common/logger.js';
+import { LogLevel } from '../../type/types.js';
 
 /**
  * ChatGPTのモデル
@@ -58,26 +59,26 @@ export async function initalize(
             messages: [],
             timestamp: dayjs()
         });
-        await logger.put({
+        await Logger.put({
             guild_id: gid,
             channel_id: undefined,
             user_id: undefined,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'init-gpt',
-            message: `Model: ${modelName}, Token: ${model.maxTokens}`
+            message: [`Model: ${modelName}, Token: ${model.maxTokens}`]
         });
         // chat is pushed, so it is not undefined
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return GPT.chat.find((c) => c.guild === gid)!;
     }
     if (type && chat.type !== type) {
-        await logger.put({
+        await Logger.put({
             guild_id: gid,
             channel_id: undefined,
             user_id: undefined,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'gpt: type-change',
-            message: `Model: ${modelName}, Token: ${model.maxTokens}, Type: ${type}`
+            message: [`Model: ${modelName}, Token: ${model.maxTokens}, Type: ${type}`]
         });
         chat.type = type ? type : 'default';
         chat.GPT = initGPT(type ? type : 'default', model);

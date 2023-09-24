@@ -12,7 +12,6 @@ import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
 import { CONFIG } from './config/config.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { TypeOrm } from './model/typeorm/typeorm.js';
-import * as logger from './common/logger.js';
 import { ItemRepository } from './model/repository/itemRepository.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { initJob } from './job/job.js';
@@ -20,6 +19,8 @@ import { switchFunctionByAPIKey } from './common/common.js';
 import { GachaList } from './bot/function/gacha.js';
 import { reactionSelector } from './bot/reactions.js';
 import { SLASH_COMMANDS } from './constant/slashCommands.js';
+import { LogLevel } from './type/types.js';
+import { Logger } from './common/logger.js';
 
 dotenv.config();
 
@@ -84,23 +85,23 @@ DISCORD_CLIENT.once('ready', async () => {
             // DBの初期化と再構築
             await new ItemRepository().init(GACHA_LIST);
             GachaList.allItemList = await new ItemRepository().getAll();
-            await logger.put({
+            await Logger.put({
                 guild_id: undefined,
                 channel_id: undefined,
                 user_id: undefined,
-                level: 'system',
+                level: LogLevel.SYSTEM,
                 event: 'db-init',
-                message: 'success'
+                message: ['success']
             });
         })
         .catch(async (e) => {
-            await logger.put({
+            await Logger.put({
                 guild_id: undefined,
                 channel_id: undefined,
                 user_id: undefined,
-                level: 'error',
+                level: LogLevel.SYSTEM,
                 event: 'db-init',
-                message: e.message
+                message: [e.message]
             });
         });
     // 定時バッチ処理 (cron)
@@ -110,38 +111,38 @@ DISCORD_CLIENT.once('ready', async () => {
         rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: [] })
             .then(
                 async () =>
-                    await logger.put({
+                    await Logger.put({
                         guild_id: gid,
                         channel_id: undefined,
                         user_id: undefined,
-                        level: 'system',
+                        level: LogLevel.SYSTEM,
                         event: 'reg-command|delete',
-                        message: 'successfully delete command.'
+                        message: ['successfully delete command.']
                     })
             )
             .catch(console.error);
         rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: commands })
             .then(
                 async () =>
-                    await logger.put({
+                    await Logger.put({
                         guild_id: gid,
                         channel_id: undefined,
                         user_id: undefined,
-                        level: 'system',
+                        level: LogLevel.SYSTEM,
                         event: 'reg-command|add',
-                        message: 'successfully add command.'
+                        message: ['successfully add command.']
                     })
             )
             .catch(console.error);
     });
 
-    await logger.put({
+    await Logger.put({
         guild_id: undefined,
         channel_id: undefined,
         user_id: undefined,
-        level: 'system',
+        level: LogLevel.SYSTEM,
         event: 'ready',
-        message: `discord bot logged in: ${DISCORD_CLIENT.user?.username}`
+        message: [`discord bot logged in: ${DISCORD_CLIENT.user?.username}`]
     });
 });
 
@@ -160,11 +161,11 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         return;
     }
 
-    await logger.put({
+    await Logger.put({
         guild_id: message.guild ? message.guild.id : 'dm',
         channel_id: message.channel.id,
         user_id: message.author.id,
-        level: 'info',
+        level: LogLevel.INFO,
         event: 'message-received',
         message: [
             ``,
@@ -175,7 +176,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
             `author : ${message.author.username}`,
             `content: ${message.content}`,
             ...message.attachments.map((a) => `file   : ${a.url}`)
-        ].join('\n')
+        ]
     });
 
     // mention to bot
@@ -198,17 +199,13 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) {
         return;
     }
-    await logger.put({
+    await Logger.put({
         guild_id: interaction.guild ? interaction.guild.id : 'dm',
         channel_id: interaction.channel?.id,
         user_id: interaction.user.id,
-        level: 'info',
+        level: LogLevel.INFO,
         event: 'interaction-received',
-        message: [
-            `cid: ${interaction.channel?.id}`,
-            `author: ${interaction.user.username}`,
-            `content: ${interaction}`
-        ].join('\n')
+        message: [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.username}`, `content: ${interaction}`]
     });
     await interactionSelector(interaction);
 });
@@ -237,37 +234,42 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
     }
 
     if (newState.channelId === null) {
-        await logger.put({
+        await Logger.put({
             guild_id: oldState.guild.id,
             channel_id: oldState.channel?.id,
             user_id: oldState.id,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'vc-left',
-            message: `ch: ${oldState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).username}`
+            message: [
+                `ch: ${oldState.channel?.name}`,
+                `user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).username}`
+            ]
         });
         await leftVoiceChannel(guild, oldState);
     } else if (oldState.channelId === null) {
-        await logger.put({
+        await Logger.put({
             guild_id: newState.guild.id,
             channel_id: newState.channel?.id,
             user_id: newState.id,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'vc-join',
-            message: `ch: ${newState.channel?.name}, user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
+            message: [
+                `ch: ${newState.channel?.name}`,
+                `user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
+            ]
         });
         await joinVoiceChannel(guild, newState);
     } else {
-        await logger.put({
+        await Logger.put({
             guild_id: newState.guild.id,
             channel_id: newState.channel?.id,
             user_id: newState.id,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'vc-move',
-            message: `ch: ${oldState.channel?.name} -> ${newState.channel?.name}, user: ${
-                (
-                    await DISCORD_CLIENT.users.fetch(newState.id)
-                ).username
-            }`
+            message: [
+                `ch: ${oldState.channel?.name} -> ${newState.channel?.name}`,
+                `user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
+            ]
         });
         //left
         await leftVoiceChannel(guild, oldState);
