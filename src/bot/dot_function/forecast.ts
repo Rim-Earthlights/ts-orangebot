@@ -11,8 +11,9 @@ import {
 } from '../../interface/geocoding.js';
 import url from 'url';
 import { CONFIG } from '../../config/config.js';
-import * as logger from '../../common/logger.js';
 import axios from 'axios';
+import { LogLevel } from '../../type/types.js';
+import { Logger } from '../../common/logger.js';
 
 /**
  * 現在の天気を返す.
@@ -52,13 +53,13 @@ export async function weather(message: Message, args?: string[]) {
         const geoList = response.location;
 
         if (response.error != undefined || geoList.length <= 0) {
-            await logger.put({
+            await Logger.put({
                 guild_id: message.guild?.id,
                 channel_id: message.channel.id,
                 user_id: message.id,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'get-forecast',
-                message: `geocoding(JP) not found.`
+                message: [`geocoding(JP) not found.`]
             });
 
             const geoResponse = await axios.get(WW_GEOCODING_URI, {
@@ -74,13 +75,13 @@ export async function weather(message: Message, args?: string[]) {
             const geoList = <WorldGeocoding[]>geoResponse.data;
 
             if (geoList == undefined || geoList.length <= 0) {
-                await logger.put({
+                await Logger.put({
                     guild_id: message.guild?.id,
                     channel_id: message.channel.id,
                     user_id: message.id,
-                    level: 'error',
+                    level: LogLevel.ERROR,
                     event: 'get-forecast',
-                    message: `geocoding get failed.`
+                    message: [`geocoding get failed.`]
                 });
                 throw new Error('名前から場所を検索できませんでした');
             }
@@ -88,24 +89,26 @@ export async function weather(message: Message, args?: string[]) {
             lat = geoList[0].lat;
             lon = geoList[0].lon;
 
-            await logger.put({
+            await Logger.put({
                 guild_id: message.guild?.id,
                 channel_id: message.channel.id,
                 user_id: message.id,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'get-forecast | geocode',
-                message: `lat: ${lat}, lon: ${lon}, name: ${geoList[0].local_names}`
+                message: [`lat: ${lat}, lon: ${lon}, name: ${geoList[0].local_names}`]
             });
         } else {
             lat = geoList[0].y;
             lon = geoList[0].x;
-            await logger.put({
+            await Logger.put({
                 guild_id: message.guild?.id,
                 channel_id: message.channel.id,
                 user_id: message.id,
-                level: 'info',
+                level: LogLevel.INFO,
                 event: 'get-forecast | geocode',
-                message: `lat: ${lat}, lon: ${lon}, name: ${geoList[0].prefecture}${geoList[0].city} / ${geoList[0].town}`
+                message: [
+                    `lat: ${lat}, lon: ${lon}, name: ${geoList[0].prefecture}${geoList[0].city} / ${geoList[0].town}`
+                ]
             });
         }
 
@@ -133,28 +136,23 @@ export async function weather(message: Message, args?: string[]) {
         const forecast = <Forecast>forecastResponse.data;
         const onecall = <Onecall>onecallResponse.data;
 
-        let description: string[] = [];
-        let icon = '';
+        let embed: EmbedBuilder | undefined = undefined;
         if (day === 0) {
-            description = await weatherToday(forecast, onecall);
-            icon = forecast.weather[0].icon;
+            embed = await weatherToday(forecast, onecall);
+            embed.setThumbnail(`http://openweathermap.org/img/wn/${forecast.weather[0].icon}@2x.png`);
         } else {
-            description = await weatherDay(onecall, day);
-            icon = onecall.daily[day].weather[0].icon;
+            embed = await weatherDay(onecall, day);
+            embed.setThumbnail(`http://openweathermap.org/img/wn/${onecall.daily[day].weather[0].icon}@2x.png`);
         }
 
-        const send = new EmbedBuilder()
-            .setColor('#0099ff')
-            .setTitle(`${cityName} の天気`)
-            .setDescription(description.join('\n'))
-            .setThumbnail(`http://openweathermap.org/img/wn/${icon}@2x.png`);
+        embed.setColor('#0099ff').setTitle(`${cityName} の天気`);
 
         if (day === 0) {
-            message.reply({ content: `今日の天気ね！はいどーぞ！`, embeds: [send] });
+            message.reply({ content: `今日の天気ね！はいどーぞ！`, embeds: [embed] });
         } else if (day === 1) {
-            message.reply({ content: `明日の天気ね！はいどーぞ！`, embeds: [send] });
+            message.reply({ content: `明日の天気ね！はいどーぞ！`, embeds: [embed] });
         } else {
-            message.reply({ content: `${day}日後の天気ね！はいどーぞ！`, embeds: [send] });
+            message.reply({ content: `${day}日後の天気ね！はいどーぞ！`, embeds: [embed] });
         }
     } catch (e) {
         const error = <Error>e;
@@ -169,7 +167,7 @@ export async function weather(message: Message, args?: string[]) {
  * @param forecast
  * @param onecall
  */
-async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<string[]> {
+async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<EmbedBuilder> {
     // 気温や気象情報
     const weather = forecast.weather[0].description;
     const cloud = forecast.clouds.all;
@@ -187,7 +185,8 @@ async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<strin
     const windDeg = findDeg(forecast.wind.deg);
     const windSpeed = forecast.wind.speed.toFixed(0);
 
-    const description = [];
+    const embed = new EmbedBuilder();
+    const description: string[] = [];
 
     if (forecast.sys.country === 'JP') {
         const geores = await axios.get(JP_LOCATION_URI, {
@@ -211,15 +210,19 @@ async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<strin
         );
         description.push('');
     }
+    embed.setDescription(description.join('\n'));
 
-    description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
-    description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
-    description.push(`体感: ${feelLike} ℃`);
-    description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
+    embed.setFields([
+        { name: '天候', value: `${weather} (雲の量: ${cloud} ％)`, inline: false },
+        { name: '気温', value: `${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`, inline: true },
+        { name: '体感', value: `${feelLike} ℃`, inline: true },
+        { name: '降水確率', value: `${popDay} ％`, inline: true },
+        { name: '湿度', value: `${humidityDay} ％`, inline: true },
+        { name: '風速', value: `${windDeg} ${windSpeed}m/s`, inline: true },
+        { name: 'UV指数', value: `${uvi}`, inline: true }
+    ]);
 
-    description.push(`風速: ${windDeg} ${windSpeed}m/s`);
-    description.push(`UV指数: ${uvi}`);
-    return description;
+    return embed;
 }
 
 /**
@@ -228,7 +231,7 @@ async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<strin
  * @param index
  * @returns
  */
-async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
+async function weatherDay(onecall: Onecall, index: number): Promise<EmbedBuilder> {
     // 気温や気象情報
     const weather = onecall.daily[index].weather[0].description;
     const cloud = onecall.daily[index].clouds;
@@ -247,6 +250,7 @@ async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
     const windSpeed = onecall.daily[index].wind_speed.toFixed(0);
 
     // 情報の整形
+    const embed = new EmbedBuilder();
     const description = [];
 
     const geores = await axios.get(JP_LOCATION_URI, {
@@ -269,16 +273,19 @@ async function weatherDay(onecall: Onecall, index: number): Promise<string[]> {
         description.push(`実際の場所: https://www.google.co.jp/maps/search/${onecall.lat},${onecall.lon}/`);
         description.push('');
     }
+    embed.setDescription(description.join('\n'));
 
-    description.push(`天候: ${weather} (雲の量: ${cloud} ％)`);
-    description.push(`気温: ${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`);
-    description.push(`体感: ${feelLike} ℃`);
-    description.push(`降水確率: ${popDay} ％ | 湿度: ${humidityDay} ％`);
+    embed.setFields([
+        { name: '天候', value: `${weather} (雲の量: ${cloud} ％)`, inline: true },
+        { name: '気温', value: `${temp} ℃ (${tempMin} ℃/${tempMax} ℃)`, inline: true },
+        { name: '体感', value: `${feelLike} ℃`, inline: true },
+        { name: '降水確率', value: `${popDay} ％`, inline: true },
+        { name: '湿度', value: `${humidityDay} ％`, inline: true },
+        { name: '風速', value: `${windDeg} ${windSpeed}m/s`, inline: true },
+        { name: 'UV指数', value: `${uvi}`, inline: true }
+    ]);
 
-    description.push(`風速: ${windDeg} ${windSpeed}m/s`);
-    description.push(`UV指数: ${uvi}`);
-
-    return description;
+    return embed;
 }
 
 /**

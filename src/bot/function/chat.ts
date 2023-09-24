@@ -1,8 +1,9 @@
-import * as logger from '../../common/logger.js';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
 import { ChatGPTModel, initalize } from '../../constant/chat/chat.js';
+import { Logger } from '../../common/logger.js';
+import { LogLevel } from '../../type/types.js';
 
 /**
  * ChatGPTで会話する
@@ -39,15 +40,19 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
         });
         chat.messages.push({ id: response.id, message: content });
         chat.timestamp = dayjs();
-        await logger.put({
+        await Logger.put({
             guild_id: interaction.guild?.id,
             channel_id: interaction.channel?.id,
             user_id: interaction.user.id,
-            level: 'info',
+            level: LogLevel.INFO,
             event: 'ChatGPT',
-            message: `ParentId: ${parentMessageId}\nUsage: ${JSON.stringify(response.detail?.usage)}\nModel: ${
-                response.detail?.model
-            }\nResponse: \n${response.text}`
+            message: [
+                `ParentId: ${parentMessageId}`,
+                `Usage: ${JSON.stringify(response.detail?.usage)}`,
+                `Model: ${response.detail?.model}`,
+                `Response: `,
+                `${response.text}`
+            ]
         });
         await interaction.editReply(response.text);
     } catch (err) {
