@@ -1048,6 +1048,16 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     break;
                 }
                 await member.voice.disconnect();
+
+                await Logger.put({
+                    guild_id: interaction.guild?.id,
+                    channel_id: interaction.channel?.id,
+                    user_id: interaction.user.id,
+                    level: LogLevel.INFO,
+                    event: 'disconnect-user',
+                    message: [`disconnect ${member.user.username} by ${user.username}`],
+                });
+
                 const send = new EmbedBuilder()
                     .setColor('#00ff00')
                     .setTitle(`成功`)

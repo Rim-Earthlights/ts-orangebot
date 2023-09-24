@@ -21,6 +21,7 @@ import { reactionSelector } from './bot/reactions.js';
 import { SLASH_COMMANDS } from './constant/slashCommands.js';
 import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
+import { GuildRepository } from './model/repository/guildRepository.js';
 
 dotenv.config();
 
@@ -107,25 +108,31 @@ DISCORD_CLIENT.once('ready', async () => {
     // 定時バッチ処理 (cron)
     await initJob();
 
-    CONFIG.DISCORD.COMMAND_GUILD_ID.map((gid) => {
-        rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: [] })
+    const repository = new GuildRepository();
+
+    DISCORD_CLIENT.guilds.cache.map(async (guild) => {
+        await repository.save({
+            id: guild.id,
+            name: guild.name
+        });
+        await Logger.put({
+            guild_id: guild.id,
+            channel_id: undefined,
+            user_id: undefined,
+            level: LogLevel.SYSTEM,
+            event: 'guild-register',
+            message: [`id : ${guild.id}`, `name : ${guild.name}`]
+        });
+    });
+
+    const guilds = await repository.getAll();
+
+    guilds.map((guild) => {
+        rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, guild.id), { body: commands })
             .then(
                 async () =>
                     await Logger.put({
-                        guild_id: gid,
-                        channel_id: undefined,
-                        user_id: undefined,
-                        level: LogLevel.SYSTEM,
-                        event: 'reg-command|delete',
-                        message: ['successfully delete command.']
-                    })
-            )
-            .catch(console.error);
-        rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, gid), { body: commands })
-            .then(
-                async () =>
-                    await Logger.put({
-                        guild_id: gid,
+                        guild_id: guild.id,
                         channel_id: undefined,
                         user_id: undefined,
                         level: LogLevel.SYSTEM,

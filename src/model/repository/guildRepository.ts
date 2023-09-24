@@ -20,6 +20,15 @@ export class GuildRepository {
     }
 
     /**
+     * botの登録されている全てのGuildを取得する
+     * @returns
+     */
+    public async getAll(): Promise<Models.Guild[]> {
+        const guilds = await this.repository.find();
+        return guilds;
+    }
+
+    /**
      * Guildを登録・更新する
      * @param user
      * @returns
