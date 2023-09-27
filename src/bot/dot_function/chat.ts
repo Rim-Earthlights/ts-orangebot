@@ -1,24 +1,21 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
-import { ChatGPTModel, initalize } from '../../constant/chat/chat.js';
+import { ChatGPTModel, GPTMode, initalize } from '../../constant/chat/chat.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 
 /**
  * ChatGPTで会話する
  */
-export async function talk(message: Message, content: string, model: ChatGPTModel) {
-    // サーバー内のテキストチャンネル以外は無視
-    if (!message.guild) {
-        return;
-    }
+export async function talk(message: Message, content: string, model: ChatGPTModel, mode: GPTMode = GPTMode.DEFAULT) {
+    const id = message.guild?.id ?? message.author.id;
 
     // ChatGPTが初期化されていない場合は初期化
-    const chat = await initalize(message.guild.id, 'default', model);
-    if (chat.type === 'proxy') {
+    const chat = await initalize(id, Boolean(!message.guild), mode, model);
+    if (chat.mode !== mode) {
         chat.messages = [];
-        chat.type = 'default';
+        chat.mode = mode;
     }
 
     let parentMessageId: string | undefined = undefined;
@@ -56,67 +53,8 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
         await message.reply(response.text);
     } catch (err) {
         const error = err as AxiosError;
-        if (error.response?.status === 500) {
-            const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
-            await message.reply({ embeds: [send] });
-        }
-    }
-}
-
-/**
- * ChatGPTで会話する(プロンプトなし)
- */
-export async function talkWithoutPrompt(message: Message, content: string) {
-    // サーバー内のテキストチャンネル以外は無視
-    if (!message.guild) {
-        return;
-    }
-
-    // ChatGPTが初期化されていない場合は初期化
-    const chat = await initalize(message.guild.id, 'proxy', ChatGPTModel.GPT_3);
-
-    if (chat.type === 'default') {
-        chat.messages = [];
-        chat.type = 'proxy';
-    }
-
-    let parentMessageId: string | undefined = undefined;
-    let conversationId: string | undefined = undefined;
-    if (chat.messages.length > 0) {
-        conversationId = chat.messages[chat.messages.length - 1].cid;
-        parentMessageId = chat.messages[chat.messages.length - 1].id;
-    }
-
-    const sendContent = `日時:[${dayjs().format('YYYY/MM/DD HH:mm:ss')}] 名前:[${
-        message.member?.displayName
-    }]\n${content}`;
-
-    try {
-        const response = await chat.GPT.sendMessage(sendContent, {
-            conversationId: conversationId,
-            parentMessageId: parentMessageId
-        });
-        chat.messages.push({ cid: response.conversationId, id: response.id, message: content });
-        chat.timestamp = dayjs();
-        await Logger.put({
-            guild_id: message.guild?.id,
-            channel_id: message.channel.id,
-            user_id: message.id,
-            level: LogLevel.INFO,
-            event: 'ChatGPT-NoPrompt',
-            message: [
-                `ConversationId: ${conversationId}, ParentId: ${parentMessageId}`,
-                `Response: `,
-                `${response.text}`
-            ]
-        });
-        await message.reply(response.text);
-    } catch (err) {
-        const error = err as AxiosError;
-        if (error.response?.status === 500) {
-            const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
-            await message.reply({ embeds: [send] });
-        }
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+        await message.reply({ embeds: [send] });
     }
 }
 
@@ -124,13 +62,10 @@ export async function talkWithoutPrompt(message: Message, content: string) {
  * ChatGPTの会話データの削除
  */
 export async function deleteChatData(message: Message, idx?: string) {
-    // サーバー内のテキストチャンネル以外は無視
-    if (!message.guild) {
-        return;
-    }
+    const id = message.guild?.id ?? message.author.id;
 
     // ChatGPT初期化
-    const chat = await initalize(message.guild.id);
+    const chat = await initalize(id, Boolean(!message.guild));
 
     if (idx != undefined) {
         const eraseData = chat.messages[chat.messages.length - 1];

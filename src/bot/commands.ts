@@ -5,7 +5,7 @@ import {
     ChatInputCommandInteraction,
     CacheType,
     ChannelType,
-    BaseGuildVoiceChannel
+    BaseGuildVoiceChannel,
 } from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
@@ -15,7 +15,7 @@ import ytpl from 'ytpl';
 import { CONFIG } from '../config/config.js';
 import { checkUserType, isEnableFunction } from '../common/common.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
-import { ChatGPTModel } from '../constant/chat/chat.js';
+import { ChatGPTModel, GPTMode } from '../constant/chat/chat.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import { RoleRepository } from '../model/repository/roleRepository.js';
 import { RoleType } from '../model/models/role.js';
@@ -60,7 +60,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talkWithoutPrompt(message, chat);
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_3, GPTMode.NOPROMPT);
             break;
         }
         case 'gpt': {
@@ -897,6 +897,10 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.reply('Pong!');
             break;
         }
+        case 'help': {
+            await help(interaction);
+            break;
+        }
         case 'debug': {
             const url = interaction.options.getString('url');
             await Logger.put({
@@ -1055,7 +1059,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     user_id: interaction.user.id,
                     level: LogLevel.INFO,
                     event: 'disconnect-user',
-                    message: [`disconnect ${member.user.username} by ${user.username}`],
+                    message: [`disconnect ${member.user.username} by ${user.username}`]
                 });
 
                 const send = new EmbedBuilder()
@@ -1099,9 +1103,13 @@ export async function debug(message: Message, args?: string[]) {
  * 現在の言語、コマンドを表示する
  * @param message
  */
-export async function help(message: Message) {
-    HELP_COMMANDS.map((c) => message.channel.send({ embeds: [c] }));
-    return;
+export async function help(message: Message | ChatInputCommandInteraction<CacheType>) {
+    if (message instanceof Message) {
+        HELP_COMMANDS.map(async (c) => await message.channel.send({ embeds: [c] }));
+    } else if (message instanceof ChatInputCommandInteraction) {
+        await message.reply({ content: 'ヘルプを表示', ephemeral: true });
+        HELP_COMMANDS.map(async (c) => await message.followUp({ embeds: [c], ephemeral: true }));
+    }
 }
 
 /**

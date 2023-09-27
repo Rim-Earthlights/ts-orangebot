@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import dayjs from 'dayjs';
-import { GPT } from '../constant/chat/chat.js';
+import { GPT, GPTType } from '../constant/chat/chat.js';
 import { Logger } from '../common/logger.js';
 import { LogLevel } from '../type/types.js';
 
@@ -27,16 +27,19 @@ export async function initJob() {
      */
     cron.schedule('* * * * *', async () => {
         GPT.chat.map(async (c) => {
+            if (c.type !== GPTType.GUILD) {
+                return;
+            }
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
-                const gid = c.guild;
-                GPT.chat = GPT.chat.filter((chat) => chat.guild !== c.guild);
+                const id = c.id;
+                GPT.chat = GPT.chat.filter((chat) => chat.id !== c.id);
                 await Logger.put({
-                    guild_id: undefined,
+                    guild_id: id,
                     channel_id: undefined,
                     user_id: undefined,
                     level: LogLevel.INFO,
                     event: 'Cron job: * * * * *',
-                    message: [`${gid}: ChatGPT data deleted`]
+                    message: [`ChatGPT data deleted`]
                 });
             }
         });

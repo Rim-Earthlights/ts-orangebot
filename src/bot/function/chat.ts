@@ -1,7 +1,7 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
-import { ChatGPTModel, initalize } from '../../constant/chat/chat.js';
+import { ChatGPTModel, GPTMode, initalize } from '../../constant/chat/chat.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 
@@ -9,17 +9,14 @@ import { LogLevel } from '../../type/types.js';
  * ChatGPTで会話する
  */
 export async function talk(interaction: ChatInputCommandInteraction<CacheType>, content: string, model: ChatGPTModel) {
-    // サーバー内のテキストチャンネル以外は無視
-    if (!interaction.guild) {
-        return;
-    }
+    const id = interaction.guild?.id ?? interaction.user.id;
 
     // ChatGPT初期化
-    const chat = await initalize(interaction.guild.id, 'default', model);
+    const chat = await initalize(id, Boolean(!interaction.guild), GPTMode.DEFAULT, model);
 
-    if (chat.type === 'proxy') {
+    if (chat.mode !== GPTMode.DEFAULT) {
         chat.messages = [];
-        chat.type = 'default';
+        chat.mode = GPTMode.DEFAULT;
     }
 
     let parentMessageId: string | undefined = undefined;
@@ -68,13 +65,10 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
  * ChatGPTの会話データの削除
  */
 export async function deleteChatData(interaction: ChatInputCommandInteraction<CacheType>, lastFlag?: boolean) {
-    // サーバー内のテキストチャンネル以外は無視
-    if (!interaction.guild) {
-        return;
-    }
+    const id = interaction.guild?.id ?? interaction.user.id;
 
     // ChatGPT初期化
-    const chat = await initalize(interaction.guild.id);
+    const chat = await initalize(id, Boolean(!interaction.guild));
 
     if (lastFlag) {
         const eraseData = chat.messages[chat.messages.length - 1];

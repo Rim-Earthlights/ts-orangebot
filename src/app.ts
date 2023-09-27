@@ -22,6 +22,8 @@ import { SLASH_COMMANDS } from './constant/slashCommands.js';
 import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
+import { Chat } from './bot/dot_function/index.js';
+import { ChatGPTModel, GPTMode } from './constant/chat/chat.js';
 
 dotenv.config();
 
@@ -110,6 +112,7 @@ DISCORD_CLIENT.once('ready', async () => {
 
     const repository = new GuildRepository();
 
+    // サーバー登録
     DISCORD_CLIENT.guilds.cache.map(async (guild) => {
         await repository.save({
             id: guild.id,
@@ -125,8 +128,8 @@ DISCORD_CLIENT.once('ready', async () => {
         });
     });
 
+    // コマンド登録
     const guilds = await repository.getAll();
-
     guilds.map((guild) => {
         rest.put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, guild.id), { body: commands })
             .then(
@@ -141,6 +144,18 @@ DISCORD_CLIENT.once('ready', async () => {
                     })
             )
             .catch(console.error);
+    });
+
+    // DM用コマンド登録
+    rest.put(Routes.applicationCommands(CONFIG.DISCORD.APP_ID), { body: commands }).then(async () => {
+        await Logger.put({
+            guild_id: undefined,
+            channel_id: undefined,
+            user_id: undefined,
+            level: LogLevel.SYSTEM,
+            event: 'reg-command|add',
+            message: ['successfully add command to DM.']
+        });
     });
 
     await Logger.put({
@@ -169,16 +184,15 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     }
 
     await Logger.put({
-        guild_id: message.guild ? message.guild.id : 'dm',
-        channel_id: message.channel.id,
+        guild_id: message.guild ? message.guild.id : undefined,
+        channel_id: message.channel.id ? message.channel.id : undefined,
         user_id: message.author.id,
         level: LogLevel.INFO,
         event: 'message-received',
         message: [
-            ``,
             `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
             `cid: ${message.channel.id}, cname: ${
-                message.channel.type !== ChannelType.DM ? message.channel.name : 'dm'
+                message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'
             }`,
             `author : ${message.author.username}`,
             `content: ${message.content}`,
@@ -197,6 +211,15 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         await commandSelector(message);
         return;
     }
+
+    if (message.channel.type === ChannelType.DM) {
+        if (message.author.id === '246007305156558848') {
+            await Chat.talk(message, message.cleanContent, ChatGPTModel.GPT_4_HALF, GPTMode.NOPROMPT);
+            return;
+        }
+        await Chat.talk(message, message.cleanContent, ChatGPTModel.GPT_4_HALF);
+        return;
+    }
 });
 
 /**
@@ -207,7 +230,7 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
         return;
     }
     await Logger.put({
-        guild_id: interaction.guild ? interaction.guild.id : 'dm',
+        guild_id: interaction.guild ? interaction.guild.id : undefined,
         channel_id: interaction.channel?.id,
         user_id: interaction.user.id,
         level: LogLevel.INFO,
