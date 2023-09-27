@@ -3,6 +3,7 @@ import { SlashCommandBuilder } from 'discord.js';
 export const SLASH_COMMANDS = [
     // ping command
     new SlashCommandBuilder().setName('ping').setDescription('replies with pong'),
+    new SlashCommandBuilder().setName('help').setDescription('ヘルプを表示します'),
     // gacha command
     new SlashCommandBuilder()
         .setName('gacha')
