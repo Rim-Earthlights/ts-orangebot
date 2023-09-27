@@ -744,7 +744,7 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
     if (length <= 1) {
         return true;
     }
-    const rnd = getRndArray(musics.length - 1);
+    const rnd = getRndArray(musics.length);
 
     for (let i = 0; i < length; i++) {
         musics[i].music_id = rnd[i];

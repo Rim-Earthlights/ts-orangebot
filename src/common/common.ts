@@ -18,18 +18,16 @@ export function getRndNumber(n: number, m: number) {
  * 0 - indexまでの重複しない乱数を生成
  */
 export function getRndArray(max: number): number[] {
-    const rndArray: number[] = [];
-    for (let i = 0; i <= max; i++) {
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const tmp = getRndNumber(0, max);
-            if (!rndArray.includes(tmp)) {
-                rndArray.push(tmp);
-                break;
-            }
-        }
+    // 0 から max - 1までの連続した数値の配列を生成
+    const arr = Array.from({ length: max }, (_, i) => i);
+
+    // 配列をシャッフル
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    return rndArray;
+
+    return arr;
 }
 
 /**

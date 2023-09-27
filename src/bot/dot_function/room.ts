@@ -144,7 +144,7 @@ export async function team(message: Message, num: number, move: boolean): Promis
     }
 
     const members = vc.members.map((m) => m.id);
-    const rnd = getRndArray(members.length - 1);
+    const rnd = getRndArray(members.length);
     const shuffleMembers = members.map((m, i) => members[rnd[i]]);
 
     const teams: { team: number; id: string; name: string | undefined }[] = [];
