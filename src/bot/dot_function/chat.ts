@@ -8,7 +8,13 @@ import { LogLevel } from '../../type/types.js';
 /**
  * ChatGPTで会話する
  */
-export async function talk(message: Message, content: string, model: ChatGPTModel, mode: GPTMode = GPTMode.DEFAULT) {
+export async function talk(
+    message: Message,
+    content: string,
+    model: ChatGPTModel,
+    mode: GPTMode = GPTMode.DEFAULT,
+    retryCount = 0
+) {
     const id = message.guild?.id ?? message.author.id;
 
     // ChatGPTが初期化されていない場合は初期化
@@ -53,6 +59,23 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
         await message.reply(response.text);
     } catch (err) {
         const error = err as AxiosError;
+        if (error.response?.status === 500) {
+            const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+            await message.reply({ embeds: [send] });
+        }
+
+        if (error.response?.status === 502) {
+            // 502 Bad Gateway
+            if (retryCount > 2) {
+                const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+                await message.reply({ embeds: [send] });
+                return;
+            }
+            setTimeout(() => null, 200);
+            await talk(message, content, model, mode);
+            return;
+        }
+
         const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
         await message.reply({ embeds: [send] });
     }

@@ -8,7 +8,12 @@ import { LogLevel } from '../../type/types.js';
 /**
  * ChatGPTで会話する
  */
-export async function talk(interaction: ChatInputCommandInteraction<CacheType>, content: string, model: ChatGPTModel) {
+export async function talk(
+    interaction: ChatInputCommandInteraction<CacheType>,
+    content: string,
+    model: ChatGPTModel,
+    retryCount = 0
+) {
     const id = interaction.guild?.id ?? interaction.user.id;
 
     // ChatGPT初期化
@@ -57,6 +62,17 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
         if (error.response?.status === 500) {
             const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
             await interaction.editReply({ embeds: [send] });
+        }
+        if (error.response?.status === 502) {
+            // 502 Bad Gateway
+            if (retryCount > 2) {
+                const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+                await interaction.editReply({ embeds: [send] });
+                return;
+            }
+            setTimeout(() => null, 200);
+            await talk(interaction, content, model);
+            return;
         }
     }
 }
