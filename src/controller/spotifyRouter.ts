@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import Express from 'express';
 import { CallbackRequest, CallbackResponse } from './types/spotify';
+import { Logger } from '../common/logger';
+import { LogLevel } from '../type/types';
 
 export const spotifyAuthRouter = Express.Router();
 
@@ -10,16 +12,19 @@ export const spotifyAuthRouter = Express.Router();
  *
  */
 spotifyAuthRouter.post('/spotify/callback', async (req: CallbackRequest, res: CallbackResponse) => {
-    console.log('==================================================');
-    console.log(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}] POST | /spotify/callback`);
-    console.log(` * code   : ${req.query.code}`);
-    console.log(` * state  : ${req.query.state}`);
-    console.log(` * ip     : ${req.ip}`);
-    console.log('==================================================');
-
     if (!req.query.code || !req.query.state) {
         res.status(400).send({ result: 'ERR_BAD_REQUEST' });
         return;
     }
+
+    Logger.put({
+        guild_id: undefined,
+        channel_id: undefined,
+        user_id: undefined,
+        level: LogLevel.SYSTEM,
+        event: 'POST /spotify/callback',
+        message: [`ip: ${req.ip}`, `code: ${req.query.code}`, `state: ${req.query.state}`]
+    });
+
     res.status(200).send({ result: 'OK' });
 });

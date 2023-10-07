@@ -2,6 +2,8 @@ import Express from 'express';
 import { TextChannel } from 'discord.js';
 import { DISCORD_CLIENT } from '../constant/constants.js';
 import dayjs from 'dayjs';
+import { Logger } from '../common/logger.js';
+import { LogLevel } from '../type/types.js';
 
 export const messagingRouter = Express.Router();
 
@@ -13,19 +15,21 @@ export const messagingRouter = Express.Router();
  * @param req.body.message 送信メッセージ
  */
 messagingRouter.post('/message', (req: Express.Request, res: Express.Response) => {
-    console.log('==================================================');
-    console.log(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}] POST | /message`);
-
     const channel = DISCORD_CLIENT.channels.cache.get(req.body.channel) as TextChannel | undefined;
-    console.log(` * ip     : ${req.ip}`);
-    console.log(` * channel: ${channel?.guild.name}/${channel?.name} (${channel?.id})`);
-    console.log(` * message: ${req.body.message}`);
-    console.log('==================================================');
 
-    if (channel == undefined) {
+    if (!channel) {
         res.status(500).send({ result: false, message: 'can not get channel.' });
         return;
     }
+
+    Logger.put({
+        guild_id: channel.guild.id,
+        channel_id: channel.id,
+        user_id: undefined,
+        level: LogLevel.INFO,
+        event: 'POST /message',
+        message: [`ip: ${req.ip}`, `message: ${req.body.message}`]
+    });
 
     channel.send(req.body.message);
     res.status(200).send({ result: true });

@@ -1,6 +1,8 @@
 import Express from 'express';
 import dayjs from 'dayjs';
 import { GachaRepository } from '../model/repository/gachaRepository.js';
+import { Logger } from '../common/logger.js';
+import { LogLevel } from '../type/types.js';
 
 export const gachaRouter = Express.Router();
 
@@ -17,15 +19,14 @@ gachaRouter.get('/gacha', async (req: Express.Request, res: Express.Response) =>
     const date = req.query.date ? dayjs(req.query.date as string).toDate() : undefined;
     const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
-    console.log('==================================================');
-    console.log(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}] GET | /gacha`);
-
-    console.log(req.query);
-    console.log(` * ip     : ${req.ip}`);
-    console.log(` * uid    : ${uid}`);
-    console.log(` * date   : ${date}`);
-    console.log(` * limit  : ${limit}`);
-    console.log('==================================================');
+    Logger.put({
+        guild_id: undefined,
+        channel_id: undefined,
+        user_id: uid,
+        level: LogLevel.INFO,
+        event: 'GET /gacha',
+        message: [`ip: ${req.ip}`, `date: ${date}`, `limit: ${limit}`]
+    });
 
     const repository = new GachaRepository();
 
