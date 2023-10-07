@@ -171,6 +171,7 @@ export async function addYoutubeMusic(
 
         if (status === AudioPlayerStatus.Playing) {
             const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+            const addMusic = musics.find((m) => m.url === ytinfo.video_details.url);
 
             if (description.length >= 4000) {
                 const sliced = musics.slice(0, 20);
@@ -178,7 +179,7 @@ export async function addYoutubeMusic(
 
                 const send = new EmbedBuilder()
                     .setColor('#cc66cc')
-                    .setAuthor({ name: `追加: ${ytinfo.video_details.title}` })
+                    .setAuthor({ name: `追加: (${addMusic?.music_id}) ${ytinfo.video_details.title}` })
                     .setTitle('キュー(先頭の20曲のみ表示しています): ')
                     .setDescription(description)
                     .setThumbnail(ytinfo.video_details.thumbnails[0].url);
@@ -189,7 +190,7 @@ export async function addYoutubeMusic(
 
             const send = new EmbedBuilder()
                 .setColor('#cc66cc')
-                .setAuthor({ name: `追加: ${ytinfo.video_details.title}` })
+                .setAuthor({ name: `追加: (${addMusic?.music_id}) ${ytinfo.video_details.title}` })
                 .setTitle(`キュー(全${musics.length}曲): `)
                 .setDescription(description ? description : 'none')
                 .setThumbnail(ytinfo.video_details.thumbnails[0].url);
