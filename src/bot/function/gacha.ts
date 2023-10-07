@@ -4,9 +4,8 @@
  */
 
 import dayjs from 'dayjs';
-import { CacheType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, Message, MessageType } from 'discord.js';
+import { CacheType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, Message } from 'discord.js';
 import { checkUserType, getRndNumber } from '../../common/common.js';
-import { CONFIG } from '../../config/config.js';
 import { GachaRepository } from '../../model/repository/gachaRepository.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
 import * as Models from '../../model/models/index.js';

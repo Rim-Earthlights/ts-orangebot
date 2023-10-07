@@ -23,7 +23,7 @@ import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
 import { Chat } from './bot/dot_function/index.js';
-import { ChatGPTModel, GPTMode } from './constant/chat/chat.js';
+import { ChatGPTModel } from './constant/chat/chat.js';
 import { UsersType } from './model/models/users.js';
 
 dotenv.config();

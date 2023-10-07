@@ -63,7 +63,7 @@
     "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "lint": "yarn run eslint src/**/*.ts",
+        "lint": "yarn run eslint --fix src/**/*.ts",
         "dev": "yarn run nodemon -x \"npm run nodemon\" -w src/app.ts -e ts,json",
         "compile": "yarn run tsc",
         "dist": "node --loader ts-node/esm dist/app.js",
