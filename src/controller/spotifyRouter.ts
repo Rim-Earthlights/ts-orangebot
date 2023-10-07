@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import Express from 'express';
 import { CallbackRequest, CallbackResponse } from './types/spotify';
 import { Logger } from '../common/logger';
