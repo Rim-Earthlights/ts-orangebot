@@ -15,7 +15,7 @@ import { TypeOrm } from './model/typeorm/typeorm.js';
 import { ItemRepository } from './model/repository/itemRepository.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { initJob } from './job/job.js';
-import { switchFunctionByAPIKey } from './common/common.js';
+import { checkUserType, switchFunctionByAPIKey } from './common/common.js';
 import { GachaList } from './bot/function/gacha.js';
 import { reactionSelector } from './bot/reactions.js';
 import { SLASH_COMMANDS } from './constant/slashCommands.js';
@@ -24,6 +24,7 @@ import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
 import { Chat } from './bot/dot_function/index.js';
 import { ChatGPTModel, GPTMode } from './constant/chat/chat.js';
+import { UsersType } from './model/models/users.js';
 
 dotenv.config();
 
@@ -213,8 +214,8 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     }
 
     if (message.channel.type === ChannelType.DM) {
-        if (message.author.id === '246007305156558848') {
-            await Chat.talk(message, message.cleanContent, ChatGPTModel.GPT_4_HALF, GPTMode.NOPROMPT);
+        if (await checkUserType(message.author.id, UsersType.OWNER)) {
+            await Chat.talk(message, message.cleanContent, ChatGPTModel.GPT_4_32K);
             return;
         }
         await Chat.talk(message, message.cleanContent, ChatGPTModel.GPT_4_HALF);
