@@ -1,9 +1,10 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ChatGPTModel, GPTMode, initalize } from '../../constant/chat/chat.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import { CONFIG } from '../../config/config.js';
 
 /**
  * ChatGPTで会話する
@@ -81,6 +82,32 @@ export async function talk(
     }
 }
 
+export async function generatePicture(message: Message, prompt: string): Promise<void> {
+    try {
+        const response = await axios.post(
+            'https://api.openai.com/v1/images/generations',
+            {
+                prompt: prompt,
+                n: 1,
+                response_format: 'url',
+                size: '1024x1024'
+            },
+            {
+                headers: { Authorization: `Bearer ${CONFIG.OPENAI.KEY}` }
+            }
+        );
+
+        const data = response.data as PictureResponse;
+
+        const send = new EmbedBuilder().setColor('#00cccc').setTitle(`生成写真`).setImage(data.data[0].url);
+
+        message.reply({ embeds: [send] });
+    } catch (e) {
+        const error = e as Error;
+        message.reply(error.message);
+    }
+}
+
 /**
  * ChatGPTの会話データの削除
  */
@@ -104,3 +131,10 @@ export async function deleteChatData(message: Message, idx?: string) {
     chat.messages = [];
     await message.reply('会話データを削除したよ～！');
 }
+
+type PictureResponse = {
+    created: Date;
+    data: {
+        url: string;
+    }[];
+};
