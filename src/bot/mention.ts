@@ -5,6 +5,7 @@ import * as BotFunctions from './dot_function/index.js';
 import * as reactions from '../constant/words/reactions.js';
 import { getRndNumber, isEnableFunction } from '../common/common.js';
 import { functionNames } from '../constant/constants.js';
+import { TOPIC } from '../constant/words/topic.js';
 
 /**
  * 反応ワードから処理を実行する
@@ -14,6 +15,14 @@ import { functionNames } from '../constant/constants.js';
 export async function wordSelector(message: Message) {
     if (message.content.match('(言語は|ヘルプ|help)')) {
         Commands.help(message);
+        return;
+    }
+    if (message.content.match('話題')) {
+        const num = getRndNumber(0, TOPIC.length - 1);
+
+        const send = new EmbedBuilder().setColor('#ff9900').setTitle(`こんなのでました～！`).setDescription(TOPIC[num]);
+
+        message.reply({ embeds: [send] });
         return;
     }
     if (message.content.match('写真')) {

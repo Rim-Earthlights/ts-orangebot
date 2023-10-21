@@ -5,7 +5,7 @@ import {
     ChatInputCommandInteraction,
     CacheType,
     ChannelType,
-    BaseGuildVoiceChannel,
+    BaseGuildVoiceChannel
 } from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
@@ -13,7 +13,7 @@ import * as BotFunctions from './function/index.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
 import { CONFIG } from '../config/config.js';
-import { checkUserType, isEnableFunction } from '../common/common.js';
+import { checkUserType, getRndNumber, isEnableFunction } from '../common/common.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { ChatGPTModel, GPTMode } from '../constant/chat/chat.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
@@ -24,6 +24,7 @@ import { getDefaultRoomName } from './dot_function/voice.js';
 import { UsersType } from '../model/models/users.js';
 import { Logger } from '../common/logger.js';
 import { LogLevel } from '../type/types.js';
+import { TOPIC } from '../constant/words/topic.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -104,6 +105,32 @@ export async function commandSelector(message: Message) {
 
             const chat = content.join(' ');
             await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL as ChatGPTModel);
+            break;
+        }
+        case 'pic': {
+            // eslint-disable-next-line no-constant-condition
+            if (true) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(picture)`, embeds: [send] });
+                return;
+            }
+
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.generatePicture(message, chat);
+            break;
+        }
+        case 'topic': {
+            const num = getRndNumber(0, TOPIC.length - 1);
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle(`こんなのでました～！`)
+                .setDescription(TOPIC[num]);
+
+            message.reply({ embeds: [send] });
             break;
         }
         case 'erase': {
@@ -1013,6 +1040,16 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         case 'erase': {
             const last = interaction.options.getBoolean('last') ?? undefined;
             await BotFunctions.Chat.deleteChatData(interaction, last);
+            break;
+        }
+        case 'topic': {
+            const num = getRndNumber(0, TOPIC.length - 1);
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle(`こんなのでました～！`)
+                .setDescription(TOPIC[num]);
+
+            interaction.reply({ embeds: [send] });
             break;
         }
         case 'dc': {
