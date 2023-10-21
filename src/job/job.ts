@@ -26,8 +26,21 @@ export async function initJob() {
      * 1分毎に実行されるタスク
      */
     cron.schedule('* * * * *', async () => {
+        const today = dayjs().date();
         GPT.chat.map(async (c) => {
             if (c.type !== GPTType.GUILD) {
+                if (today !== c.timestamp.date()) {
+                    const id = c.id;
+                    GPT.chat = GPT.chat.filter((chat) => chat.id !== c.id);
+                    await Logger.put({
+                        guild_id: id,
+                        channel_id: undefined,
+                        user_id: undefined,
+                        level: LogLevel.INFO,
+                        event: 'Cron job: * * * * *',
+                        message: [`ChatGPT data deleted`]
+                    });
+                }
                 return;
             }
             if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
