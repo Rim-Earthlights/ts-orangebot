@@ -75,16 +75,16 @@ export async function changeRoomSetting(
                 roomInfo.is_live = false;
                 const vc = message.member?.voice.channel;
                 if (vc) {
-                    roomInfo.name = value!.replace('[🔴配信] ', '');
-                    await vc.setName(value!.replace('[🔴配信] ', ''), '部屋名変更: ' + message.author.username);
+                    roomInfo.name = value!.replace('[🔴] ', '');
+                    await vc.setName(value!.replace('[🔴] ', ''), '部屋名変更: ' + message.author.username);
                 }
                 await message.reply('配信フラグを外したよ！');
             } else {
                 roomInfo.is_live = true;
                 const vc = message.member?.voice.channel;
                 if (vc) {
-                    roomInfo.name = value!.replace('[🔴配信] ', '');
-                    await vc.setName('[🔴配信] ' + value, '部屋名変更: ' + message.author.username);
+                    roomInfo.name = value!.replace('[🔴] ', '');
+                    await vc.setName('[🔴] ' + value, '部屋名変更: ' + message.author.username);
                 }
                 await message.reply('配信フラグをつけたよ！');
             }
