@@ -51,12 +51,26 @@ export class GachaRepository {
      * @param uid ユーザID
      * @returns Gacha[]
      */
-    public async getPresents(uid: string): Promise<Models.Gacha[]> {
+    public async getPresents(uid: string, hist: boolean): Promise<Models.Gacha[]> {
+        if (hist) {
+            const gachaList = await this.repository.find({
+                relations: {
+                    users: true,
+                    items: true
+                },
+                where: { user_id: uid, items: { is_present: 1 } },
+                order: { pick_date: 'ASC' }
+            });
+            return gachaList;
+        }
+
         const gachaList = await this.repository.find({
             relations: {
+                users: true,
                 items: true
             },
-            where: { user_id: uid, items: { is_present: 1 }, is_used: 0 }
+            where: { user_id: uid, items: { is_present: 1 }, is_used: 0 },
+            order: { pick_date: 'ASC' }
         });
         return gachaList;
     }

@@ -378,7 +378,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
     const users = new UsersRepository();
     const user = await users.get(getUid);
     const pickLeft = user?.pick_left;
-    const gachaList = await gachaRepository.getPresents(getUid);
+    const gachaList = await gachaRepository.getPresents(getUid, false);
 
     if (pickLeft != undefined) {
         const presentDescription = gachaList
