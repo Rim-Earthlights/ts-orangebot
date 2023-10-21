@@ -38,3 +38,23 @@ gachaRouter.get('/gacha', async (req: Express.Request, res: Express.Response) =>
     const gacha = await repository.getHistory(uid, date, limit);
     res.render('./gacha.ejs', { gacha });
 });
+
+gachaRouter.get('/gacha/history', async (req: Express.Request, res: Express.Response) => {
+    const uid = req.query.uid as string;
+    const hist = (req.query.hist as string).toLowerCase() === 'true';
+
+    Logger.put({
+        guild_id: undefined,
+        channel_id: undefined,
+        user_id: uid,
+        level: LogLevel.INFO,
+        event: 'GET /gacha',
+        message: [`ip: ${req.ip}`]
+    });
+
+    const repository = new GachaRepository();
+
+    const gachaList = await repository.getPresents(uid, hist);
+
+    res.render('./present.ejs', { gachaList });
+});

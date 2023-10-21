@@ -10,6 +10,7 @@ import { checkUserType } from '../../common/common.js';
 import { UsersType } from '../../model/models/users.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import { CONFIG } from '../../config/config.js';
 
 /**
  * ガチャを引く
@@ -20,7 +21,9 @@ import { LogLevel } from '../../type/types.js';
 export async function pickGacha(message: Message, args?: string[]) {
     if (args != undefined && args.length > 0) {
         if (args[0] === 'list') {
-            await getPresent(message, args[1]);
+            await getPresent(message, args[1], false);
+        } else if (args[0] === 'hist') {
+            await getPresent(message, args[1], true);
         } else if (args[0] === 'use') {
             await usePresent(message, args.slice(1));
         } else if (args[0] === 'reset') {
@@ -321,7 +324,7 @@ async function pickNormal(message: Message, gnum = '10') {
  * プレゼント一覧を取得する
  * @param message
  */
-export async function getPresent(message: Message, uid?: string) {
+export async function getPresent(message: Message, uid?: string, hist?: boolean) {
     let getUid: string;
     if (message.channel.type === ChannelType.GuildStageVoice) {
         return;
@@ -341,22 +344,23 @@ export async function getPresent(message: Message, uid?: string) {
     const users = new UsersRepository();
     const user = await users.get(getUid);
     const pickLeft = user?.pick_left;
-    const gachaList = await gachaRepository.getPresents(getUid);
+    const gachaList = await gachaRepository.getPresents(getUid, hist ?? false);
+    const list = gachaList.map((p) => {
+        return `${p.id}: [${p.items.rare}]${p.items.icon ? p.items.icon : ''} ${p.items.name} ${
+            p.is_used ? '(**使用済み**)' : ''
+        }`;
+    });
 
     if (pickLeft != undefined) {
-        const presentDescription = gachaList
-            .map((p) => `${p.id}: [${p.items.rare}]${p.items.icon ? p.items.icon : ''} ${p.items.name}`)
-            .join('\n');
+        const presentDescription = list.join('\n');
         const money = gachaList.reduce((prev, current) => {
             return prev + current.items.price;
         }, 0);
         const send = new EmbedBuilder()
             .setColor('#ff9900')
             .setTitle(`${user?.user_name} さんのガチャ情報だよ！`)
-            .setFields(
-                { name: '当選したプレゼント', value: presentDescription ? presentDescription : 'なし' },
-                { name: '現在の金額', value: money.toString() },
-                { name: '残りガチャ回数', value: pickLeft.toString() }
+            .setDescription(
+                `${CONFIG.COMMON.HOST_URL}:${CONFIG.COMMON.PORT}/gacha/history?uid=${getUid}&hist=${hist ?? false}`
             );
         await message.channel.send({ embeds: [send] });
     } else {
