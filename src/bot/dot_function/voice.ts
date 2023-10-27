@@ -19,16 +19,28 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
             const room = new RoomRepository();
             const roomInfo = await room.getRoom(vc.id);
             if (!roomInfo || roomInfo.is_autodelete) {
-                await room.deleteRoom(vc.id);
-                await Logger.put({
-                    guild_id: vc.guild?.id,
-                    channel_id: vc.id,
-                    user_id: undefined,
-                    level: LogLevel.INFO,
-                    event: 'vc-left',
-                    message: [`delete ch: ${voiceState.channel?.name}`]
-                });
-                await vc.delete();
+                try {
+                    await room.deleteRoom(vc.id);
+                    await Logger.put({
+                        guild_id: vc.guild?.id,
+                        channel_id: vc.id,
+                        user_id: undefined,
+                        level: LogLevel.INFO,
+                        event: 'vc-left',
+                        message: [`delete ch: ${voiceState.channel?.name}`]
+                    });
+                    await vc.delete();
+                } catch (e) {
+                    const err = e as Error;
+                    await Logger.put({
+                        guild_id: vc.guild?.id,
+                        channel_id: vc.id,
+                        user_id: undefined,
+                        level: LogLevel.ERROR,
+                        event: 'vc-left',
+                        message: [`delete ch: ${voiceState.channel?.name}`, err.message]
+                    });
+                }
             }
         } else {
             const bot = vc.members.filter((m) => m.user.bot);
