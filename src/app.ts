@@ -265,46 +265,40 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
     }
 
     if (newState.channelId === null) {
+        const user = await DISCORD_CLIENT.users.fetch(newState.id);
         await Logger.put({
             guild_id: oldState.guild.id,
             channel_id: oldState.channel?.id,
             user_id: oldState.id,
             level: LogLevel.INFO,
             event: 'vc-left',
-            message: [
-                `ch: ${oldState.channel?.name}`,
-                `user: ${(await DISCORD_CLIENT.users.fetch(oldState.id)).username}`
-            ]
+            message: [`ch: ${oldState.channel?.name}`, `user: ${user.username}`]
         });
-        await leftVoiceChannel(guild, oldState);
+        await leftVoiceChannel(guild, user.id, oldState);
     } else if (oldState.channelId === null) {
+        const user = await DISCORD_CLIENT.users.fetch(newState.id);
         await Logger.put({
             guild_id: newState.guild.id,
             channel_id: newState.channel?.id,
             user_id: newState.id,
             level: LogLevel.INFO,
             event: 'vc-join',
-            message: [
-                `ch: ${newState.channel?.name}`,
-                `user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
-            ]
+            message: [`ch: ${newState.channel?.name}`, `user: ${user.username}`]
         });
-        await joinVoiceChannel(guild, newState);
+        await joinVoiceChannel(guild, user.id, newState);
     } else {
+        const user = await DISCORD_CLIENT.users.fetch(newState.id);
         await Logger.put({
             guild_id: newState.guild.id,
             channel_id: newState.channel?.id,
             user_id: newState.id,
             level: LogLevel.INFO,
             event: 'vc-move',
-            message: [
-                `ch: ${oldState.channel?.name} -> ${newState.channel?.name}`,
-                `user: ${(await DISCORD_CLIENT.users.fetch(newState.id)).username}`
-            ]
+            message: [`ch: ${oldState.channel?.name} -> ${newState.channel?.name}`, `user: ${user.username}`]
         });
         //left
-        await leftVoiceChannel(guild, oldState);
+        await leftVoiceChannel(guild, user.id, oldState);
         // joined
-        await joinVoiceChannel(guild, newState);
+        await joinVoiceChannel(guild, user.id, newState);
     }
 });

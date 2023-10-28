@@ -4,6 +4,7 @@ import { extermAudioPlayer } from './music.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -11,7 +12,7 @@ import { LogLevel } from '../../type/types.js';
  * @param voiceState VoiceState
  * @returns void
  */
-export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Promise<void> {
+export async function leftVoiceChannel(guild: Guild, userId: string, voiceState: VoiceState): Promise<void> {
     if (EXCLUDE_ROOM.every((r) => r !== voiceState.channel?.name)) {
         const vc = voiceState.channel as VoiceChannel;
 
@@ -59,7 +60,7 @@ export async function leftVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
  * @param voiceState VoiceState
  * @returns void
  */
-export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Promise<void> {
+export async function joinVoiceChannel(guild: Guild, userId: string, voiceState: VoiceState): Promise<void> {
     // joined
     if (voiceState.channel?.name === 'ロビー') {
         // lobby login
@@ -116,6 +117,34 @@ export async function joinVoiceChannel(guild: Guild, voiceState: VoiceState): Pr
                 is_live: false,
                 is_private: false
             });
+        }
+    }
+    const userRepository = new UsersRepository();
+
+    const user = await userRepository.get(userId);
+
+    if (!user) {
+        return;
+    } else {
+        if (user.voice_channel_data) {
+            const vd = user.voice_channel_data.find((v) => v.gid === voiceState.guild.id);
+            if (vd) {
+                vd.date = new Date();
+            } else {
+                user.voice_channel_data.push({
+                    gid: voiceState.guild.id,
+                    date: new Date()
+                });
+            }
+            await userRepository.save(user);
+        } else {
+            user.voice_channel_data = [
+                {
+                    gid: voiceState.guild.id,
+                    date: new Date()
+                }
+            ];
+            await userRepository.save(user);
         }
     }
 }

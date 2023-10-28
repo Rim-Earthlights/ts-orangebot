@@ -833,7 +833,26 @@ export async function commandSelector(message: Message) {
                 const userRepository = new UsersRepository();
                 const user = await userRepository.get(m.id);
                 if (!user) {
-                    await userRepository.save({ id: m.id, user_name: m.user.username });
+                    await userRepository.save({
+                        id: m.id,
+                        user_name: m.user.username,
+                        voice_channel_data: [
+                            {
+                                gid: message.guild?.id ?? 'DM',
+                                date: new Date()
+                            }
+                        ]
+                    });
+                } else {
+                    await userRepository.save({
+                        ...user,
+                        voice_channel_data: [
+                            {
+                                gid: message.guild?.id ?? 'DM',
+                                date: new Date()
+                            }
+                        ]
+                    });
                 }
                 if (m.roles.cache.has(memberRole.role_id)) {
                     return;
