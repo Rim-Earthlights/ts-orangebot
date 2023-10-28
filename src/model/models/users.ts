@@ -40,6 +40,9 @@ export class Users extends BaseEntity {
     @Column({ type: 'float', nullable: false, default: 1.0 })
     voice_speed!: number;
 
+    @Column({ type: 'json', nullable: true })
+    voice_channel_data: VoiceChannelData[] | null = null;
+
     @DeleteDateColumn({ type: 'datetime', nullable: true })
     deleted_at: Date | null = null;
 
@@ -59,3 +62,8 @@ export enum UsersType {
     ADMIN = 'admin',
     OWNER = 'owner'
 }
+
+export type VoiceChannelData = {
+    gid: string;
+    date: Date;
+};

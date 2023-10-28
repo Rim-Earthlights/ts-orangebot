@@ -175,6 +175,23 @@ async function pickNormal(message: Message, gnum = '10') {
     }
 
     if (user) {
+        if (user.voice_channel_data?.length) {
+            const vc = user.voice_channel_data.find((v) => v.gid === '1017341244508225596');
+            if (vc) {
+                const now = new Date();
+                const diff = now.getTime() - new Date(vc.date).getTime();
+                if (diff >= 1000 * 60 * 60 * 24 * 7) {
+                    const send = new EmbedBuilder()
+                        .setColor('#ff0000')
+                        .setTitle(`エラー`)
+                        .setDescription(`7日以内の通話参加履歴が見つからなかった`);
+
+                    await message.reply({ content: `1週間通話に参加してない人は引けないみたい、、`, embeds: [send] });
+                    return;
+                }
+            }
+        }
+
         if (user.pick_left < num) {
             const send = new EmbedBuilder()
                 .setColor('#ff0000')
@@ -187,7 +204,12 @@ async function pickNormal(message: Message, gnum = '10') {
             return;
         }
     } else {
-        await users.save({ id: message.author.id, user_name: message.author.username, pick_left: 10 });
+        await users.save({
+            id: message.author.id,
+            user_name: message.author.username,
+            pick_left: 10,
+            voice_channel_data: [{ gid: message.guild?.id ?? 'DM', date: new Date() }]
+        });
         num = 10;
     }
 
