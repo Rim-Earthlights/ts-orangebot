@@ -176,7 +176,7 @@ async function pickNormal(message: Message, gnum = '10') {
 
     if (user) {
         if (user.voice_channel_data?.length) {
-            const vc = user.voice_channel_data.find((v) => v.gid === '1017341244508225596');
+            const vc = user.voice_channel_data.find((v) => v.gid === message.guild?.id);
             if (vc) {
                 const now = new Date();
                 const diff = now.getTime() - new Date(vc.date).getTime();
@@ -186,9 +186,23 @@ async function pickNormal(message: Message, gnum = '10') {
                         .setTitle(`エラー`)
                         .setDescription(`7日以内の通話参加履歴が見つからなかった`);
 
-                    await message.reply({ content: `1週間通話に参加してない人は引けないみたい、、`, embeds: [send] });
+                    await message.reply({
+                        content: `最後に通話してから1週間以上通話に参加してないみたい……`,
+                        embeds: [send]
+                    });
                     return;
                 }
+            } else {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`7日以内の通話参加履歴が見つからなかった`);
+
+                await message.reply({
+                    content: `このサーバーで通話に参加した履歴がないみたい……？`,
+                    embeds: [send]
+                });
+                return;
             }
         }
 

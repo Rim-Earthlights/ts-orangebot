@@ -25,6 +25,7 @@ import { UsersType } from '../model/models/users.js';
 import { Logger } from '../common/logger.js';
 import { LogLevel } from '../type/types.js';
 import { TOPIC } from '../constant/words/topic.js';
+import { LogRepository } from '../model/repository/logRepository.js';
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -879,6 +880,53 @@ export async function commandSelector(message: Message) {
             const roleRepository = new RoleRepository();
             await roleRepository.addRole({ type, name, role_id, guild_id: message.guild?.id });
 
+            break;
+        }
+        case 'last-vc-join': {
+            if (!checkUserType(message.author.id, UsersType.OWNER)) {
+                return;
+            }
+
+            if (!message.guild) {
+                return;
+            }
+
+            const userRepository = new UsersRepository();
+            const logRepository = new LogRepository();
+
+            const members = await message.guild?.members.fetch();
+            if (!members) {
+                return;
+            }
+
+            const result = members.map(async (m) => {
+                if (m.user.bot) {
+                    return;
+                }
+                const user = await userRepository.get(m.id);
+                if (!user) {
+                    return;
+                }
+                const lastJoin = await logRepository.getLastCallJoinDate(message.guild!.id, user.id);
+                if (!lastJoin) {
+                    return;
+                }
+
+                if (!user.voice_channel_data) {
+                    return;
+                }
+
+                const guildVoiceData = user.voice_channel_data.find((v) => v.gid === message.guild?.id);
+                if (!guildVoiceData) {
+                    return;
+                }
+
+                guildVoiceData.date = lastJoin;
+                await userRepository.save(user);
+            });
+
+            await Promise.all(result);
+            await message.reply('success.');
             break;
         }
         case 'color': {
