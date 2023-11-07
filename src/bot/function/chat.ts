@@ -1,9 +1,10 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
-import { ChatGPTModel, GPTMode, initalize } from '../../constant/chat/chat.js';
+import { GPTMode, initalize } from '../../constant/chat/chat.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import { ChatGPTModel } from '../../config/config.js';
 
 /**
  * ChatGPTで会話する

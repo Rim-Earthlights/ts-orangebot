@@ -1,10 +1,10 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import axios, { AxiosError } from 'axios';
-import { ChatGPTModel, GPTMode, initalize } from '../../constant/chat/chat.js';
+import { GPTMode, initalize } from '../../constant/chat/chat.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
-import { CONFIG } from '../../config/config.js';
+import { CONFIG, ChatGPTModel } from '../../config/config.js';
 
 /**
  * ChatGPTで会話する
