@@ -26,10 +26,9 @@ export async function initJob() {
      * 1分毎に実行されるタスク
      */
     cron.schedule('* * * * *', async () => {
-        const today = dayjs().date();
         GPT.chat.map(async (c) => {
             if (c.type !== GPTType.GUILD) {
-                if (today !== c.timestamp.date()) {
+                if (c.timestamp.isBefore(dayjs().subtract(12, 'hour'))) {
                     const id = c.id;
                     GPT.chat = GPT.chat.filter((chat) => chat.id !== c.id);
                     await Logger.put({
@@ -43,7 +42,7 @@ export async function initJob() {
                 }
                 return;
             }
-            if (c.timestamp.isBefore(dayjs().subtract(10, 'minute'))) {
+            if (c.timestamp.isBefore(dayjs().subtract(20, 'minute'))) {
                 const id = c.id;
                 GPT.chat = GPT.chat.filter((chat) => chat.id !== c.id);
                 await Logger.put({
