@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 import 'dayjs/locale/ja.js';
 import { routers } from './routers.js';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
-import { CONFIG } from './config/config.js';
+import { CONFIG, ChatGPTModel } from './config/config.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { TypeOrm } from './model/typeorm/typeorm.js';
 import { ItemRepository } from './model/repository/itemRepository.js';
@@ -23,7 +23,6 @@ import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
 import { Chat } from './bot/dot_function/index.js';
-import { ChatGPTModel } from './constant/chat/chat.js';
 import { UsersType } from './model/models/users.js';
 
 dotenv.config();
@@ -214,11 +213,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     }
 
     if (message.channel.type === ChannelType.DM) {
-        if (await checkUserType(message.author.id, UsersType.OWNER)) {
-            await Chat.talk(message, message.cleanContent, ChatGPTModel.GPT_4_32K);
-            return;
-        }
-        await Chat.talk(message, message.cleanContent, ChatGPTModel.GPT_4_HALF);
+        await Chat.talk(message, message.cleanContent, CONFIG.OPENAI.DEFAULT_MODEL);
         return;
     }
 });

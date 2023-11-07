@@ -1,20 +1,9 @@
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
 import dayjs from 'dayjs';
-import { CONFIG } from '../../config/config.js';
+import { CONFIG, ChatGPTModel } from '../../config/config.js';
 import { CHATBOT_TEMPLATE } from '../constants.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
-
-/**
- * ChatGPTのモデル
- */
-export enum ChatGPTModel {
-    GPT_3 = 'gpt-3.5-turbo',
-    GPT_3_16K = 'gpt-3.5-turbo-16k',
-    GPT_4 = 'gpt-4',
-    GPT_4_32K = 'gpt-4-32k',
-    GPT_4_HALF = 'gpt-4-half'
-}
 
 type GPTModel = {
     modelName: ChatGPTModel;
@@ -37,8 +26,10 @@ export const getGPTModel = (modelName: ChatGPTModel): GPTModel => {
         case ChatGPTModel.GPT_4_32K:
             // 32k model is integrated into 8k model.
             return { modelName: ChatGPTModel.GPT_4, maxTokens: 32768 };
-        case ChatGPTModel.GPT_4_HALF:
-            return { modelName: ChatGPTModel.GPT_4, maxTokens: 4096 };
+        case ChatGPTModel.GPT_4_TURBO_PREVIEW:
+            return { modelName: ChatGPTModel.GPT_4_TURBO_PREVIEW, maxTokens: 128000 };
+        case ChatGPTModel.GPT_4_VISION_PREVIEW:
+            return { modelName: ChatGPTModel.GPT_4_VISION_PREVIEW, maxTokens: 128000 };
         default:
             return { modelName: ChatGPTModel.GPT_3, maxTokens: 4096 };
     }
