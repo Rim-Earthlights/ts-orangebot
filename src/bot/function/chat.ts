@@ -32,7 +32,7 @@ export async function talk(
 
     const systemContent = {
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
-        user: (interaction.member as GuildMember).nickname ?? interaction.user.username ?? 'system'
+        user: `<@${interaction.user.id}>`
     };
 
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
