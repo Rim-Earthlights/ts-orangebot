@@ -23,7 +23,7 @@ export async function save(message: Message, args?: string[]): Promise<void> {
             const users = new UsersRepository();
             await users.save({
                 id: userId,
-                user_name: message.author.username,
+                user_name: message.author.displayName,
                 pref: regName[0]
             });
 
@@ -51,7 +51,7 @@ export async function save(message: Message, args?: string[]): Promise<void> {
                 const users = new UsersRepository();
                 await users.save({
                     id: userId,
-                    user_name: message.author.username,
+                    user_name: message.author.displayName,
                     birth_date: `1900-${month}-${day} 00:00:00`
                 });
 

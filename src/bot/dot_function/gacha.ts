@@ -220,7 +220,7 @@ async function pickNormal(message: Message, gnum = '10') {
     } else {
         await users.save({
             id: message.author.id,
-            user_name: message.author.username,
+            user_name: message.author.displayName,
             pick_left: 10,
             voice_channel_data: [{ gid: message.guild?.id ?? 'DM', date: new Date() }]
         });
@@ -292,7 +292,7 @@ async function pickNormal(message: Message, gnum = '10') {
 
     await users.save({
         id: message.author.id,
-        user_name: message.author.username,
+        user_name: message.author.displayName,
         last_pick_date: dayjs().toDate(),
         pick_left: pickLeft
     });
@@ -317,7 +317,7 @@ async function pickNormal(message: Message, gnum = '10') {
                 user_id: message.id,
                 level: LogLevel.INFO,
                 event: 'get-gacha',
-                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)]
+                message: [`user: ${message.author.displayName}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)]
             });
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
@@ -344,7 +344,7 @@ async function pickNormal(message: Message, gnum = '10') {
                 user_id: message.id,
                 level: LogLevel.INFO,
                 event: 'get-gacha',
-                message: [`user: ${message.author.username}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)]
+                message: [`user: ${message.author.displayName}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)]
             });
             const send = new EmbedBuilder()
                 .setColor('#ff9900')
@@ -426,7 +426,7 @@ export async function usePresent(message: Message, args: string[]) {
                 .setColor('#ff9900')
                 .setTitle('プレゼントを使用したよ！')
                 .setDescription(
-                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).username}\nプレゼント: ${
+                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).displayName}\nプレゼント: ${
                         result.items.name
                     }`
                 );
@@ -464,7 +464,7 @@ export async function givePresent(message: Message, uid: string, itemId: number)
             .setColor('#ff9900')
             .setTitle('プレゼントを渡したよ！')
             .setDescription(
-                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).username}\nプレゼント: ${result.items.name}`
+                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).displayName}\nプレゼント: ${result.items.name}`
             );
 
         await message.reply({

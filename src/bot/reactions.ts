@@ -48,7 +48,7 @@ export const reactionSelector = async (
                     user_id: user.id,
                     level: LogLevel.INFO,
                     event: 'reaction-add',
-                    message: [`rule accepted: ${user.username}`]
+                    message: [`rule accepted: ${user.displayName}`]
                 });
 
                 const u = reaction.message.guild?.members.cache.get(user.id);
@@ -94,7 +94,7 @@ export const reactionSelector = async (
                 if (!userEntity) {
                     const saveUser: Partial<Users> = {
                         id: user.id,
-                        user_name: user.username,
+                        user_name: user.displayName,
                         pick_left: 10,
                         voice_channel_data: [
                             {
@@ -132,7 +132,7 @@ export const reactionSelector = async (
                     user_id: user.id,
                     level: LogLevel.INFO,
                     event: 'reaction-add',
-                    message: [`game selected: ${user.username} | ${reaction.emoji.name}`]
+                    message: [`game selected: ${user.displayName} | ${reaction.emoji.name}`]
                 });
             }
             break;

@@ -164,7 +164,7 @@ DISCORD_CLIENT.once('ready', async () => {
         user_id: undefined,
         level: LogLevel.SYSTEM,
         event: 'ready',
-        message: [`discord bot logged in: ${DISCORD_CLIENT.user?.username}`]
+        message: [`discord bot logged in: ${DISCORD_CLIENT.user?.displayName}`]
     });
 });
 
@@ -194,7 +194,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
             `cid: ${message.channel.id}, cname: ${
                 message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'
             }`,
-            `author : ${message.author.username}`,
+            `author : ${message.author.displayName}`,
             `content: ${message.content}`,
             ...message.attachments.map((a) => `file   : ${a.url}`)
         ]
@@ -231,7 +231,11 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
         user_id: interaction.user.id,
         level: LogLevel.INFO,
         event: 'interaction-received',
-        message: [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.username}`, `content: ${interaction}`]
+        message: [
+            `cid: ${interaction.channel?.id}`,
+            `author: ${interaction.user.displayName}`,
+            `content: ${interaction}`
+        ]
     });
     await interactionSelector(interaction);
 });
@@ -267,7 +271,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             user_id: oldState.id,
             level: LogLevel.INFO,
             event: 'vc-left',
-            message: [`ch: ${oldState.channel?.name}`, `user: ${user.username}`]
+            message: [`ch: ${oldState.channel?.name}`, `user: ${user.displayName}`]
         });
         await leftVoiceChannel(guild, user.id, oldState);
     } else if (oldState.channelId === null) {
@@ -278,7 +282,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             user_id: newState.id,
             level: LogLevel.INFO,
             event: 'vc-join',
-            message: [`ch: ${newState.channel?.name}`, `user: ${user.username}`]
+            message: [`ch: ${newState.channel?.name}`, `user: ${user.displayName}`]
         });
         await joinVoiceChannel(guild, user.id, newState);
     } else {
@@ -289,7 +293,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             user_id: newState.id,
             level: LogLevel.INFO,
             event: 'vc-move',
-            message: [`ch: ${oldState.channel?.name} -> ${newState.channel?.name}`, `user: ${user.username}`]
+            message: [`ch: ${oldState.channel?.name} -> ${newState.channel?.name}`, `user: ${user.displayName}`]
         });
         //left
         await leftVoiceChannel(guild, user.id, oldState);

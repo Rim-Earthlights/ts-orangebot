@@ -237,7 +237,7 @@ async function pickNormal(
             return;
         }
     } else {
-        await users.save({ id: interaction.user.id, user_name: interaction.user.username, pick_left: 10 });
+        await users.save({ id: interaction.user.id, user_name: interaction.user.displayName, pick_left: 10 });
     }
 
     for (let i = 0; i < num; i++) {
@@ -305,7 +305,7 @@ async function pickNormal(
 
     await users.save({
         id: interaction.user.id,
-        user_name: interaction.user.username,
+        user_name: interaction.user.displayName,
         last_pick_date: dayjs().toDate(),
         pick_left: pickLeft
     });
@@ -423,7 +423,7 @@ export async function usePresent(interaction: ChatInputCommandInteraction<CacheT
                 .setColor('#ff9900')
                 .setTitle('プレゼントを使用したよ！')
                 .setDescription(
-                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).username}\nプレゼント: ${
+                    `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).displayName}\nプレゼント: ${
                         result.items.name
                     }`
                 );
@@ -461,7 +461,7 @@ export async function givePresent(message: Message, uid: string, itemId: number)
             .setColor('#ff9900')
             .setTitle('プレゼントを渡したよ！')
             .setDescription(
-                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).username}\nプレゼント: ${result.items.name}`
+                `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).displayName}\nプレゼント: ${result.items.name}`
             );
 
         message.reply({

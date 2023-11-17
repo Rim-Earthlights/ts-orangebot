@@ -86,9 +86,9 @@ export async function roll(message: Message, args?: string[]) {
  */
 export async function rollAll(message: Message): Promise<void> {
     if (message.channel.type === ChannelType.GuildVoice || message.channel.type === ChannelType.GuildStageVoice) {
-        const result: { username: string; rnd: number }[] = [];
+        const result: { displayName: string; rnd: number }[] = [];
         message.channel.members.map((m) => {
-            result.push({ username: m.nickname ?? m.user.username, rnd: getRndNumber(1, 100) });
+            result.push({ displayName: m.displayName, rnd: getRndNumber(1, 100) });
         });
 
         result.sort((a, b) => b.rnd - a.rnd);
@@ -99,7 +99,7 @@ export async function rollAll(message: Message): Promise<void> {
             .setDescription(
                 result
                     .map((r) => {
-                        return `${r.username}: ${r.rnd}`;
+                        return `${r.displayName}: ${r.rnd}`;
                     })
                     .join('\n')
             )

@@ -836,7 +836,7 @@ export async function commandSelector(message: Message) {
                 if (!user) {
                     await userRepository.save({
                         id: m.id,
-                        user_name: m.user.username,
+                        user_name: m.user.displayName,
                         voice_channel_data: [
                             {
                                 gid: message.guild?.id ?? 'DM',
@@ -1145,7 +1145,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
 
             if (interaction.channel?.type === ChannelType.GuildVoice) {
                 const channel = interaction.channel as BaseGuildVoiceChannel;
-                const member = channel.members.find((member) => member.id === id || member.user.username === id);
+                const member = channel.members.find((member) => member.id === id);
                 if (!member) {
                     const send = new EmbedBuilder()
                         .setColor('#ff0000')
@@ -1163,13 +1163,13 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     user_id: interaction.user.id,
                     level: LogLevel.INFO,
                     event: 'disconnect-user',
-                    message: [`disconnect ${member.user.username} by ${user.username}`]
+                    message: [`disconnect ${member.user.displayName} by ${user.displayName}`]
                 });
 
                 const send = new EmbedBuilder()
                     .setColor('#00ff00')
                     .setTitle(`成功`)
-                    .setDescription(`${member.user.username}を切断しました`);
+                    .setDescription(`${member.user.displayName}を切断しました`);
 
                 interaction.reply({ embeds: [send] });
             }

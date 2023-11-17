@@ -36,7 +36,7 @@ export async function changeRoomName(message: Message, roomName: string): Promis
         roomName = '[🔴配信] ' + roomName;
     }
 
-    await vc.setName(roomName, '部屋名変更: ' + message.author.username);
+    await vc.setName(roomName, '部屋名変更: ' + message.author.displayName);
     message.reply(`お部屋の名前を${roomName}に変更したよ！`);
 }
 
@@ -76,7 +76,7 @@ export async function changeRoomSetting(
                 const vc = message.member?.voice.channel;
                 if (vc) {
                     roomInfo.name = value!.replace('[🔴] ', '');
-                    await vc.setName(value!.replace('[🔴] ', ''), '部屋名変更: ' + message.author.username);
+                    await vc.setName(value!.replace('[🔴] ', ''), '部屋名変更: ' + message.author.displayName);
                 }
                 await message.reply('配信フラグを外したよ！');
             } else {
@@ -84,7 +84,7 @@ export async function changeRoomSetting(
                 const vc = message.member?.voice.channel;
                 if (vc) {
                     roomInfo.name = value!.replace('[🔴] ', '');
-                    await vc.setName('[🔴] ' + value, '部屋名変更: ' + message.author.username);
+                    await vc.setName('[🔴] ' + value, '部屋名変更: ' + message.author.displayName);
                 }
                 await message.reply('配信フラグをつけたよ！');
             }
@@ -94,7 +94,7 @@ export async function changeRoomSetting(
             roomInfo.is_private = !roomInfo.is_private;
             const vc = message.member?.voice.channel;
             if (vc) {
-                await vc.setName('[🅿] ' + vc.name, '部屋名変更: ' + message.author.username);
+                await vc.setName('[🅿] ' + vc.name, '部屋名変更: ' + message.author.displayName);
             }
             await message.reply('プライベートフラグをつけたよ！<未実装>');
             break;
@@ -153,7 +153,7 @@ export async function team(message: Message, num: number, move: boolean): Promis
         teams.push({
             team: i % num,
             id: shuffleMembers[i],
-            name: vc.members.find((m) => m.id === shuffleMembers[i])?.user.username
+            name: vc.members.find((m) => m.id === shuffleMembers[i])?.user.displayName
         });
     }
 
