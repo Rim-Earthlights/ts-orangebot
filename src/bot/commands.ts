@@ -1175,6 +1175,49 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             }
             break;
         }
+        case 'timeout': {
+            const guild = interaction.guild;
+            if (!guild) {
+                return;
+            }
+
+            if (!checkUserType(interaction.user.id, UsersType.ADMIN)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`このコマンドは管理者のみ使用できます。`);
+
+                interaction.reply({ embeds: [send] });
+                return;
+            }
+
+            const user = interaction.options.getUser('user')!;
+            const time = interaction.options.getNumber('time')!;
+            const reason = interaction.options.getString('reason')!;
+            const member = guild.members.cache.find((member) => member.id === user.id);
+
+            if (!member) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription('ユーザーが見つからなかった');
+                await interaction.reply({ embeds: [send] });
+                return;
+            }
+
+            await member.timeout(time * 60 * 60 * 1000, reason);
+
+            const send = new EmbedBuilder()
+                .setColor('#00ff00')
+                .setTitle(`タイムアウトの実行`)
+                .setFields(
+                    { name: '対象人物', value: member.user.displayName },
+                    { name: '規制時間', value: `${time.toString()} 時間` },
+                    { name: '理由', value: reason }
+                );
+            await interaction.reply({ embeds: [send] });
+            return;
+        }
         default: {
             return;
         }

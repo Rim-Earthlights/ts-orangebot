@@ -86,6 +86,12 @@ export const SLASH_COMMANDS = [
         .setName('dc')
         .setDescription('特定のユーザーをボイスチャンネルから切断します')
         .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('timeout')
+        .setDescription('特定のユーザーをタイムアウトします')
+        .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))
+        .addNumberOption((option) => option.setName('time').setDescription('タイムアウト時間').setRequired(true))
+        .addStringOption((option) => option.setName('reason').setDescription('事由').setRequired(true)),
     new SlashCommandBuilder().setName('topic').setDescription('ランダムなお題を表示します')
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
