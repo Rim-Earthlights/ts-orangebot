@@ -271,7 +271,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             user_id: oldState.id,
             level: LogLevel.INFO,
             event: 'vc-left',
-            message: [`ch: ${oldState.channel?.name}`, `user: ${user.displayName}`]
+            message: [`ch: ${oldState.channel?.name}`, `user: ${oldState.member?.displayName}`]
         });
         await leftVoiceChannel(guild, user.id, oldState);
     } else if (oldState.channelId === null) {
@@ -282,7 +282,7 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             user_id: newState.id,
             level: LogLevel.INFO,
             event: 'vc-join',
-            message: [`ch: ${newState.channel?.name}`, `user: ${user.displayName}`]
+            message: [`ch: ${newState.channel?.name}`, `user: ${newState.member?.displayName}`]
         });
         await joinVoiceChannel(guild, user.id, newState);
     } else {
@@ -293,7 +293,10 @@ DISCORD_CLIENT.on('voiceStateUpdate', async (oldState, newState) => {
             user_id: newState.id,
             level: LogLevel.INFO,
             event: 'vc-move',
-            message: [`ch: ${oldState.channel?.name} -> ${newState.channel?.name}`, `user: ${user.displayName}`]
+            message: [
+                `ch: ${oldState.channel?.name} -> ${newState.channel?.name}`,
+                `user: ${newState.member?.displayName}`
+            ]
         });
         //left
         await leftVoiceChannel(guild, user.id, oldState);

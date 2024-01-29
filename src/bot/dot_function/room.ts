@@ -1,6 +1,7 @@
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
+import { getDefaultRoomName } from './voice.js';
 
 /**
  * お部屋の名前を変更する
@@ -104,6 +105,43 @@ export async function changeRoomSetting(
     await roomRepository.updateRoom(message.channel.id, roomInfo);
 }
 
+export async function createRoom(
+    message: Message,
+    id: string,
+    roomName?: string,
+    isDelete?: boolean,
+    limit?: number
+): Promise<void> {
+    if (!message.guild) {
+        return;
+    }
+    if (message.channel.type === ChannelType.GuildStageVoice) {
+        return;
+    }
+    if (message.channel.type === ChannelType.DM) {
+        await message.channel.send('DM内では使えない機能だよ！');
+    }
+
+    const vc = await message.guild.channels.create({
+        name: roomName ?? getDefaultRoomName(message.guild),
+        type: ChannelType.GuildVoice,
+        parent: id
+    });
+
+    if (limit) {
+        await vc.setUserLimit(limit);
+    }
+
+    const room = new RoomRepository();
+    await room.createRoom({
+        room_id: vc.id,
+        guild_id: vc.guild.id,
+        name: vc.name,
+        is_autodelete: isDelete,
+        is_live: false,
+        is_private: false
+    });
+}
 /**
  * お部屋の人数制限を設定する
  * @param message
@@ -143,7 +181,7 @@ export async function team(message: Message, num: number, move: boolean): Promis
         return;
     }
 
-    const members = vc.members.map((m) => m.id);
+    const members = vc.members.filter((m) => !m.user.bot).map((m) => m.id);
     const rnd = getRndArray(members.length);
     const shuffleMembers = members.map((m, i) => members[rnd[i]]);
 
@@ -153,7 +191,7 @@ export async function team(message: Message, num: number, move: boolean): Promis
         teams.push({
             team: i % num,
             id: shuffleMembers[i],
-            name: vc.members.find((m) => m.id === shuffleMembers[i])?.user.displayName
+            name: vc.members.find((m) => m.id === shuffleMembers[i])?.displayName
         });
     }
 
