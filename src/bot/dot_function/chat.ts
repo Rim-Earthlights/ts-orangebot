@@ -57,7 +57,12 @@ export async function talk(
                 `${response.text}`
             ]
         });
-        await message.reply(response.text);
+        if (response.text.length > 2000) {
+            const chunks = response.text.match(new RegExp('.{1,' + 1800 + '}', 'g'));
+            chunks?.map(async (chunk) => await message.reply(chunk));
+        } else {
+            await message.reply(response.text);
+        }
     } catch (err) {
         const error = err as AxiosError;
         if (error.response?.status === 500) {

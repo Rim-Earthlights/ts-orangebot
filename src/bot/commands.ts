@@ -62,7 +62,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_3, GPTMode.NOPROMPT);
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4_TURBO_PREVIEW, GPTMode.NOPROMPT);
             break;
         }
         case 'gpt': {
@@ -647,6 +647,18 @@ export async function commandSelector(message: Message) {
                     }
 
                     await DotBotFunctions.Room.changeRoomSetting(message, 'live', roomName);
+                    break;
+                }
+                case 'create': {
+                    const categoryId: string | undefined = content[1];
+                    const roomName: string | undefined = content[2];
+                    const isDelete = !!content[3];
+
+                    if (!categoryId) {
+                        return;
+                    }
+
+                    await DotBotFunctions.Room.createRoom(message, categoryId, roomName, isDelete);
                     break;
                 }
                 case 'private': {
