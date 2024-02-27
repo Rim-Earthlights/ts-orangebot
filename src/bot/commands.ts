@@ -5,7 +5,10 @@ import {
     ChatInputCommandInteraction,
     CacheType,
     ChannelType,
-    BaseGuildVoiceChannel
+    BaseGuildVoiceChannel,
+    ButtonBuilder,
+    ButtonStyle,
+    ActionRowBuilder
 } from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
@@ -21,7 +24,7 @@ import { RoleRepository } from '../model/repository/roleRepository.js';
 import { RoleType } from '../model/models/role.js';
 import { ColorRepository } from '../model/repository/colorRepository.js';
 import { getDefaultRoomName } from './dot_function/voice.js';
-import { UsersType } from '../model/models/users.js';
+import { Users, UsersType } from '../model/models/users.js';
 import { Logger } from '../common/logger.js';
 import { LogLevel } from '../type/types.js';
 import { TOPIC } from '../constant/words/topic.js';
@@ -1229,6 +1232,91 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                 );
             await interaction.reply({ embeds: [send] });
             return;
+        }
+        case 'accept': {
+            if (!interaction.guild) {
+                return;
+            }
+            if (interaction.channel?.type === ChannelType.GuildText) {
+                const user = interaction.user;
+                await Logger.put({
+                    guild_id: interaction.guild.id,
+                    channel_id: interaction.channel.id,
+                    user_id: user.id,
+                    level: LogLevel.INFO,
+                    event: 'reaction-add',
+                    message: [`rule accepted: ${user.displayName}`]
+                });
+
+                const u = interaction.guild.members.cache.get(user.id);
+
+                if (!u) {
+                    console.error('user not found');
+                    return;
+                }
+
+                const roleRepository = new RoleRepository();
+
+                const r = await roleRepository.getRoleByName(interaction.guild.id, 'member');
+                if (!r) {
+                    console.error('role not found');
+                    return;
+                }
+                const userRole = u?.roles.cache.find((role) => role.id === r.role_id);
+
+                await Logger.put({
+                    guild_id: interaction.guild.id,
+                    channel_id: interaction.channel.id,
+                    user_id: user.id,
+                    level: LogLevel.INFO,
+                    event: 'role-check',
+                    message: [u?.roles.cache.map((role) => role.name).join(',')]
+                });
+                if (userRole) {
+                    const message = await interaction.reply({ content: `もうロールが付いてるみたい！`, ephemeral: true });
+                    setTimeout(async () => {
+                        await message.delete();
+                    }, 3000);
+                    return;
+                }
+
+                // add user role
+                await u?.roles.add(r.role_id);
+
+                // register user
+                const userRepository = new UsersRepository();
+                const userEntity = await userRepository.get(user.id);
+                if (!userEntity) {
+                    const saveUser: Partial<Users> = {
+                        id: user.id,
+                        user_name: user.displayName,
+                        pick_left: 10,
+                        voice_channel_data: [
+                            {
+                                gid: interaction.guild.id ?? 'DM',
+                                date: new Date()
+                            }
+                        ]
+                    };
+                    await userRepository.save(saveUser);
+                }
+                const name = u?.roles.cache.find((role) => role.name === 'member')?.name;
+                await Logger.put({
+                    guild_id: interaction.guild.id,
+                    channel_id: interaction.channel.id,
+                    user_id: user.id,
+                    level: LogLevel.INFO,
+                    event: 'add-role',
+                    message: name ? [name] : undefined
+                });
+
+                const message = await interaction.reply({ content: `読んでくれてありがと～！ロールを付与したよ！`, ephemeral: true });
+                setTimeout(async () => {
+                    await message.delete();
+                }, 3000);
+                return;
+            }
+            break;
         }
         default: {
             return;

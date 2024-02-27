@@ -9,13 +9,13 @@ import dotenv from 'dotenv';
 import 'dayjs/locale/ja.js';
 import { routers } from './routers.js';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
-import { CONFIG, ChatGPTModel } from './config/config.js';
+import { CONFIG } from './config/config.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { TypeOrm } from './model/typeorm/typeorm.js';
 import { ItemRepository } from './model/repository/itemRepository.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { initJob } from './job/job.js';
-import { checkUserType, switchFunctionByAPIKey } from './common/common.js';
+import { switchFunctionByAPIKey } from './common/common.js';
 import { GachaList } from './bot/function/gacha.js';
 import { reactionSelector } from './bot/reactions.js';
 import { SLASH_COMMANDS } from './constant/slashCommands.js';
@@ -23,7 +23,6 @@ import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
 import { Chat } from './bot/dot_function/index.js';
-import { UsersType } from './model/models/users.js';
 
 dotenv.config();
 

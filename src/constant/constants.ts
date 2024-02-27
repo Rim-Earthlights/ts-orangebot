@@ -24,7 +24,18 @@ export const ENABLE_FUNCTION: functions[] = [
 // 連携できるbot
 export const COORDINATION_ID = ['985704725016105000'];
 
-// Client
+export const EXCLUDE_ROOM = ['ロビー', '墓'];
+
+export const ICON = {
+    CROWN: ':crown:',
+    SPARKLES: ':sparkles:',
+    STAR: ':star:',
+    STAR2: ':star2:',
+    TICKETS: ':tickets:',
+    HEART: ':heart:'
+};
+
+    // Client
 export const DISCORD_CLIENT = new Client({
     partials: [Partials.User, Partials.Channel, Partials.Message, Partials.Reaction, Partials.GuildMember],
     intents: [
@@ -38,16 +49,6 @@ export const DISCORD_CLIENT = new Client({
     ]
 });
 
-export const EXCLUDE_ROOM = ['ロビー', '墓'];
-
-export const ICON = {
-    CROWN: ':crown:',
-    SPARKLES: ':sparkles:',
-    STAR: ':star:',
-    STAR2: ':star2:',
-    TICKETS: ':tickets:',
-    HEART: ':heart:'
-};
 
 export const HELP_COMMANDS = [
     new EmbedBuilder()
