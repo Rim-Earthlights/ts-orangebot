@@ -58,8 +58,17 @@ export async function talk(
             ]
         });
         if (response.text.length > 2000) {
-            const chunks = response.text.match(new RegExp('.{1,' + 1800 + '}', 'g'));
-            chunks?.map(async (chunk) => await message.reply(chunk));
+            const texts = response.text.split('\n');
+            let chunk = '';
+            for (const text of texts) {
+                if (chunk.length + text.length > 2000) {
+                    await message.reply(chunk + '\n');
+                    chunk = '';
+                } else {
+                    chunk += text + '\n';
+                }
+            }
+            await message.reply(chunk);
         } else {
             await message.reply(response.text);
         }

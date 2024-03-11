@@ -57,7 +57,27 @@ export async function talk(
                 `${response.text}`
             ]
         });
-        await interaction.editReply(response.text);
+
+        if (response.text.length > 2000) {
+            const texts = response.text.split('\n');
+            let message = '';
+            const chunks = [];
+            for (const text of texts) {
+                if (chunks[chunks.length - 1].length + text.length > 2000) {
+                    chunks.push(message);
+                    message = text + '\n';
+                } else {
+                    message += text + '\n';
+                }
+            }
+            await interaction.editReply(chunks.shift() ?? 'no response');
+            for (const chunk of chunks) {
+                await interaction.followUp({ content: chunk });
+            }
+        } else {
+            await interaction.editReply(response.text);
+        }
+
     } catch (err) {
         const error = err as AxiosError;
         if (error.response?.status === 500) {
