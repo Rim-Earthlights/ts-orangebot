@@ -94,6 +94,10 @@ export const SLASH_COMMANDS = [
         .addStringOption((option) => option.setName('reason').setDescription('事由').setRequired(true)),
     new SlashCommandBuilder().setName('topic').setDescription('ランダムなお題を表示します'),
     new SlashCommandBuilder().setName('accept').setDescription('ルールに同意します'),
+    new SlashCommandBuilder()
+        .setName('nickname')
+        .setDescription('あなたの呼び方を登録します')
+        .addStringOption((option) => option.setName('name').setDescription('呼び方').setRequired(true)),
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

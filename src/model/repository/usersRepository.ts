@@ -21,6 +21,15 @@ export class UsersRepository {
     }
 
     /**
+     * すべてのユーザを取得する.
+     * @returns Promise<Users[]>
+     */
+    public async getAll(): Promise<Models.Users[]> {
+        const user = await this.repository.find();
+        return user;
+    }
+
+    /**
      * ユーザを登録・更新する
      * @param user
      * @returns

@@ -19,6 +19,9 @@ export class Users extends BaseEntity {
     @Column({ type: 'varchar', width: 255, nullable: true })
     user_name: string | null = null;
 
+    @Column({ type: 'varchar', width: 255, nullable: true })
+    nickname: string | null = null;
+
     @Column({ type: 'varchar', nullable: false, default: 'member' })
     type!: UsersType;
 

@@ -963,6 +963,23 @@ export async function commandSelector(message: Message) {
 
             break;
         }
+        case 'nickname': {
+            const name = content[0];
+            if (!name) {
+                return;
+            }
+            if (message.guild) {
+                const usersRepository = new UsersRepository();
+                const user = await usersRepository.get(message.author.id);
+                if (!user) {
+                    await message.reply({ content: `あなたのことが登録されていないみたい……？` });
+                    return;
+                }
+                await usersRepository.save({ ...user, nickname: name });
+                await message.reply({ content: `はーい！これから「${name}」って呼ぶね～！` });
+            }
+            break;
+        }
         case 'user-type': {
             if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
@@ -1178,7 +1195,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     user_id: interaction.user.id,
                     level: LogLevel.INFO,
                     event: 'disconnect-user',
-                    message: [`disconnect ${member.user.displayName} by ${user.displayName}`]
+                    message: [`disconnect ${member.user.displayName} by ${interaction.user}`]
                 });
 
                 const send = new EmbedBuilder()
@@ -1318,6 +1335,23 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             }
             break;
         }
+        case 'nickname': {
+            const name = interaction.options.getString('name');
+            if (!name) {
+                return;
+            }
+            if (interaction.guild) {
+                const usersRepository = new UsersRepository();
+                const user = await usersRepository.get(interaction.user.id);
+                if (!user) {
+                    await interaction.reply({ content: `あなたのことが登録されていないみたい……？` });
+                    return;
+                }
+                await usersRepository.save({ ...user, nickname: name });
+                await interaction.reply({ content: `はーい！これから「${name}」って呼ぶね～！` });
+            }
+            break;
+        }
         default: {
             return;
         }
@@ -1342,8 +1376,25 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-    const channel = message.member?.voice.channel as VoiceBasedChannel;
-    await DotBotFunctions.Music.playMusic(channel);
+    // const channel = message.member?.voice.channel as VoiceBasedChannel;
+    // await DotBotFunctions.Music.playMusic(channel);
+
+    // ギルドユーザーを全て取得する
+    const userRepository = new UsersRepository();
+    const users = await userRepository.getAll();
+    const guild = message.guild;
+    if (!guild) {
+        return;
+    }
+    const members = await guild.members.fetch();
+    for (const [, member] of members) {
+        const user = users.find((u) => u.id === member.id);
+        if (!user) {
+            return;
+        }
+        user.nickname = member.displayName;
+        await userRepository.save(user);
+    }
 }
 
 /**
