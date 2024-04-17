@@ -4,5 +4,6 @@ node_modules/*
 *.log
 .node-version
 src/config/config.ts
+src/test.ts
 .data/*.data
 .vscode

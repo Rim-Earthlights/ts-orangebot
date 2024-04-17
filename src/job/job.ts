@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import dayjs from 'dayjs';
-import { GPT, GPTType } from '../constant/chat/chat.js';
+import { GPT } from '../constant/chat/chat.js';
 import { Logger } from '../common/logger.js';
 import { LogLevel } from '../type/types.js';
 
