@@ -1,7 +1,7 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember } from 'discord.js';
 import dayjs from 'dayjs';
 import { AxiosError } from 'axios';
-import { GPTMode, initalize } from '../../constant/chat/chat.js';
+import { GPT, GPTMode, initalize } from '../../constant/chat/chat.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 import { ChatGPTModel } from '../../config/config.js';
@@ -118,6 +118,16 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
         await interaction.reply({ embeds: [send] });
         return;
     }
-    chat.messages = [];
+    GPT.chat = GPT.chat.filter((c) => c.id !== id);
+    Logger.put({
+        guild_id: interaction.guild?.id,
+        channel_id: interaction.channel?.id,
+        user_id: interaction.user.id,
+        level: LogLevel.INFO,
+        event: 'ChatGPT',
+        message: [
+            `Delete: ${chat.id}`
+        ]
+    });
     await interaction.reply('会話データを削除したよ～！');
 }
