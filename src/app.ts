@@ -57,6 +57,37 @@ app.use((req, res) => {
     res.status(404).send({ status: 404, message: 'NOT FOUND' });
 });
 
+console.log('==================================================');
+
+// DBの初期化
+await TypeOrm.dataSource
+    .initialize()
+    .then(async () => {
+        // DBの初期化と再構築
+        await new ItemRepository().init(GACHA_LIST);
+        GachaList.allItemList = await new ItemRepository().getAll();
+        await Logger.put({
+            guild_id: undefined,
+            channel_id: undefined,
+            user_id: undefined,
+            level: LogLevel.SYSTEM,
+            event: 'db-init',
+            message: ['success']
+        });
+    })
+    .catch(async (e) => {
+        await Logger.put({
+            guild_id: undefined,
+            channel_id: undefined,
+            user_id: undefined,
+            level: LogLevel.SYSTEM,
+            event: 'db-init',
+            message: [e.message]
+        });
+        return;
+    });
+
+
 // launch server.
 app.listen(port, hostName);
 
@@ -65,7 +96,6 @@ app.listen(port, hostName);
  * Bot Process
  * =======================
  */
-console.log('==================================================');
 
 const commands = SLASH_COMMANDS.map((command) => command.toJSON());
 
@@ -80,32 +110,6 @@ DISCORD_CLIENT.once('ready', async () => {
     // APIキーによって有効無効を切り替える
     switchFunctionByAPIKey();
 
-    // DBの初期化
-    await TypeOrm.dataSource
-        .initialize()
-        .then(async () => {
-            // DBの初期化と再構築
-            await new ItemRepository().init(GACHA_LIST);
-            GachaList.allItemList = await new ItemRepository().getAll();
-            await Logger.put({
-                guild_id: undefined,
-                channel_id: undefined,
-                user_id: undefined,
-                level: LogLevel.SYSTEM,
-                event: 'db-init',
-                message: ['success']
-            });
-        })
-        .catch(async (e) => {
-            await Logger.put({
-                guild_id: undefined,
-                channel_id: undefined,
-                user_id: undefined,
-                level: LogLevel.SYSTEM,
-                event: 'db-init',
-                message: [e.message]
-            });
-        });
     // 定時バッチ処理 (cron)
     await initJob();
 
