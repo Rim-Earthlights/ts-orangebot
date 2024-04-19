@@ -592,6 +592,19 @@ export async function commandSelector(message: Message) {
             }
             break;
         }
+        case 'custom': {
+            const value = content[0];
+            if (!value) {
+                return;
+            }
+            if (value === 'start') {
+                await DotBotFunctions.Room.createTeamRoom(message);
+            }
+            if (value === 'end') {
+                await DotBotFunctions.Room.deleteTeamRoom(message);
+            }
+            return;
+        }
         case 'room': {
             const mode = content[0];
             const value = content[1];

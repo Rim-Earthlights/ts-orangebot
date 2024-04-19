@@ -1,4 +1,4 @@
-import { ChannelType, EmbedBuilder, Message } from 'discord.js';
+import { BaseGuildVoiceChannel, ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
 import { getDefaultRoomName } from './voice.js';
@@ -237,4 +237,100 @@ export async function team(message: Message, num: number, move: boolean): Promis
             }
         }
     }
+}
+
+/**
+ * カスタム用の部屋を作成する
+ * @param message
+ * @returns
+ */
+export async function createTeamRoom(message: Message) {
+    if (!message.guild) {
+        return;
+    }
+    if (message.channel.type === ChannelType.DM) {
+        await message.channel.send('DM内では使えない機能だよ！');
+    }
+    if (message.channel.type !== ChannelType.GuildVoice) {
+        return;
+    }
+    const parentId = message.channel.parentId;
+
+    if (!parentId) {
+        return;
+    }
+
+    const vcList = message.guild.channels.cache.filter((c) => c.type === ChannelType.GuildVoice && c.parentId === parentId);
+    if (vcList.find(v => v.name === 'アタッカー') && vcList.find(v => v.name === 'ディフェンダー')) {
+        await message.channel.send('既に部屋が作成されているよ！');
+        return;
+    }
+    const vc1 = await message.guild.channels.create({
+        name: 'アタッカー',
+        type: ChannelType.GuildVoice,
+        parent: parentId
+    });
+    const vc2 = await message.guild.channels.create({
+        name: 'ディフェンダー',
+        type: ChannelType.GuildVoice,
+        parent: parentId
+    });
+
+    const room = new RoomRepository();
+    await room.createRoom({
+        room_id: vc1.id,
+        guild_id: vc1.guild.id,
+        name: vc1.name,
+        is_autodelete: false,
+        is_live: false,
+        is_private: false
+    });
+    await room.createRoom({
+        room_id: vc2.id,
+        guild_id: vc2.guild.id,
+        name: vc2.name,
+        is_autodelete: false,
+        is_live: false,
+        is_private: false
+    });
+}
+
+/**
+ * カスタム用の部屋を削除する
+ * @param message
+ * @returns
+ */
+export async function deleteTeamRoom(message: Message) {
+    if (!message.guild) {
+        return;
+    }
+    if (message.channel.type === ChannelType.DM) {
+        await message.channel.send('DM内では使えない機能だよ！');
+    }
+    if (message.channel.type !== ChannelType.GuildVoice) {
+        return;
+    }
+    const parentId = message.channel.parentId;
+
+    if (!parentId) {
+        return;
+    }
+
+    const vcList = message.guild.channels.cache.filter((c) => c.type === ChannelType.GuildVoice && c.parentId === parentId);
+
+    await Promise.all(vcList.map(async (c) => {
+        const vc = c as BaseGuildVoiceChannel;
+        if (vc.name === 'アタッカー' || vc.name === 'ディフェンダー') {
+            if (vc.members.size > 0) {
+                await message.channel.send('部屋に人がいるよ！');
+                return;
+            }
+            const room = new RoomRepository();
+            await room.deleteRoom(vc.id);
+            await vc.delete();
+       }
+    }));
+
+    await message.channel.send('部屋を削除したよ！');
+    return;
 }
