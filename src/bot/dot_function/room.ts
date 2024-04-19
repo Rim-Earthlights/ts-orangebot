@@ -1,4 +1,4 @@
-import { BaseGuildVoiceChannel, ChannelType, EmbedBuilder, Message } from 'discord.js';
+import { BaseGuildVoiceChannel, ChannelType, Collection, EmbedBuilder, Message } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
 import { getDefaultRoomName } from './voice.js';
@@ -318,19 +318,20 @@ export async function deleteTeamRoom(message: Message) {
         return;
     }
 
-    const vcList = message.guild.channels.cache.filter((c) => c.type === ChannelType.GuildVoice && c.parentId === parentId);
+    const vcList = message.guild.channels.cache
+        .filter((c) => c.type === ChannelType.GuildVoice && c.parentId === parentId)
+        .filter((c) => c.name === 'アタッカー' || c.name === 'ディフェンダー') as Collection<string, BaseGuildVoiceChannel>;
+
+    if (vcList.find((c) => c.members.size > 0)) {
+        await message.channel.send('部屋に人がいるよ！');
+        return;
+    }
 
     await Promise.all(vcList.map(async (c) => {
         const vc = c as BaseGuildVoiceChannel;
-        if (vc.name === 'アタッカー' || vc.name === 'ディフェンダー') {
-            if (vc.members.size > 0) {
-                await message.channel.send('部屋に人がいるよ！');
-                return;
-            }
-            const room = new RoomRepository();
-            await room.deleteRoom(vc.id);
-            await vc.delete();
-       }
+        const room = new RoomRepository();
+        await room.deleteRoom(vc.id);
+        await vc.delete();
     }));
 
     await message.channel.send('部屋を削除したよ！');
