@@ -87,6 +87,10 @@ export const HELP_COMMANDS = [
                     'moveを指定するとチーム分け後にメンバーを移動します'
                 ].join('\n')
             },
+            {
+                name: '.custom [start / end]',
+                value: 'カスタム部屋の自動作成機能です. startで作成、endで削除します.'
+            },
             { name: '.choose [選択肢1] [選択肢2] ...', value: '選択肢をスペース区切りで入力するとランダムに選びます' }
         ),
     new EmbedBuilder()

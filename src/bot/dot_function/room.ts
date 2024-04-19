@@ -293,6 +293,8 @@ export async function createTeamRoom(message: Message) {
         is_live: false,
         is_private: false
     });
+
+    await message.channel.send('部屋を作成したよ！');
 }
 
 /**
