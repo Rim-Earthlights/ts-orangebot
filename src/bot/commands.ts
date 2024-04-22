@@ -65,7 +65,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4_TURBO_PREVIEW, GPTMode.NOPROMPT);
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4_TURBO, GPTMode.NOPROMPT);
             break;
         }
         case 'gpt': {

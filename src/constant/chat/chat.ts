@@ -26,8 +26,8 @@ export const getGPTModel = (modelName: ChatGPTModel): GPTModel => {
         case ChatGPTModel.GPT_4_32K:
             // 32k model is integrated into 8k model.
             return { modelName: ChatGPTModel.GPT_4, maxTokens: 32768 };
-        case ChatGPTModel.GPT_4_TURBO_PREVIEW:
-            return { modelName: ChatGPTModel.GPT_4_TURBO_PREVIEW, maxTokens: 128000 };
+        case ChatGPTModel.GPT_4_TURBO:
+            return { modelName: ChatGPTModel.GPT_4_TURBO, maxTokens: 128000 };
         case ChatGPTModel.GPT_4_VISION_PREVIEW:
             return { modelName: ChatGPTModel.GPT_4_VISION_PREVIEW, maxTokens: 128000 };
         default:
