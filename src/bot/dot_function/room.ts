@@ -3,6 +3,8 @@ import { getRndArray } from '../../common/common.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
 import { getDefaultRoomName } from './voice.js';
 
+const teamName = ['赤', '青', '黄', '緑', '紫', '桃', '茶', '白', 'アタッカー', 'ディフェンダー'];
+
 /**
  * お部屋の名前を変更する
  * @param message Message
