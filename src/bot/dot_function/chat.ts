@@ -1,34 +1,21 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
-import axios, { AxiosError } from 'axios';
-import { GPT, GPTMode, initalize } from '../../constant/chat/chat.js';
+import { GPTMode, Role, gptList, initalize } from '../../constant/chat/chat.js';
+import { ChatGPTModel } from '../../config/config.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
-import { CONFIG, ChatGPTModel } from '../../config/config.js';
 
 /**
  * ChatGPTで会話する
  */
-export async function talk(
-    message: Message,
-    content: string,
-    model: ChatGPTModel,
-    mode: GPTMode = GPTMode.DEFAULT,
-    retryCount = 0
-) {
-    const id = message.guild?.id ?? message.author.id;
-
-    // ChatGPTが初期化されていない場合は初期化
-    const chat = await initalize(id, Boolean(!message.guild), mode, model);
-    if (chat.mode !== mode) {
-        chat.messages = [];
-        chat.mode = mode;
+export async function talk(message: Message, content: string, model: ChatGPTModel, mode: GPTMode) {
+    const { id, isGuild } = getIdInfo(message);
+    let gpt = gptList.gpt.find(c => c.id === id);
+    if (!gpt) {
+        gpt = await initalize(id, model, mode, isGuild);
+        gptList.gpt.push(gpt);
     }
-
-    let parentMessageId: string | undefined = undefined;
-    if (chat.messages.length > 0) {
-        parentMessageId = chat.messages[chat.messages.length - 1].id;
-    }
+    const openai = gpt.openai;
 
     const systemContent = {
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
@@ -37,112 +24,79 @@ export async function talk(
 
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
-    try {
-        const response = await chat.GPT.sendMessage(sendContent, {
-            parentMessageId: parentMessageId
+    gpt.chat.push({
+            role: Role.USER,
+            content: sendContent
         });
-        chat.messages.push({ id: response.id, message: content });
-        chat.timestamp = dayjs();
-        await Logger.put({
-            guild_id: message.guild?.id,
-            channel_id: message.channel.id,
-            user_id: message.author.id,
-            level: LogLevel.INFO,
-            event: 'ChatGPT',
-            message: [
-                `ParentId: ${parentMessageId}, ResponseId: ${response.id}`,
-                `Usage: ${JSON.stringify(response.detail?.usage)}`,
-                `Model: ${response.detail?.model}`,
-                `Response:`,
-                `${response.text}`
-            ]
-        });
-        if (response.text.length > 2000) {
-            const texts = response.text.split('\n');
-            let chunk = '';
-            for (const text of texts) {
-                if (chunk.length + text.length > 2000) {
-                    await message.reply(chunk + '\n');
-                    chunk = '';
-                } else {
-                    chunk += text + '\n';
-                }
-            }
-            await message.reply(chunk);
-        } else {
-            await message.reply(response.text);
-        }
-    } catch (err) {
-        const error = err as AxiosError;
-        if (error.response?.status === 500) {
-            const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
-            await message.reply({ embeds: [send] });
-        }
 
-        if (error.response?.status === 502) {
-            // 502 Bad Gateway
-            if (retryCount > 2) {
-                const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
-                await message.reply({ embeds: [send] });
-                return;
-            }
-            setTimeout(() => null, 200);
-            await talk(message, content, model, mode);
-            return;
-        }
+    const response = await openai.chat.completions.create({
+        model: model,
+        messages: gpt.chat,
+    });
 
-        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(error.message);
+    const completion = response.choices[0].message;
+
+    if (!completion.content) {
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`contentがnull`);
         await message.reply({ embeds: [send] });
+        return;
     }
-}
 
-export async function generatePicture(message: Message, prompt: string): Promise<void> {
-    try {
-        const response = await axios.post(
-            'https://api.openai.com/v1/images/generations',
-            {
-                prompt: prompt,
-                n: 1,
-                response_format: 'url',
-                size: '1024x1024'
-            },
-            {
-                headers: { Authorization: `Bearer ${CONFIG.OPENAI.KEY}` }
+    gpt.chat.push({ role: Role.ASSISTANT, content: completion.content });
+    gpt.timestamp = dayjs();
+
+    if (completion.content.length > 2000) {
+        const texts = completion.content.split('\n');
+        let chunk = '';
+        for (const text of texts) {
+            if (chunk.length + text.length > 2000) {
+                await message.reply(chunk + '\n');
+                chunk = '';
+            } else {
+                chunk += text + '\n';
             }
-        );
-
-        const data = response.data as PictureResponse;
-
-        const send = new EmbedBuilder().setColor('#00cccc').setTitle(`生成写真`).setImage(data.data[0].url);
-
-        message.reply({ embeds: [send] });
-    } catch (e) {
-        const error = e as Error;
-        message.reply(error.message);
+        }
+        await message.reply(chunk);
+    } else {
+        await message.reply(completion.content);
     }
+
+    await Logger.put({
+        guild_id: message.guild?.id,
+        channel_id: message.channel.id,
+        user_id: message.author.id,
+        level: LogLevel.INFO,
+        event: 'ChatGPT',
+        message: [
+            `ResponseId: ${response.id}`,
+            `Usage: ${JSON.stringify(response.usage)}`,
+            `Model: ${response.model}`,
+            `Response:`,
+            `${completion.content}`
+        ]
+    });
 }
 
-/**
- * ChatGPTの会話データの削除
- */
 export async function deleteChatData(message: Message, idx?: string) {
-    const id = message.guild?.id ?? message.author.id;
+    const { id } = getIdInfo(message);
 
-    // ChatGPT初期化
-    const chat = await initalize(id, Boolean(!message.guild));
+    const gpt = gptList.gpt.find(c => c.id === id);
+    if (!gpt) {
+        return;
+    }
 
     if (idx != undefined) {
-        const eraseData = chat.messages[chat.messages.length - 1];
-        chat.messages.splice(chat.messages.length - 1, 1);
+        const eraseData = gpt.chat[gpt.chat.length - 1];
+        gpt.chat.splice(gpt.chat.length - 1, 1);
 
         const send = new EmbedBuilder()
             .setColor('#00cc00')
             .setTitle(`直前の会話データを削除したよ～！`)
-            .setDescription(`会話データ: \ncid: ${eraseData.cid}\nid: ${eraseData.id}\nmessage: ${eraseData.message}`);
+            .setDescription(`会話データ: \ncid: ${gpt.id}\nmessage: ${eraseData.content}`);
         await message.reply({ embeds: [send] });
         return;
     }
-    GPT.chat = GPT.chat.filter((c) => c.id !== id);
+    gptList.gpt = gptList.gpt.filter((c) => c.id !== id);
     Logger.put({
         guild_id: message.guild?.id,
         channel_id: message.channel.id,
@@ -150,15 +104,16 @@ export async function deleteChatData(message: Message, idx?: string) {
         level: LogLevel.INFO,
         event: 'ChatGPT',
         message: [
-            `Delete: ${chat.id}`
+            `Delete: ${gpt.id}`
         ]
     });
     await message.reply('会話データを削除したよ～！');
 }
 
-type PictureResponse = {
-    created: Date;
-    data: {
-        url: string;
-    }[];
-};
+function getIdInfo(message: Message) {
+    const guild = message.guild;
+    if (!guild) {
+        return { id: message.channel.id, isGuild: false, };
+    }
+    return { id: guild.id, isGuild: true, };
+}

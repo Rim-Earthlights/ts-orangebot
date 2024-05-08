@@ -127,12 +127,9 @@ export async function createRoom(
     const vc = await message.guild.channels.create({
         name: roomName ?? getDefaultRoomName(message.guild),
         type: ChannelType.GuildVoice,
+        userLimit: limit ?? 50,
         parent: id
     });
-
-    if (limit) {
-        await vc.setUserLimit(limit);
-    }
 
     const room = new RoomRepository();
     await room.createRoom({
@@ -246,7 +243,7 @@ export async function team(message: Message, num: number, move: boolean): Promis
  * @param message
  * @returns
  */
-export async function createTeamRoom(message: Message) {
+export async function createTeamRoom(message: Message, team: number, limit: number) {
     if (!message.guild) {
         return;
     }
@@ -262,39 +259,33 @@ export async function createTeamRoom(message: Message) {
         return;
     }
 
+    const t = Number.isNaN(team) ? 2 : team > 8 ? 8 : team;
+    const l = Number.isNaN(limit) ? 10 : limit;
+
     const vcList = message.guild.channels.cache.filter((c) => c.type === ChannelType.GuildVoice && c.parentId === parentId);
-    if (vcList.find(v => v.name === 'アタッカー') && vcList.find(v => v.name === 'ディフェンダー')) {
+    if (vcList.find(v => v.name === '赤')) {
         await message.channel.send('既に部屋が作成されているよ！');
         return;
     }
-    const vc1 = await message.guild.channels.create({
-        name: 'アタッカー',
-        type: ChannelType.GuildVoice,
-        parent: parentId
-    });
-    const vc2 = await message.guild.channels.create({
-        name: 'ディフェンダー',
-        type: ChannelType.GuildVoice,
-        parent: parentId
-    });
 
     const room = new RoomRepository();
-    await room.createRoom({
-        room_id: vc1.id,
-        guild_id: vc1.guild.id,
-        name: vc1.name,
-        is_autodelete: false,
-        is_live: false,
-        is_private: false
-    });
-    await room.createRoom({
-        room_id: vc2.id,
-        guild_id: vc2.guild.id,
-        name: vc2.name,
-        is_autodelete: false,
-        is_live: false,
-        is_private: false
-    });
+
+    for (let i = 0; i < t; i++) {
+        const vc = await message.guild.channels.create({
+            name: teamName[i],
+            type: ChannelType.GuildVoice,
+            userLimit: l,
+            parent: parentId
+        });
+        await room.createRoom({
+            room_id: vc.id,
+            guild_id: vc.guild.id,
+            name: vc.name,
+            is_autodelete: false,
+            is_live: false,
+            is_private: false
+        });
+    }
 
     await message.channel.send('部屋を作成したよ！');
 }
@@ -304,7 +295,7 @@ export async function createTeamRoom(message: Message) {
  * @param message
  * @returns
  */
-export async function deleteTeamRoom(message: Message) {
+export async function deleteTeamRoom(message: Message, force: boolean) {
     if (!message.guild) {
         return;
     }
@@ -322,11 +313,13 @@ export async function deleteTeamRoom(message: Message) {
 
     const vcList = message.guild.channels.cache
         .filter((c) => c.type === ChannelType.GuildVoice && c.parentId === parentId)
-        .filter((c) => c.name === 'アタッカー' || c.name === 'ディフェンダー') as Collection<string, BaseGuildVoiceChannel>;
+        .filter((c) => teamName.includes(c.name)) as Collection<string, BaseGuildVoiceChannel>;
 
-    if (vcList.find((c) => c.members.size > 0)) {
-        await message.channel.send('部屋に人がいるよ！');
-        return;
+    if (!force) {
+        if (vcList.find((c) => c.members.size > 0)) {
+            await message.channel.send('部屋に人がいるよ！');
+            return;
+        }
     }
 
     await Promise.all(vcList.map(async (c) => {
