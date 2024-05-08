@@ -5,11 +5,7 @@ import {
     ChatInputCommandInteraction,
     CacheType,
     ChannelType,
-    BaseGuildVoiceChannel,
-    ButtonBuilder,
-    ButtonStyle,
-    ActionRowBuilder
-} from 'discord.js';
+    BaseGuildVoiceChannel} from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
 import * as BotFunctions from './function/index.js';
@@ -79,7 +75,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
             break;
         }
         case 'g3': {
@@ -93,7 +89,7 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G3_MODEL);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G3_MODEL, GPTMode.DEFAULT);
             break;
         }
         case 'g4': {
@@ -108,7 +104,7 @@ export async function commandSelector(message: Message) {
             }
 
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL as ChatGPTModel);
+            await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL as ChatGPTModel, GPTMode.DEFAULT);
             break;
         }
         case 'pic': {
@@ -122,9 +118,7 @@ export async function commandSelector(message: Message) {
                 message.reply({ content: `機能が有効化されてないよ！(picture)`, embeds: [send] });
                 return;
             }
-
-            const chat = content.join(' ');
-            await DotBotFunctions.Chat.generatePicture(message, chat);
+            // await DotBotFunctions.Chat.generatePicture(message, chat);
             break;
         }
         case 'topic': {
@@ -594,14 +588,16 @@ export async function commandSelector(message: Message) {
         }
         case 'custom': {
             const value = content[0];
+            const team = Number(content[1]);
+            const limit = Number(content[2]);
             if (!value) {
                 return;
             }
             if (value === 'start') {
-                await DotBotFunctions.Room.createTeamRoom(message);
+                await DotBotFunctions.Room.createTeamRoom(message, team, limit);
             }
             if (value === 'end') {
-                await DotBotFunctions.Room.deleteTeamRoom(message);
+                await DotBotFunctions.Room.deleteTeamRoom(message, !!content[1]);
             }
             return;
         }
@@ -922,7 +918,7 @@ export async function commandSelector(message: Message) {
             const userRepository = new UsersRepository();
             const logRepository = new LogRepository();
 
-            const members = await message.guild?.members.fetch();
+            const members = await message.guild.members.fetch();
             if (!members) {
                 return;
             }
@@ -935,6 +931,7 @@ export async function commandSelector(message: Message) {
                 if (!user) {
                     return;
                 }
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const lastJoin = await logRepository.getLastCallJoinDate(message.guild!.id, user.id);
                 if (!lastJoin) {
                     return;
@@ -1114,7 +1111,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.deferReply();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL);
+            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
             break;
         }
         case 'g3': {
@@ -1130,7 +1127,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.deferReply();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G3_MODEL);
+            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G3_MODEL, GPTMode.DEFAULT);
             break;
         }
         case 'g4': {
@@ -1146,7 +1143,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             await interaction.deferReply();
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const text = interaction.options.getString('text')!;
-            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL);
+            await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL, GPTMode.DEFAULT);
             break;
         }
         case 'erase': {
@@ -1236,8 +1233,11 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                 return;
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const user = interaction.options.getUser('user')!;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const time = interaction.options.getNumber('time')!;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const reason = interaction.options.getString('reason')!;
             const member = guild.members.cache.find((member) => member.id === user.id);
 

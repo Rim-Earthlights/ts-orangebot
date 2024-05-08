@@ -1,133 +1,63 @@
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'chatgpt';
-import dayjs from 'dayjs';
-import { CONFIG, ChatGPTModel } from '../../config/config.js';
+import { OpenAI } from 'openai';
 import { CHATBOT_TEMPLATE } from '../constants.js';
-import { Logger } from '../../common/logger.js';
-import { LogLevel } from '../../type/types.js';
+import { CONFIG, ChatGPTModel } from '../../config/config.js';
+import dayjs from 'dayjs';
+import { ChatCompletionMessageParam } from 'openai/resources';
 
-type GPTModel = {
-    modelName: ChatGPTModel;
-    maxTokens: number;
-};
+export const gptList = { gpt: [] as ChatGPT[] };
 
-/**
- * GPTモデル取得
- * @param modelName
- * @returns
- */
-export const getGPTModel = (modelName: ChatGPTModel): GPTModel => {
-    switch (modelName) {
-        case ChatGPTModel.GPT_3:
-            return { modelName: ChatGPTModel.GPT_3, maxTokens: 4096 };
-        case ChatGPTModel.GPT_3_16K:
-            return { modelName: ChatGPTModel.GPT_3_16K, maxTokens: 16384 };
-        case ChatGPTModel.GPT_4:
-            return { modelName: ChatGPTModel.GPT_4, maxTokens: 8192 };
-        case ChatGPTModel.GPT_4_32K:
-            // 32k model is integrated into 8k model.
-            return { modelName: ChatGPTModel.GPT_4, maxTokens: 32768 };
-        case ChatGPTModel.GPT_4_TURBO:
-            return { modelName: ChatGPTModel.GPT_4_TURBO, maxTokens: 128000 };
-        case ChatGPTModel.GPT_4_VISION_PREVIEW:
-            return { modelName: ChatGPTModel.GPT_4_VISION_PREVIEW, maxTokens: 128000 };
-        default:
-            return { modelName: ChatGPTModel.GPT_3, maxTokens: 4096 };
-    }
-};
-
-/**
- * ChatGPTの初期化
- * @param id
- */
-export async function initalize(
-    id: string,
-    isDM: boolean,
-    mode?: GPTMode,
-    modelName?: ChatGPTModel
-): Promise<GPTChatData> {
-    const model = getGPTModel(modelName ?? ChatGPTModel.GPT_3);
-    const chat = GPT.chat.find((c) => c.id === id);
-    if (!chat) {
-        GPT.chat.push({
-            id: id,
-            GPT: initGPT(mode ? mode : GPTMode.DEFAULT, model),
-            mode: mode ? mode : GPTMode.DEFAULT,
-            type: isDM ? GPTType.USER : GPTType.GUILD,
-            messages: [],
-            timestamp: dayjs()
-        });
-        await Logger.put({
-            guild_id: isDM ? undefined : id,
-            channel_id: undefined,
-            user_id: isDM ? id : undefined,
-            level: LogLevel.INFO,
-            event: 'init-gpt',
-            message: [`Model: ${modelName}, Token: ${model.maxTokens}`]
-        });
-        // chat is pushed, so it is not undefined
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return GPT.chat.find((c) => c.id === id)!;
-    }
-    if (mode && chat.mode !== mode) {
-        await Logger.put({
-            guild_id: isDM ? undefined : id,
-            channel_id: undefined,
-            user_id: isDM ? id : undefined,
-            level: LogLevel.INFO,
-            event: 'gpt: type-change',
-            message: [`Model: ${modelName}, Token: ${model.maxTokens}, Type: ${mode}`]
-        });
-        chat.mode = mode ? mode : GPTMode.DEFAULT;
-        chat.GPT = initGPT(mode ? mode : GPTMode.DEFAULT, model);
-    }
-    return chat;
-}
-
-/**
- * GPTAPIの初期化
- * @param mode
- * @param model
- * @returns
- */
-const initGPT = (mode: GPTMode, model: GPTModel): ChatGPTAPI | ChatGPTUnofficialProxyAPI => {
-    return new ChatGPTAPI({
+export async function initalize(id: string, model: ChatGPTModel, mode: GPTMode, isGuild: boolean) {
+    const openai = new OpenAI({
+        organization: CONFIG.OPENAI.ORG,
+        project: CONFIG.OPENAI.PROJECT,
         apiKey: CONFIG.OPENAI.KEY,
-        maxModelTokens: model.maxTokens,
-        completionParams: {
-            model: model.modelName
-        },
-        systemMessage: mode === GPTMode.DEFAULT ? CHATBOT_TEMPLATE : undefined
+        maxRetries: 3,
     });
-};
-
-/**
- * GPTの会話データ
- */
-export const GPT = {
-    chat: [] as GPTChatData[]
-};
-
-/**
- * GPTの会話データ構造体
- */
-export interface GPTChatData {
-    id: string;
-    GPT: ChatGPTAPI | ChatGPTUnofficialProxyAPI;
-    mode: GPTMode;
-    type: GPTType;
-    messages: {
-        cid?: string;
-        id: string;
-        message: string;
-    }[];
-    timestamp: dayjs.Dayjs;
+    const gpt: ChatGPT = {
+        id,
+        openai: openai,
+        model: model,
+        chat: [],
+        isGuild: isGuild,
+        timestamp: dayjs(),
+    };
+    if(mode === GPTMode.DEFAULT) {
+        gpt.chat.push({
+            role: Role.SYSTEM,
+            content: CHATBOT_TEMPLATE
+        });
+    }
+    return gpt;
 }
+
+export type ChatGPT = {
+    id: string;
+    openai: OpenAI;
+    model: ChatGPTModel;
+    chat: ChatCompletionMessageParam[];
+    isGuild: boolean;
+    timestamp: dayjs.Dayjs;
+};
 
 export enum GPTMode {
     DEFAULT = 'default',
-    NOPROMPT = 'NOPROMPT'
+    NOPROMPT = 'no_prompt'
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type VisionMessage = {
+    role: Role;
+    content: VisionContent;
 }
-export enum GPTType {
-    GUILD = 'GUILD',
-    USER = 'USER'
-}
+
+type VisionContent = {
+    type: 'text' | 'image_url';
+    text?: string;
+    image_url?: { url: string };
+};
+
+export enum Role {
+    SYSTEM = 'system',
+    USER = 'user',
+    ASSISTANT = 'assistant',
+};
