@@ -23,6 +23,7 @@ import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
 import { Chat } from './bot/dot_function/index.js';
+import { GPTMode } from './constant/chat/chat.js';
 
 dotenv.config();
 
@@ -216,7 +217,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     }
 
     if (message.channel.type === ChannelType.DM) {
-        await Chat.talk(message, message.cleanContent, CONFIG.OPENAI.DEFAULT_MODEL);
+        await Chat.talk(message, message.cleanContent, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
         return;
     }
 });

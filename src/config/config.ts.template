@@ -46,6 +46,9 @@ export const CONFIG = {
     // TOKEN:
     // GET > https://chat.openai.com/api/auth/session and find accessToken
     OPENAI: {
+        /// org id / project id (optional)
+        ORG: undefined,
+        PROJECT: undefined,
         // if disabled, still empty.
         KEY: '',
         // default model
