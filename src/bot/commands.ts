@@ -50,6 +50,20 @@ export async function commandSelector(message: Message) {
             await debug(message, content);
             break;
         }
+        case 'speech': {
+            if (!isEnableFunction(functionNames.GPT_WITHOUT_KEY)) {
+                const send = new EmbedBuilder()
+                    .setColor('#ff0000')
+                    .setTitle(`エラー`)
+                    .setDescription(`機能が有効化されていません。`);
+
+                message.reply({ content: `機能が有効化されてないよ！(GPT_WITHOUT_KEY)`, embeds: [send] });
+                return;
+            }
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.speech(message, chat);
+            break;
+        }
         case 'gpt-no-system': {
             if (!isEnableFunction(functionNames.GPT_WITHOUT_KEY)) {
                 const send = new EmbedBuilder()
@@ -109,7 +123,7 @@ export async function commandSelector(message: Message) {
         }
         case 'pic': {
             // eslint-disable-next-line no-constant-condition
-            if (true) {
+            if (!isEnableFunction(functionNames.GPT)) {
                 const send = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle(`エラー`)
@@ -118,7 +132,8 @@ export async function commandSelector(message: Message) {
                 message.reply({ content: `機能が有効化されてないよ！(picture)`, embeds: [send] });
                 return;
             }
-            // await DotBotFunctions.Chat.generatePicture(message, chat);
+            const chat = content.join(' ');
+            await DotBotFunctions.Chat.generatePicture(message, chat);
             break;
         }
         case 'topic': {

@@ -35,7 +35,7 @@ export const ICON = {
     HEART: ':heart:'
 };
 
-    // Client
+// Client
 export const DISCORD_CLIENT = new Client({
     partials: [Partials.User, Partials.Channel, Partials.Message, Partials.Reaction, Partials.GuildMember],
     intents: [
@@ -284,6 +284,7 @@ export const CHATBOT_TEMPLATE = [
     '- You usually speak in Japanese, if necessary can speak in English.',
     '- Please break lines moderately in your reply if necessary.',
     '- My name is "華日咲(かじつさき) みかん" and my nickname is "みかんちゃん".',
+    '- Your id is "<@985693983055437864>".',
     '- the first person is "私".',
     '- My gender is "female" and my personality is "cheerful, energetic and active".',
     '- Her tone of voice is that of a cute little girl, and she tends to lengthen the end of words.',
@@ -305,7 +306,7 @@ export const CHATBOT_TEMPLATE = [
     //   '- Please respond appropriately to sexual topics.',
     '',
     'Format sent by user:',
-    "- 1st line: { user: <@user_id> or 'system', date: @datetime }",
+    "- 1st line: { user: { mention_id: string, name: string }[], date: datetime, weather?: { name: string, value: string }[] }",
     "- 2nd and subsequent lines: user's statement",
     '- The first line of information sent by the user is private information. It is not included in the response.',
     '```'

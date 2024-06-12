@@ -2,7 +2,7 @@ import Express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { ChannelType, Message, REST, Routes } from 'discord.js';
+import { ChannelType, EmbedBuilder, Message, REST, Routes, TextChannel } from 'discord.js';
 import { commandSelector, interactionSelector } from './bot/commands.js';
 import { wordSelector } from './bot/mention.js';
 import dotenv from 'dotenv';
@@ -206,7 +206,10 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
 
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
-        await wordSelector(message);
+        if (message.content.startsWith(`<@${DISCORD_CLIENT.user?.id}>`)) {
+            await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
+        }
+        // await wordSelector(message);
         return;
     }
 
@@ -217,7 +220,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     }
 
     if (message.channel.type === ChannelType.DM) {
-        await Chat.talk(message, message.cleanContent, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
+        await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
         return;
     }
 });

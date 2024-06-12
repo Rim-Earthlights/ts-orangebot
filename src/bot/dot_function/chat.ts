@@ -1,9 +1,12 @@
-import { EmbedBuilder, Message } from 'discord.js';
+import { AttachmentBuilder, EmbedBuilder, Message } from 'discord.js';
 import dayjs from 'dayjs';
 import { GPTMode, Role, gptList, initalize } from '../../constant/chat/chat.js';
-import { ChatGPTModel } from '../../config/config.js';
+import { ChatGPTModel, CONFIG } from '../../config/config.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import { ChatCompletionContentPart } from 'openai/resources/index.js';
+import OpenAI from 'openai';
+import { Forecast } from './index.js';
 
 /**
  * ChatGPTで会話する
@@ -16,18 +19,78 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
         gptList.gpt.push(gpt);
     }
     const openai = gpt.openai;
+    let weather = undefined;
+
+    if (content.includes(`天気`)) {
+        const cityName = await Forecast.getPref(message.author.id);
+        if (!cityName) {
+            weather = { error: 'weather not register, please enter `.reg pref [pref_name]`' };
+        }
+        else {
+            const when = message.content.match(/今日|明日|明後日|\d日後/);
+            let day = 0;
+            if (when != null) {
+                if (when[0] === '明日') {
+                    day++;
+                }
+                else if (when[0] === '明後日') {
+                    day += 2;
+                }
+                else if (when[0].includes('日後')) {
+                    const d = when[0].replace('日後', '');
+                    day = Number(d);
+                }
+            }
+            weather = await Forecast.weatherJson(message, [cityName, day.toString()]);
+        }
+    }
+
+    const user = message.mentions.users.map(u => {
+        return {
+            mention_id: `<@${u.id}>`,
+            name: u.displayName
+        }
+    });
+    if (!user.find(u => u.mention_id === `<@${message.author.id}>`)) {
+        user.push({
+            mention_id: `<@${message.author.id}>`,
+            name: message.author.displayName
+        });
+    }
 
     const systemContent = {
+        user,
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
-        user: `<@${message.author.id}>`
+        weather,
     };
 
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
-    gpt.chat.push({
+    if (message.attachments) {
+        const attachmentUrls = message.attachments.filter(a => a.height && a.width).map(a => a.url);
+        const urls = attachmentUrls.map(u => ({ type: 'image_url', image_url: { url: u }}));
+        gpt.chat.push({
+            role: Role.USER,
+            content: [{ type: 'text', text: sendContent }, ...urls] as Array<ChatCompletionContentPart>
+        });
+    } else {
+        gpt.chat.push({
             role: Role.USER,
             content: sendContent
         });
+    }
+
+    await Logger.put({
+        guild_id: message.guild?.id,
+        channel_id: message.channel.id,
+        user_id: message.author.id,
+        level: LogLevel.INFO,
+        event: 'ChatGPT',
+        message: [
+            `Request:`,
+            sendContent
+        ]
+    });
 
     const response = await openai.chat.completions.create({
         model: model,
@@ -75,6 +138,57 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
             `${completion.content}`
         ]
     });
+}
+
+/**
+ * テキストから音声を出力する
+ * @param message
+ * @param chat
+ */
+export async function speech(message: Message, chat: string) {
+    const openai = new OpenAI({
+        organization: CONFIG.OPENAI.ORG,
+        project: CONFIG.OPENAI.PROJECT,
+        apiKey: CONFIG.OPENAI.KEY,
+        maxRetries: 3,
+    });
+    const response = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: "nova",
+        input: chat,
+    });
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const attachment = new AttachmentBuilder(buffer, { name: 'speech.mp3' });
+    await message.reply({ files: [attachment] });
+}
+
+/**
+ * プロンプトから画像を生成する
+ * @param message
+ * @param chat
+ * @returns
+ */
+export async function generatePicture(message: Message<boolean>, chat: string) {
+    const openai = new OpenAI({
+        organization: CONFIG.OPENAI.ORG,
+        project: CONFIG.OPENAI.PROJECT,
+        apiKey: CONFIG.OPENAI.KEY,
+        maxRetries: 3,
+    });
+    const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: chat,
+        n: 1,
+        size: "1024x1024",
+      });
+    const image_url = response.data[0].url;
+
+    if (!image_url) {
+        return;
+    }
+
+    const send = new EmbedBuilder().setColor('#00cccc').setTitle(`出力画像`).setImage(image_url);
+    message.reply({ embeds: [send] });
 }
 
 export async function deleteChatData(message: Message, idx?: string) {

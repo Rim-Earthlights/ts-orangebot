@@ -26,8 +26,8 @@ export async function talk(
     const openai = gpt.openai;
 
     const systemContent = {
+        user: [{ mention_id: `<@${interaction.user.id}>`, name: interaction.user.displayName }],
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
-        user: `<@${interaction.user.id}>`
     };
 
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;

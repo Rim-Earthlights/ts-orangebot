@@ -79,7 +79,7 @@ export class UsersRepository {
     public async addPickLeft(): Promise<void> {
         const users = await this.repository.find();
         const saveUsers = users.map((u) => {
-            if (u.pick_left < 70) {
+            if (u.pick_left < 30) {
                 return { ...u, pick_left: u.pick_left + 10 };
             } else {
                 return { ...u };

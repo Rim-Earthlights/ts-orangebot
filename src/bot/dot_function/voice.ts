@@ -70,7 +70,8 @@ export async function joinVoiceChannel(guild: Guild, userId: string, voiceState:
             const vc = await guild.channels.create({
                 name: getDefaultRoomName(guild),
                 type: ChannelType.GuildVoice,
-                userLimit: 30,
+                bitrate: 96000,
+                userLimit: 99,
                 parent: parent
             });
             const room = new RoomRepository();
@@ -78,6 +79,7 @@ export async function joinVoiceChannel(guild: Guild, userId: string, voiceState:
                 room_id: vc.id,
                 guild_id: vc.guild.id,
                 name: vc.name,
+
                 is_autodelete: true,
                 is_live: false,
                 is_private: false
