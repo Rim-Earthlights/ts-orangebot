@@ -5,7 +5,8 @@ import {
     DiscordGatewayAdapterCreator,
     entersState,
     getVoiceConnection,
-    joinVoiceChannel
+    joinVoiceChannel,
+    StreamType
 } from '@discordjs/voice';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import pldl, { SpotifyAlbum, SpotifyTrack } from 'play-dl';
@@ -19,6 +20,7 @@ import { getPlaylistItems } from '../request/youtube.js';
 import { Music, PlayerData } from '../../constant/music/music.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import ytdl from 'ytdl-core';
 
 /**
  * キューに音楽を追加する
@@ -617,10 +619,10 @@ export async function playMusic(channel: VoiceBasedChannel) {
         }
 
         const p = await updateAudioPlayer(channel);
-        const stream = await pldl.stream(playing.url, { discordPlayerCompatibility: true });
+        const stream = ytdl(playing.url, { filter: "audioonly", liveBuffer: 0, quality: "lowestaudio" });
 
-        const resource = createAudioResource(stream.stream, {
-            inputType: stream.type
+        const resource = createAudioResource(stream, {
+            inputType: StreamType.WebmOpus
         });
 
         if (info?.silent === 0) {
