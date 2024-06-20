@@ -22,7 +22,7 @@ import { SLASH_COMMANDS } from './constant/slashCommands.js';
 import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
-import { Chat } from './bot/dot_function/index.js';
+import { Chat, Room } from './bot/dot_function/index.js';
 import { GPTMode } from './constant/chat/chat.js';
 
 dotenv.config();
@@ -212,6 +212,13 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         // await wordSelector(message);
         return;
     }
+
+    if (message.mentions.users.size >= 1) {
+        if (message.channel.type === ChannelType.GuildVoice) {
+            await Room.updateRoomSettings(message.channel, message.mentions.users.map(u => u));
+        }
+    }
+
 
     // command
     if (message.content.startsWith('.')) {

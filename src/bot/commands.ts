@@ -677,18 +677,12 @@ export async function commandSelector(message: Message) {
                     break;
                 }
                 case 'create': {
-                    const categoryId: string | undefined = content[1];
-                    const roomName: string | undefined = content[2];
-                    const isDelete = !!content[3];
-
-                    if (!categoryId) {
-                        return;
-                    }
-
-                    await DotBotFunctions.Room.createRoom(message, categoryId, roomName, isDelete);
+                    const roomName: string | undefined = content[1];
+                    await DotBotFunctions.Room.createRoom(message, roomName);
                     break;
                 }
                 case 'private': {
+                    // await DotBotFunctions.Room.changeRoomSetting(message, 'private');
                     break;
                 }
             }

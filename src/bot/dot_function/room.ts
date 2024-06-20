@@ -1,7 +1,9 @@
-import { BaseGuildVoiceChannel, ChannelType, Collection, EmbedBuilder, Message } from 'discord.js';
+import { BaseGuildVoiceChannel, ChannelType, Collection, EmbedBuilder, Guild, Message, PermissionsBitField, User, VoiceChannel } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
 import { getDefaultRoomName } from './voice.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
+import { CONFIG } from '../../config/config.js';
 
 const teamName = ['赤', '青', '黄', '緑', '紫', '桃', '茶', '白', 'アタッカー', 'ディフェンダー'];
 
@@ -15,31 +17,25 @@ export async function changeRoomName(message: Message, roomName: string): Promis
         return;
     }
 
-    if (message.channel.type === ChannelType.DM) {
+    if (message.channel.type !== ChannelType.GuildVoice) {
         await message.channel.send('DM内では使えない機能だよ！');
         return;
     }
 
-    if (!message.member?.voice.channel) {
-        await message.channel.send('ボイスチャンネルに接続していないよ！');
-        return;
-    }
-    const vc = message.member?.voice.channel;
-
     const roomRepository = new RoomRepository();
-    const roomInfo = await roomRepository.getRoom(vc.id);
+    const roomInfo = await roomRepository.getRoom(message.channel.id);
 
     if (!roomInfo) {
         return;
     }
 
-    await roomRepository.updateRoom(vc.id, { name: roomName });
+    await roomRepository.updateRoom(message.channel.id, { name: roomName });
 
     if (roomInfo.is_live) {
         roomName = '[🔴配信] ' + roomName;
     }
 
-    await vc.setName(roomName, '部屋名変更: ' + message.author.displayName);
+    await message.channel.setName(roomName, '部屋名変更: ' + message.author.displayName);
     message.reply(`お部屋の名前を${roomName}に変更したよ！`);
 }
 
@@ -54,6 +50,11 @@ export async function changeRoomSetting(
     mode: 'delete' | 'live' | 'private',
     value?: string
 ): Promise<void> {
+    if (message.channel.type !== ChannelType.GuildVoice) {
+        await message.channel.send('DM内では使えない機能だよ！');
+        return;
+    }
+
     const roomRepository = new RoomRepository();
     const roomInfo = await roomRepository.getRoom(message.channel.id);
 
@@ -76,18 +77,16 @@ export async function changeRoomSetting(
         case 'live': {
             if (roomInfo.is_live) {
                 roomInfo.is_live = false;
-                const vc = message.member?.voice.channel;
-                if (vc) {
+                if (message.channel) {
                     roomInfo.name = value!.replace('[🔴] ', '');
-                    await vc.setName(value!.replace('[🔴] ', ''), '部屋名変更: ' + message.author.displayName);
+                    await message.channel.setName(value!.replace('[🔴] ', ''), '部屋名変更: ' + message.author.displayName);
                 }
                 await message.reply('配信フラグを外したよ！');
             } else {
                 roomInfo.is_live = true;
-                const vc = message.member?.voice.channel;
-                if (vc) {
+                if (message.channel) {
                     roomInfo.name = value!.replace('[🔴] ', '');
-                    await vc.setName('[🔴] ' + value, '部屋名変更: ' + message.author.displayName);
+                    await message.channel.setName('[🔴] ' + value, '部屋名変更: ' + message.author.displayName);
                 }
                 await message.reply('配信フラグをつけたよ！');
             }
@@ -109,26 +108,38 @@ export async function changeRoomSetting(
 
 export async function createRoom(
     message: Message,
-    id: string,
     roomName?: string,
-    isDelete?: boolean,
-    limit?: number
 ): Promise<void> {
-    if (!message.guild) {
+    if (message.channel.type !== ChannelType.DM) {
         return;
-    }
-    if (message.channel.type === ChannelType.GuildStageVoice) {
-        return;
-    }
-    if (message.channel.type === ChannelType.DM) {
-        await message.channel.send('DM内では使えない機能だよ！');
     }
 
-    const vc = await message.guild.channels.create({
-        name: roomName ?? getDefaultRoomName(message.guild),
+    const guild = DISCORD_CLIENT.guilds.cache.get('1017341244508225596');
+
+    if (!guild) {
+        return;
+    }
+
+    const vc = await guild.channels.create({
+        name: '[P]' + (roomName ?? getDefaultRoomName(guild)),
         type: ChannelType.GuildVoice,
-        userLimit: limit ?? 50,
-        parent: id
+        userLimit: 99,
+        parent: '1028184159975391273',
+        bitrate: 96000,
+        permissionOverwrites: [
+            {
+                id: '1107841131678535692',
+                deny: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect],
+            },
+            {
+                id: '1136129943013707837',
+                deny: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect],
+            },
+            {
+                id: message.author.id,
+                allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect],
+            },
+        ],
     });
 
     const room = new RoomRepository();
@@ -136,11 +147,26 @@ export async function createRoom(
         room_id: vc.id,
         guild_id: vc.guild.id,
         name: vc.name,
-        is_autodelete: isDelete,
+        is_autodelete: true,
         is_live: false,
-        is_private: false
+        is_private: true
     });
 }
+
+export async function updateRoomSettings(channel: VoiceChannel, users: User[]) {
+    const permission = channel.permissionOverwrites.cache;
+
+    for (const user of users) {
+        const p = permission.find(p => p.id === user.id);
+        if (p) {
+            p.allow.has(PermissionsBitField.Flags.ViewChannel)
+             ? p.allow.remove([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect])
+             : p.allow.add([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect]);
+        }
+    }
+    return;
+}
+
 /**
  * お部屋の人数制限を設定する
  * @param message
