@@ -612,14 +612,13 @@ export async function playMusic(channel: VoiceBasedChannel) {
         url: playing.url,
         thumbnail: playing.thumbnail
     });
-
     try {
         if (pldl.is_expired()) {
             await pldl.refreshToken();
         }
 
         const p = await updateAudioPlayer(channel);
-        const stream = ytdl(playing.url, { filter: "audioonly", liveBuffer: 0, quality: "lowestaudio" });
+        const stream = ytdl(playing.url, { filter: "audioonly", quality: "lowestaudio" });
 
         const resource = createAudioResource(stream, {
             inputType: StreamType.WebmOpus
@@ -654,20 +653,21 @@ export async function playMusic(channel: VoiceBasedChannel) {
         await entersState(p.player, AudioPlayerStatus.Playing, 10 * 1000);
         await entersState(p.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
     } catch (e) {
+        const err = e as Error;
         await Logger.put({
             guild_id: channel.guild?.id,
             channel_id: channel.id,
             user_id: undefined,
             level: LogLevel.ERROR,
             event: 'command|music-play',
-            message: [JSON.stringify(e)]
+            message: [JSON.stringify(err.message)]
         });
         const send = new EmbedBuilder()
             .setColor('#ff0000')
             .setAuthor({ name: `音楽の取得に失敗した` })
             .setTitle(playing.title)
             .setURL(playing.url)
-            .setDescription(JSON.stringify(e))
+            .setDescription(JSON.stringify(err.message))
             .addFields({
                 name: '再生キュー',
                 value: `${
