@@ -59,6 +59,7 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
     }
 
     const systemContent = {
+        server: { name: message.guild?.name },
         user,
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
         weather,

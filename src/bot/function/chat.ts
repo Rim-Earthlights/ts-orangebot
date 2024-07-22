@@ -26,6 +26,7 @@ export async function talk(
     const openai = gpt.openai;
 
     const systemContent = {
+        server: { name: interaction.guild?.name },
         user: [{ mention_id: `<@${interaction.user.id}>`, name: interaction.user.displayName }],
         date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
     };
