@@ -896,6 +896,51 @@ export async function commandSelector(message: Message) {
             await message.reply('add roles to all members.');
             break;
         }
+        case 'timer': {
+            const description = content[0];
+            const time = Number(content[1]);
+
+            if (!time) {
+                return;
+            }
+
+            message.reply(`set ${description} timer ${time} min.`);
+
+            setTimeout(async () => {
+                if (message.channel?.type === ChannelType.GuildVoice) {
+                    const channel = message.channel as BaseGuildVoiceChannel;
+                    const member = channel.members.find((member) => member.id === message.author.id);
+                    if (!member) {
+                        const send = new EmbedBuilder()
+                            .setColor('#ff0000')
+                            .setTitle(`エラー`)
+                            .setDescription(`id not found or invalid`);
+
+                            message.reply({ embeds: [send] });
+                        return;
+                    }
+                    await member.voice.disconnect();
+
+                    await Logger.put({
+                        guild_id: message.guild?.id,
+                        channel_id: message.channel?.id,
+                        user_id: message.author.id,
+                        level: LogLevel.INFO,
+                        event: 'disconnect-user',
+                        message: [`disconnect ${member.user.displayName} by ${message.author.displayName}`]
+                    });
+
+                    const send = new EmbedBuilder()
+                        .setColor('#00ff00')
+                        .setTitle(`成功`)
+                        .setDescription(`${member.user.displayName}を切断しました`);
+
+                        message.reply({ embeds: [send] });
+                }
+                return;
+            }, time * 1000 * 60);
+            break;
+        }
         case 'role': {
             if (!checkUserType(message.author.id, UsersType.OWNER)) {
                 return;
