@@ -98,6 +98,11 @@ export const SLASH_COMMANDS = [
         .setName('nickname')
         .setDescription('あなたの呼び方を登録します')
         .addStringOption((option) => option.setName('name').setDescription('呼び方').setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('dice')
+        .setDescription('サイコロを振ります')
+        .addNumberOption((option) => option.setName('num').setDescription('回数'))
+        .addNumberOption((option) => option.setName('max').setDescription('最大値')),
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

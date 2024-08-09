@@ -5,7 +5,8 @@ import {
     ChatInputCommandInteraction,
     CacheType,
     ChannelType,
-    BaseGuildVoiceChannel} from 'discord.js';
+    BaseGuildVoiceChannel
+} from 'discord.js';
 import ytdl from 'ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
 import * as BotFunctions from './function/index.js';
@@ -346,8 +347,7 @@ export async function commandSelector(message: Message) {
                 const description = playlists
                     .map(
                         (p) =>
-                            `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${
-                                p.loop ? 'ON' : 'OFF'
+                            `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${p.loop ? 'ON' : 'OFF'
                             } | シャッフル: ${p.shuffle ? 'ON' : 'OFF'}`
                     )
                     .join('\n');
@@ -916,7 +916,7 @@ export async function commandSelector(message: Message) {
                             .setTitle(`エラー`)
                             .setDescription(`id not found or invalid`);
 
-                            message.reply({ embeds: [send] });
+                        message.reply({ embeds: [send] });
                         return;
                     }
                     await member.voice.disconnect();
@@ -935,7 +935,7 @@ export async function commandSelector(message: Message) {
                         .setTitle(`成功`)
                         .setDescription(`${member.user.displayName}を切断しました`);
 
-                        message.reply({ embeds: [send] });
+                    message.reply({ embeds: [send] });
                 }
                 return;
             }, time * 1000 * 60);
@@ -1150,6 +1150,13 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         case 'gl': {
             await interaction.deferReply();
             await BotFunctions.Gacha.pickGacha(interaction, true);
+            break;
+        }
+        case 'dice': {
+            await interaction.deferReply({ ephemeral: true });
+            const num = interaction.options.getNumber('num') ?? 1;
+            const max = interaction.options.getNumber('max') ?? 100;
+            await BotFunctions.Dice.rollHideDice(interaction, num, max);
             break;
         }
         case 'gpt': {
