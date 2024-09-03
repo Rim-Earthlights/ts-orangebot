@@ -103,6 +103,13 @@ export const SLASH_COMMANDS = [
         .setDescription('サイコロを振ります')
         .addNumberOption((option) => option.setName('num').setDescription('回数'))
         .addNumberOption((option) => option.setName('max').setDescription('最大値')),
+    new SlashCommandBuilder()
+        .setName('genito')
+        .setDescription('itoのお題を出すよ'),
+    new SlashCommandBuilder()
+        .setName('ito')
+        .setDescription('itoのダイスを振るよ')
+        .addNumberOption((option) => option.setName('round').setDescription('ラウンド数').setRequired(true)),
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
     // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

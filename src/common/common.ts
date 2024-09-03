@@ -31,6 +31,23 @@ export function getRndArray(max: number): number[] {
 }
 
 /**
+ * 1 - indexまでの重複しない乱数を生成
+ */
+export function getIntArray(max: number): number[] {
+    // 1 から maxまでの連続した数値の配列を生成
+    const arr = Array.from({ length: max }, (_, i) => i + 1);
+
+    // 配列をシャッフル
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+
+    return arr;
+}
+
+
+/**
  * 2つの配列が全て等しいかチェックする
  * @param t 配列
  * @param v 配列

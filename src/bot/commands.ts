@@ -13,7 +13,7 @@ import * as BotFunctions from './function/index.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
 import { CONFIG, ChatGPTModel } from '../config/config.js';
-import { checkUserType, getRndNumber, isEnableFunction } from '../common/common.js';
+import { checkUserType, getIntArray, getRndNumber, isEnableFunction } from '../common/common.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { GPTMode } from '../constant/chat/chat.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
@@ -26,6 +26,9 @@ import { Logger } from '../common/logger.js';
 import { LogLevel } from '../type/types.js';
 import { TOPIC } from '../constant/words/topic.js';
 import { LogRepository } from '../model/repository/logRepository.js';
+import { ITO_TOPICS } from '../constant/words/ito.js';
+
+let ITO_NUMS = getIntArray(100);
 
 /**
  * 渡されたコマンドから処理を実行する
@@ -1157,6 +1160,41 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
             const num = interaction.options.getNumber('num') ?? 1;
             const max = interaction.options.getNumber('max') ?? 100;
             await BotFunctions.Dice.rollHideDice(interaction, num, max);
+            break;
+        }
+        case 'genito': {
+            await interaction.deferReply();
+            ITO_NUMS = getIntArray(100);
+            const nums = [];
+            for (let i = 0; i < 4; i++) {
+                const num = getRndNumber(0, ITO_TOPICS.length - 1);
+                nums.push(num);
+            }
+            const send = new EmbedBuilder()
+                .setColor('#ff9900')
+                .setTitle(`今回のお題は？`)
+                .setDescription(nums.map((num) => ITO_TOPICS[num]).join('\n'));
+
+            interaction.editReply({ embeds: [send] });
+            break;
+        }
+        case 'ito': {
+            await interaction.deferReply({ ephemeral: true });
+            const round = interaction.options.getNumber('round') ?? 1;
+            // roundの数だけ取り出す
+            const sendNums = ITO_NUMS.slice(0, round);
+            ITO_NUMS.splice(0, round);
+
+            await Logger.put({
+                guild_id: interaction.guild?.id,
+                channel_id: interaction.channel?.id,
+                user_id: interaction.user.id,
+                level: LogLevel.INFO,
+                event: 'received-command/ito',
+                message: [`${sendNums.join(', ')}`]
+            });
+
+            interaction.editReply({ content: `貴方の数は${sendNums.join(', ')}です.` });
             break;
         }
         case 'gpt': {
