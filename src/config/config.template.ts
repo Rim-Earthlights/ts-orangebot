@@ -1,3 +1,5 @@
+import ytdl from "@distube/ytdl-core";
+
 export enum ChatGPTModel {
     GPT_3 = 'gpt-3.5-turbo',
     GPT_3_16K = 'gpt-3.5-turbo-16k',
@@ -75,3 +77,5 @@ export const CONFIG = {
         FLUSH: false
     }
 };
+
+export const YT_AGENT = ytdl.createAgent();

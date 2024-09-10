@@ -7,7 +7,7 @@ import {
     ChannelType,
     BaseGuildVoiceChannel
 } from 'discord.js';
-import ytdl from 'ytdl-core';
+import ytdl from '@distube/ytdl-core';
 import * as DotBotFunctions from './dot_function/index.js';
 import * as BotFunctions from './function/index.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';

@@ -24,6 +24,7 @@ import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
 import { Chat, Room } from './bot/dot_function/index.js';
 import { GPTMode } from './constant/chat/chat.js';
+import ytdl from '@distube/ytdl-core';
 
 dotenv.config();
 
@@ -195,8 +196,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         event: 'message-received',
         message: [
             `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
-            `cid: ${message.channel.id}, cname: ${
-                message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'
+            `cid: ${message.channel.id}, cname: ${message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'
             }`,
             `author : ${message.author.displayName}`,
             `content: ${message.content}`,
