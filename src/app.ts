@@ -152,7 +152,7 @@ DISCORD_CLIENT.once('ready', async () => {
     });
 
     // DM用コマンド登録
-    rest.put(Routes.applicationCommands(CONFIG.DISCORD.APP_ID), { body: commands }).then(async () => {
+    rest.put(Routes.applicationCommands(CONFIG.DISCORD.APP_ID), { body: [] }).then(async () => {
         await Logger.put({
             guild_id: undefined,
             channel_id: undefined,

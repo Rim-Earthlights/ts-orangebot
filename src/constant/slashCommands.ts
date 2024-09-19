@@ -43,15 +43,7 @@ export const SLASH_COMMANDS = [
     new SlashCommandBuilder().setName('gl').setDescription('/gacha limitの短縮形コマンドです.'),
     new SlashCommandBuilder()
         .setName('gpt')
-        .setDescription('GPT-4(8K)でおしゃべりします')
-        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
-    new SlashCommandBuilder()
-        .setName('g3')
-        .setDescription('GPT-3(16K)でおしゃべりします, GPT-3なので軽いです')
-        .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
-    new SlashCommandBuilder()
-        .setName('g4')
-        .setDescription('GPT-4(32K)でおしゃべりします. 非常に遅いです')
+        .setDescription('GPT-4oでおしゃべりします')
         .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
     new SlashCommandBuilder()
         .setName('erase')
@@ -62,25 +54,36 @@ export const SLASH_COMMANDS = [
         .setDescription('お部屋の設定をします')
         .addSubcommand((sc) =>
             sc
-                .setName('name')
-                .setDescription('お部屋名を変更します')
+                .setName('create')
+                .setDescription('お部屋を作ります')
                 .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true))
-        )
-        .addSubcommand((sc) =>
-            sc
-                .setName('live')
-                .setDescription('配信モードを設定します')
                 .addBooleanOption((option) =>
-                    option.setName('mode').setDescription('Trueで配信モードON').setRequired(true)
+                    option
+                        .setName('live')
+                        .setDescription('Trueで配信モードON').setRequired(false)
+                )
+                .addBooleanOption((option) =>
+                    option
+                        .setName('private')
+                        .setDescription('TrueでプライベートモードON').setRequired(false)
                 )
         )
         .addSubcommand((sc) =>
             sc
-                .setName('private')
-                .setDescription('プライベートモードを設定します')
-                .addBooleanOption((option) =>
-                    option.setName('mode').setDescription('TrueでプライベートモードON').setRequired(true)
-                )
+                .setName('add')
+                .setDescription('ユーザーを追加します')
+                .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))
+        )
+        .addSubcommand((sc) =>
+            sc
+                .setName('remove')
+                .setDescription('ユーザーを削除します')
+                .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))
+        )
+        .addSubcommand((sc) =>
+            sc
+                .setName('delete')
+                .setDescription('お部屋を削除します')
         ),
     new SlashCommandBuilder()
         .setName('dc')
@@ -108,7 +111,7 @@ export const SLASH_COMMANDS = [
         .setDescription('itoのお題を出すよ'),
     new SlashCommandBuilder()
         .setName('ito')
-        .setDescription('itoのダイスを振るよ')
+        .setDescription('itoのダイスを振ります')
         .addNumberOption((option) => option.setName('round').setDescription('ラウンド数').setRequired(true)),
     // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
     // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),

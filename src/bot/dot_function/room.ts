@@ -47,7 +47,7 @@ export async function changeRoomName(message: Message, roomName: string): Promis
  */
 export async function changeRoomSetting(
     message: Message,
-    mode: 'delete' | 'live' | 'private',
+    mode: 'delete' | 'live',
     value?: string
 ): Promise<void> {
     if (message.channel.type !== ChannelType.GuildVoice) {
@@ -78,79 +78,23 @@ export async function changeRoomSetting(
             if (roomInfo.is_live) {
                 roomInfo.is_live = false;
                 if (message.channel) {
-                    roomInfo.name = value!.replace('[🔴] ', '');
-                    await message.channel.setName(value!.replace('[🔴] ', ''), '部屋名変更: ' + message.author.displayName);
+                    roomInfo.name = value!.replace('[L] ', '');
+                    await message.channel.setName(value!.replace('[L] ', ''), '部屋名変更: ' + message.author.displayName);
                 }
                 await message.reply('配信フラグを外したよ！');
             } else {
                 roomInfo.is_live = true;
                 if (message.channel) {
-                    roomInfo.name = value!.replace('[🔴] ', '');
-                    await message.channel.setName('[🔴] ' + value, '部屋名変更: ' + message.author.displayName);
+                    roomInfo.name = value!.replace('[L] ', '');
+                    await message.channel.setName('[L] ' + value, '部屋名変更: ' + message.author.displayName);
                 }
                 await message.reply('配信フラグをつけたよ！');
             }
             break;
         }
-        case 'private': {
-            roomInfo.is_private = !roomInfo.is_private;
-            const vc = message.member?.voice.channel;
-            if (vc) {
-                await vc.setName('[🅿] ' + vc.name, '部屋名変更: ' + message.author.displayName);
-            }
-            await message.reply('プライベートフラグをつけたよ！<未実装>');
-            break;
-        }
     }
 
     await roomRepository.updateRoom(message.channel.id, roomInfo);
-}
-
-export async function createRoom(
-    message: Message,
-    roomName?: string,
-): Promise<void> {
-    if (message.channel.type !== ChannelType.DM) {
-        return;
-    }
-
-    const guild = DISCORD_CLIENT.guilds.cache.get('1017341244508225596');
-
-    if (!guild) {
-        return;
-    }
-
-    const vc = await guild.channels.create({
-        name: '[P]' + (roomName ?? getDefaultRoomName(guild)),
-        type: ChannelType.GuildVoice,
-        userLimit: 99,
-        parent: '1028184159975391273',
-        bitrate: 96000,
-        permissionOverwrites: [
-            {
-                id: '1107841131678535692',
-                deny: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect],
-            },
-            {
-                id: '1136129943013707837',
-                deny: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect],
-            },
-            {
-                id: message.author.id,
-                allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect],
-            },
-        ],
-    });
-
-    const room = new RoomRepository();
-    await room.createRoom({
-        room_id: vc.id,
-        guild_id: vc.guild.id,
-        name: vc.name,
-        is_autodelete: true,
-        is_live: false,
-        is_private: true
-    });
 }
 
 export async function updateRoomSettings(channel: VoiceChannel, users: User[]) {
@@ -160,8 +104,8 @@ export async function updateRoomSettings(channel: VoiceChannel, users: User[]) {
         const p = permission.find(p => p.id === user.id);
         if (p) {
             p.allow.has(PermissionsBitField.Flags.ViewChannel)
-             ? p.allow.remove([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect])
-             : p.allow.add([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect]);
+                ? p.allow.remove([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect])
+                : p.allow.add([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect]);
         }
     }
     return;

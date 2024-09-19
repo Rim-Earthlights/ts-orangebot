@@ -679,15 +679,6 @@ export async function commandSelector(message: Message) {
                     await DotBotFunctions.Room.changeRoomSetting(message, 'live', roomName);
                     break;
                 }
-                case 'create': {
-                    const roomName: string | undefined = content[1];
-                    await DotBotFunctions.Room.createRoom(message, roomName);
-                    break;
-                }
-                case 'private': {
-                    // await DotBotFunctions.Room.changeRoomSetting(message, 'private');
-                    break;
-                }
             }
             break;
         }
@@ -1444,6 +1435,49 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     await message.delete();
                 }, 3000);
                 return;
+            }
+            break;
+        }
+        case 'room': {
+            const type = interaction.options.getSubcommand();
+            switch (type) {
+                case 'create': {
+                    const name = interaction.options.getString('name');
+                    const isLive = interaction.options.getBoolean('live') ?? false;
+                    const isPrivate = interaction.options.getBoolean('private') ?? true;
+
+                    if (!name) {
+                        return;
+                    }
+                    await BotFunctions.Room.createRoom(interaction, name, isLive, isPrivate);
+                    break;
+                }
+                case 'add': {
+                    await interaction.deferReply()
+                    const user = interaction.options.getUser('user')!;
+                    const member = interaction.guild?.members.cache.get(user.id);
+                    if (!member) {
+                        await interaction.editReply({ content: 'ユーザーが見つかりません' });
+                        return;
+                    }
+                    await BotFunctions.Room.addPermission(interaction, member);
+                    break;
+                }
+                case 'remove': {
+                    await interaction.deferReply()
+                    const user = interaction.options.getUser('user')!;
+                    const member = interaction.guild?.members.cache.get(user.id);
+                    if (!member) {
+                        await interaction.editReply({ content: 'ユーザーが見つかりません' });
+                        return;
+                    }
+                    await BotFunctions.Room.removePermission(interaction, member);
+                    break;
+                }
+                case 'delete': {
+                    await BotFunctions.Room.toggleAutoDelete(interaction);
+                    break;
+                }
             }
             break;
         }
