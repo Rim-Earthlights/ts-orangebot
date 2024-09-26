@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import { LogRepository } from '../model/repository/logRepository.js';
 import { LogData } from '../type/types';
 import { GuildRepository } from '../model/repository/guildRepository.js';
+import { CONFIG } from '../config/config.js';
 
 export class Logger {
     static async put(logData: LogData) {
@@ -10,6 +11,7 @@ export class Logger {
         try {
             await logRepository.save({
                 ...logData,
+                bot_id: CONFIG.DISCORD.APP_ID,
                 message: logData.message ? logData.message.join('\n') : ''
             });
             if (logData.guild_id) {
@@ -19,8 +21,7 @@ export class Logger {
                 );
             } else {
                 console.log(
-                    `[${dayjs().format('YYYY/MM/DD HH:mm:ss')}/${logData.level}]: ${logData.guild_id} | ${
-                        logData.event
+                    `[${dayjs().format('YYYY/MM/DD HH:mm:ss')}/${logData.level}]: ${logData.guild_id} | ${logData.event
                     }`
                 );
             }

@@ -14,6 +14,9 @@ export class Log extends BaseEntity {
     @PrimaryGeneratedColumn({ type: 'bigint' })
     id!: number;
 
+    @Column({ type: 'bigint', width: 20, nullable: false, default: '985693983055437864' })
+    bot_id!: string;
+
     @Column({ type: 'bigint', width: 20, nullable: true })
     guild_id: string | null = null;
 
