@@ -18,7 +18,7 @@ import { initJob } from './job/job.js';
 import { switchFunctionByAPIKey } from './common/common.js';
 import { GachaList } from './bot/function/gacha.js';
 import { reactionSelector } from './bot/reactions.js';
-import { SLASH_COMMANDS } from './constant/slashCommands.js';
+import { DM_SLASH_COMMANDS, SERVER_SLASH_COMMANDS } from './constant/slashCommands.js';
 import { LogLevel } from './type/types.js';
 import { Logger } from './common/logger.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
@@ -99,7 +99,8 @@ app.listen(port, hostName);
  * =======================
  */
 
-const commands = SLASH_COMMANDS.map((command) => command.toJSON());
+const commands = SERVER_SLASH_COMMANDS.map((command) => command.toJSON());
+const dmCommands = DM_SLASH_COMMANDS.map((command) => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(CONFIG.DISCORD.TOKEN);
 
@@ -152,7 +153,7 @@ DISCORD_CLIENT.once('ready', async () => {
     });
 
     // DM用コマンド登録
-    rest.put(Routes.applicationCommands(CONFIG.DISCORD.APP_ID), { body: [] }).then(async () => {
+    rest.put(Routes.applicationCommands(CONFIG.DISCORD.APP_ID), { body: dmCommands }).then(async () => {
         await Logger.put({
             guild_id: undefined,
             channel_id: undefined,
@@ -259,6 +260,29 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
  */
 DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
     await reactionSelector(reaction, user);
+});
+
+/**
+ * メンバーが退出した
+ */
+DISCORD_CLIENT.on('guildMemberRemove', async (member) => {
+    const channel = await member.guild.channels.fetch('1239718107073875978') as TextChannel;
+    if (!channel) {
+        return;
+    }
+    await channel.send(`leaved guild: ${member.guild.name} user: ${member.user.displayName}`);
+    await Logger.put({
+        guild_id: member.guild ? member.guild.id : undefined,
+        channel_id: undefined,
+        user_id: member.user.id,
+        level: LogLevel.INFO,
+        event: 'guild-member-remove',
+        message: [
+            `gid: ${member.guild?.id}`,
+            `gname: ${member.guild?.name}`,
+            `user: ${member.user.displayName}`
+        ]
+    });
 });
 
 /**

@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
 
-export const SLASH_COMMANDS = [
+export const SERVER_SLASH_COMMANDS = [
     // ping command
     new SlashCommandBuilder().setName('ping').setDescription('replies with pong'),
     new SlashCommandBuilder().setName('help').setDescription('ヘルプを表示します'),
@@ -46,10 +46,6 @@ export const SLASH_COMMANDS = [
         .setDescription('GPT-4oでおしゃべりします')
         .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
     new SlashCommandBuilder()
-        .setName('erase')
-        .setDescription('ChatGPTとのチャット履歴を削除します')
-        .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
-    new SlashCommandBuilder()
         .setName('room')
         .setDescription('お部屋の設定をします')
         .addSubcommand((sc) =>
@@ -82,8 +78,8 @@ export const SLASH_COMMANDS = [
         )
         .addSubcommand((sc) =>
             sc
-                .setName('delete')
-                .setDescription('お部屋を削除します')
+                .setName('lock')
+                .setDescription('お部屋の自動削除を切り替えます')
         ),
     new SlashCommandBuilder()
         .setName('dc')
@@ -120,4 +116,11 @@ export const SLASH_COMMANDS = [
     //     .setName('pl')
     //     .setDescription('音楽を再生します')
     //     .addStringOption((option) => option.setName('url').setDescription('youtube url').setRequired(true))
+];
+
+export const DM_SLASH_COMMANDS = [
+    new SlashCommandBuilder()
+        .setName('erase')
+        .setDescription('ChatGPTとのチャット履歴を削除します')
+        .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
 ];

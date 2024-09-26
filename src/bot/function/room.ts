@@ -85,7 +85,7 @@ export async function createRoom(
     is_private: isPrivate
   });
 
-  await interaction.reply({ ephemeral: true, content: 'お部屋を作りました！' });
+  await interaction.editReply({ content: 'お部屋を作りました！' });
 }
 
 /**
@@ -186,5 +186,5 @@ export async function toggleAutoDelete(interaction: ChatInputCommandInteraction<
 
   await roomRepository.updateRoom(interaction.channelId, room);
 
-  await interaction.reply({ ephemeral: true, content: 'お部屋の自動削除を' + (room.is_autodelete ? '有効' : '無効') + 'にしたよ！' });
+  await interaction.editReply({ content: 'お部屋の自動削除を' + (room.is_autodelete ? '有効' : '無効') + 'にしたよ！' });
 }

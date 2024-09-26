@@ -68,7 +68,7 @@ export async function commandSelector(message: Message) {
             await DotBotFunctions.Chat.speech(message, chat);
             break;
         }
-        case 'gpt-no-system': {
+        case 'no-system-gpt': {
             if (!isEnableFunction(functionNames.GPT_WITHOUT_KEY)) {
                 const send = new EmbedBuilder()
                     .setColor('#ff0000')
@@ -79,10 +79,11 @@ export async function commandSelector(message: Message) {
                 return;
             }
             const chat = content.join(' ');
-            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4_TURBO, GPTMode.NOPROMPT);
+            await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4_O, GPTMode.NOPROMPT);
             break;
         }
-        case 'gpt': {
+        case 'gpt':
+        case 'mikan': {
             if (!isEnableFunction(functionNames.GPT)) {
                 const send = new EmbedBuilder()
                     .setColor('#ff0000')
@@ -1440,6 +1441,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         }
         case 'room': {
             const type = interaction.options.getSubcommand();
+            await interaction.deferReply({ ephemeral: true });
             switch (type) {
                 case 'create': {
                     const name = interaction.options.getString('name');
@@ -1447,13 +1449,13 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     const isPrivate = interaction.options.getBoolean('private') ?? true;
 
                     if (!name) {
+                        await interaction.editReply({ content: 'チャンネル名を指定してください' });
                         return;
                     }
                     await BotFunctions.Room.createRoom(interaction, name, isLive, isPrivate);
                     break;
                 }
                 case 'add': {
-                    await interaction.deferReply()
                     const user = interaction.options.getUser('user')!;
                     const member = interaction.guild?.members.cache.get(user.id);
                     if (!member) {
@@ -1464,7 +1466,6 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     break;
                 }
                 case 'remove': {
-                    await interaction.deferReply()
                     const user = interaction.options.getUser('user')!;
                     const member = interaction.guild?.members.cache.get(user.id);
                     if (!member) {
@@ -1474,7 +1475,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
                     await BotFunctions.Room.removePermission(interaction, member);
                     break;
                 }
-                case 'delete': {
+                case 'lock': {
                     await BotFunctions.Room.toggleAutoDelete(interaction);
                     break;
                 }
