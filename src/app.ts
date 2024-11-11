@@ -207,7 +207,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
 
     // mention to bot
     if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
-        if (message.content.startsWith(`<@${DISCORD_CLIENT.user?.id}>`)) {
+        if (message.content.includes(`<@${DISCORD_CLIENT.user?.id}>`) && message.content.trimEnd() !== `<@${DISCORD_CLIENT.user?.id}>`) {
             await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
         }
         // await wordSelector(message);
@@ -219,7 +219,6 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
             await Room.updateRoomSettings(message.channel, message.mentions.users.map(u => u));
         }
     }
-
 
     // command
     if (message.content.startsWith('.')) {

@@ -43,6 +43,12 @@ export class Users extends BaseEntity {
     @Column({ type: 'float', nullable: false, default: 1.0 })
     voice_speed!: number;
 
+    @Column({ type: 'float', nullable: false, default: 0.0 })
+    voice_pitch!: number;
+
+    @Column({ type: 'float', nullable: false, default: 1.0 })
+    voice_intonation!: number;
+
     @Column({ type: 'json', nullable: true })
     voice_channel_data: VoiceChannelData[] | null = null;
 
