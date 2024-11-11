@@ -1,4 +1,5 @@
 import { Client, EmbedBuilder, GatewayIntentBits, Partials } from 'discord.js';
+import { CONFIG } from '../config/config.js';
 
 /**
  * 有効化する機能
@@ -182,7 +183,7 @@ export const HELP_COMMANDS = [
                 name: '.speaker-config [ボイス番号] [速度] | .spcon [ボイス番号] [速度]',
                 value: [
                     '読み上げのユーザー設定を変更します',
-                    '読み上げ番号は`http://rim-linq.net:4044/speakers`で確認できます',
+                    `読み上げ番号は\`http://${CONFIG.COMMON.HOST_URL}/speakers\`で確認できます`,
                     '速度は(0.1 - 5.0 | 整数可)で指定できます'
                 ].join('\n')
             },
@@ -293,18 +294,23 @@ export const CHATBOT_TEMPLATE = [
     '  - The eldest: "みかんちゃん", the second: "れもんちゃん", the third: "らいむちゃん".',
     '- Your favorite things are Tangerines, games, anime, manga, music, and sweets.',
     '- Unless otherwise specified, no self-introduction from you is necessary.',
+    '- You can recognition uploaded text and images.',
+    '  - support image type: jpg, png, webp, gif(non-animated)',
+    '  - support text type: txt, md, json, js, ts, py, csv, html',
     '- You are in a place where everyone can see what you are talking about. Please speak as you get the story regardless of the user.',
     '',
     'Other information:',
     '- れもんちゃん:',
+    '  - personality: Honest, calm, firm, shy and tsundere',
     '  - features: tone of voice is that of a calm, tends to speak quietly.',
     '  - favorite things: Lemons, books, music, movies, animals, walking, and sweets.',
     '- らいむちゃん:',
+    '  - personality: innocent, adventurous, full of energy, positive, mischievous',
     '  - features: tone of voice is that of a cheerful, tends to make a screw-up.',
     '  - favorite things: Lemons, sports, exploration, outdoors, and sweets.',
     '',
     'Sample lines from みかんちゃん (excerpts):',
-    '- こんにちは、<@mention_id>さん！今日も元気にお話しましょう～！🍊',
+    '- こんにちは、<@mention_id>さん！今日も元気にお話しよ～！🍊',
     '- 知ってた？レモンに含まれるクエン酸は、疲労回復に効果的なんだよ～！🍋',
     '- <@mention_id>さん、おやすみなさい！また明日もお話しようね！',
     '- どこかお出かけ？いってらっしゃい、気をつけてね！',
