@@ -28,8 +28,8 @@ export interface AudioResponse {
 }
 export interface SpeakersResponse {
   supported_features: {
-    permitted_synthesis_morphing: "ALL" | "SELF_ONLY";
-  },
+    permitted_synthesis_morphing: 'ALL' | 'SELF_ONLY';
+  };
   name: string;
   speaker_uuid: string;
   styles: [
@@ -54,4 +54,4 @@ export interface CoeiroSpeakersResponse {
   ];
   version: string;
   base64Portrait: string;
-};
+}

@@ -1,9 +1,17 @@
-import { CacheType, CategoryChannel, ChannelType, ChatInputCommandInteraction, GuildMember, PermissionsBitField, User, VoiceChannel } from "discord.js";
-import { GuildRepository } from "../../model/repository/guildRepository.js";
-import { RoleRepository } from "../../model/repository/roleRepository.js";
-import { RoomRepository } from "../../model/repository/roomRepository.js";
-import { UsersRepository } from "../../model/repository/usersRepository.js";
-
+import {
+  CacheType,
+  CategoryChannel,
+  ChannelType,
+  ChatInputCommandInteraction,
+  GuildMember,
+  PermissionsBitField,
+  User,
+  VoiceChannel,
+} from 'discord.js';
+import { GuildRepository } from '../../model/repository/guildRepository.js';
+import { RoleRepository } from '../../model/repository/roleRepository.js';
+import { RoomRepository } from '../../model/repository/roomRepository.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
 
 /**
  * チャンネルを作成する
@@ -18,7 +26,6 @@ export async function createRoom(
   isLive: boolean,
   isPrivate: boolean
 ) {
-
   const guild = interaction.guild;
   if (!guild) {
     return;
@@ -30,14 +37,14 @@ export async function createRoom(
     return;
   }
 
-
   const lobby = guild.channels.cache.find((c) => c.name === guildInfo.lobby_name);
 
   if (!lobby) {
     return;
   }
 
-  const parent = guild.channels.cache.find((c) => c.parentId != null && c.type === ChannelType.GuildVoice)?.parent as CategoryChannel;
+  const parent = guild.channels.cache.find((c) => c.parentId != null && c.type === ChannelType.GuildVoice)
+    ?.parent as CategoryChannel;
 
   if (!parent) {
     return;
@@ -82,7 +89,7 @@ export async function createRoom(
     name: vc.name,
     is_autodelete: true,
     is_live: isLive,
-    is_private: isPrivate
+    is_private: isPrivate,
   });
 
   await interaction.editReply({ content: 'お部屋を作りました！' });
@@ -105,7 +112,6 @@ export async function addPermission(interaction: ChatInputCommandInteraction<Cac
     await interaction.editReply({ content: 'owner権限は追加/削除できません' });
     return;
   }
-
 
   const roomRepository = new RoomRepository();
   const room = await roomRepository.getRoom(interaction.channelId);
@@ -144,7 +150,6 @@ export async function removePermission(interaction: ChatInputCommandInteraction<
     await interaction.editReply({ content: 'owner権限は追加/削除できません' });
     return;
   }
-
 
   const roomRepository = new RoomRepository();
   const room = await roomRepository.getRoom(interaction.channelId);
@@ -186,5 +191,7 @@ export async function toggleAutoDelete(interaction: ChatInputCommandInteraction<
 
   await roomRepository.updateRoom(interaction.channelId, room);
 
-  await interaction.editReply({ content: 'お部屋の自動削除を' + (room.is_autodelete ? '有効' : '無効') + 'にしたよ！' });
+  await interaction.editReply({
+    content: 'お部屋の自動削除を' + (room.is_autodelete ? '有効' : '無効') + 'にしたよ！',
+  });
 }
