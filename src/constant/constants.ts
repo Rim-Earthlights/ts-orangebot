@@ -115,10 +115,18 @@ export const HELP_COMMANDS = [
                 value: ['お部屋に人数制限をつけます。'].join('\n')
             },
             {
-                name: '.room delete',
+                name: '.room delete | .room lock',
                 value: [
                     'お部屋の自動削除設定を変更します。自動削除がOFFになった通話部屋は0人になっても削除されません。',
                     '削除したい時は非常にお手数ですが入り直してONに戻した後出てください……'
+                ].join('\n')
+            },
+            {
+                name: '/room create [?部屋名] [?プライベート] [?配信]',
+                value: [
+                    'お部屋を作成します。部屋名を指定しない場合は`お部屋: #(連番)`になります',
+                    'プライベートはtrue/falseで指定',
+                    '配信はtrue/falseで指定'
                 ].join('\n')
             }
         ),
@@ -159,32 +167,26 @@ export const HELP_COMMANDS = [
     ),
     new EmbedBuilder().setColor('Aqua').setTitle('おしゃべり系').addFields(
         {
-            name: '.gpt [text] | /gpt [text]',
-            value: 'おしゃべり(GPT-4 / 8K tokens)\nみかんちゃんとChatGPTを使ったおしゃべりができます'
-        },
-        {
-            name: '.g3 [text] | /g3 [text]',
-            value: 'おしゃべり(GPT-3 / 16K tokens)\nみかんちゃんとChatGPTを使ったおしゃべりができます'
-        },
-        {
-            name: '.g4 [text] | /g4 [text]',
-            value: 'おしゃべり(GPT-4 / 32K tokens)\nみかんちゃんとChatGPTを使ったおしゃべりができます'
+            name: '.gpt [text] | /gpt [text] | @みかんちゃん [text]',
+            value: 'おしゃべり(GPT-4o)\nみかんちゃんとChatGPTを使ったおしゃべりができます'
         }
     ),
     new EmbedBuilder()
         .setColor('Aqua')
-        .setTitle('読み上げ系(れもんちゃん)')
+        .setTitle('読み上げ系(れもん/らいむ)')
         .addFields(
             {
-                name: '.speak',
+                name: '.speak | /speak',
                 value: '読み上げを開始します'
             },
             {
-                name: '.speaker-config [ボイス番号] [速度] | .spcon [ボイス番号] [速度]',
+                name: '/spcon [?ボイス番号] [?速度] [?ピッチ] [?抑揚]',
                 value: [
-                    '読み上げのユーザー設定を変更します',
+                    '読み上げのユーザー設定を表示、または変更します',
                     `読み上げ番号は\`http://${CONFIG.COMMON.HOST_URL}/speakers\`で確認できます`,
-                    '速度は(0.1 - 5.0 | 整数可)で指定できます'
+                    '速度は(0.1 - 5.0 | 整数可)で指定 1が標準',
+                    'ピッチは(-20.0 - 20.0 | 整数可)で指定 0が標準',
+                    '抑揚は(0.0 - 5.0 | 整数可)で指定 1が標準'
                 ].join('\n')
             },
             {
