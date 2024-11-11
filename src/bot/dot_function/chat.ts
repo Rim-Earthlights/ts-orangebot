@@ -7,6 +7,8 @@ import { LogLevel } from '../../type/types.js';
 import { ChatCompletionContentPart } from 'openai/resources/index.js';
 import OpenAI from 'openai';
 import { Forecast } from './index.js';
+import axios from 'axios';
+import iconv from 'iconv-lite';
 
 /**
  * ChatGPTで会話する
@@ -68,8 +70,45 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
     const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
     if (message.attachments) {
-        const attachmentUrls = message.attachments.filter(a => a.height && a.width).map(a => a.url);
-        const urls = attachmentUrls.map(u => ({ type: 'image_url', image_url: { url: u }}));
+        const urls = await Promise.all(message.attachments.map(async a => {
+            const fileName = a.name;
+            console.log(a.contentType);
+
+            const contentTypes = a.contentType?.split('; ');
+            const contentType = contentTypes?.[0];
+            const charset = contentTypes?.[1]?.replace('charset=', '');
+            if (!contentType) {
+                return { type: 'text', text: `error: contentType is null or undefined` };
+            }
+
+            if (contentType?.includes('image/')) {
+                return { type: 'image_url', image_url: { url: a.url } };
+            }
+
+            if (a.size > 100_000) {
+                return { type: 'text', text: `error: file size is too large, max size is 100KB. file: ${fileName}` };
+            }
+
+            const { data } = await axios.get(a.url, { responseType: 'arraybuffer' }) as { data: Buffer };
+            const text = iconv.decode(data, charset === 'SHIFT_JIS' ? 'SHIFT_JIS' : 'utf-8');
+
+            if (contentType?.includes('application/json')) {
+                return { type: 'text', text: [`file: ${fileName}`, '```json', JSON.stringify(text, null, 2), '```'].join('\n') };
+            }
+            else if (contentType?.includes('application/javascript')) {
+                return { type: 'text', text: [`file: ${fileName}`, '```javascript', text, '```'].join('\n') };
+            }
+            else if (contentType?.includes('video/MP2T')) {
+                return { type: 'text', text: [`file: ${fileName}`, '```typescript', text, '```'].join('\n') };
+            }
+            else if (contentType?.includes('text/')) {
+                return { type: 'text', text: [`file: ${fileName}`, '```' + contentType?.split('/')[1], text, '```'].join('\n') };
+            }
+            else {
+                return { type: 'text', text: `not support file type: [${a.contentType}]` };
+            }
+        }));
+
         gpt.chat.push({
             role: Role.USER,
             content: [{ type: 'text', text: sendContent }, ...urls] as Array<ChatCompletionContentPart>
@@ -80,18 +119,6 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
             content: sendContent
         });
     }
-
-    await Logger.put({
-        guild_id: message.guild?.id,
-        channel_id: message.channel.id,
-        user_id: message.author.id,
-        level: LogLevel.INFO,
-        event: 'ChatGPT',
-        message: [
-            `Request:`,
-            sendContent
-        ]
-    });
 
     const response = await openai.chat.completions.create({
         model: model,
@@ -120,7 +147,9 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
                 chunk += text + '\n';
             }
         }
-        await message.reply(chunk);
+        if (chunk.length > 0) {
+            await message.reply(chunk);
+        }
     } else {
         await message.reply(completion.content);
     }
@@ -181,7 +210,7 @@ export async function generatePicture(message: Message<boolean>, chat: string) {
         prompt: chat,
         n: 1,
         size: "1024x1024",
-      });
+    });
     const image_url = response.data[0].url;
 
     if (!image_url) {
