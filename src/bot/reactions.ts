@@ -1,8 +1,8 @@
-import { ChannelType, MessageReaction, PartialMessageReaction, PartialUser, User } from 'discord.js';
+import { ChannelType, MessageReaction, PartialMessageReaction, PartialUser, TextChannel, User } from 'discord.js';
 import { Logger } from '../common/logger.js';
-import { UsersRepository } from '../model/repository/usersRepository.js';
 import { Users } from '../model/models';
 import { RoleRepository } from '../model/repository/roleRepository.js';
+import { UsersRepository } from '../model/repository/usersRepository.js';
 import { LogLevel } from '../type/types.js';
 
 /**
@@ -42,6 +42,16 @@ export const reactionSelector = async (
     case 'ルールを読んだ': {
       if (reaction.message.channel.type === ChannelType.GuildText) {
         await reaction.users.remove(user.id);
+
+        if (!reaction.message.guild) {
+          return;
+        }
+        const channel = (await reaction.message.guild.channels.fetch('1239718107073875978')) as TextChannel;
+        if (!channel) {
+          return;
+        }
+        await channel.send(`rule accepted: ${user.displayName}`);
+
         await Logger.put({
           guild_id: reaction.message.guild?.id,
           channel_id: reaction.message.channel.id,
