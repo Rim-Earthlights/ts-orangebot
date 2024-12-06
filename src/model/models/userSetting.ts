@@ -4,7 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  OneToOne,
+  OneToMany,
   PrimaryColumn,
   Relation,
   UpdateDateColumn
@@ -46,6 +46,6 @@ export class UserSetting extends BaseEntity {
   @CreateDateColumn({ type: 'datetime', nullable: false })
   created_at!: Date;
 
-  @OneToOne(() => Users, (user) => user.id)
-  user!: Relation<Users>;
+  @OneToMany(() => Users, (user) => user.id)
+  user!: Relation<Users>[];
 }

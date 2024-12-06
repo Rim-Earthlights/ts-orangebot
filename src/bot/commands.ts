@@ -1550,13 +1550,10 @@ export async function debug(message: Message, args?: string[]) {
     // ギルドユーザーを全て取得する
     const userRepository = new UsersRepository();
     const users = await userRepository.getAll(guild.id);
-    if (!guild) {
-      return;
-    }
     const members = await (await guild.fetch()).members.fetch();
-
     // ユーザーが存在しない場合は削除する
     for (const user of users) {
+      console.log(guild.id, user.id);
       const member = members.find((m) => m.id === user.id);
       if (!member) {
         await userRepository.delete(user.guild_id, user.id);
@@ -1566,9 +1563,17 @@ export async function debug(message: Message, args?: string[]) {
 
     // ユーザーが存在しない場合は追加する
     for (const [, member] of members) {
+      console.log(guild.id, member.id);
       const user = await userRepository.get(guild.id, member.id);
       if (!user) {
-        await userRepository.save({ id: member.id, user_name: member.displayName, pick_left: 10 });
+        await userRepository.saveUserSetting({ user_id: member.id, nickname: member.displayName });
+
+        await userRepository.save({
+          id: member.id,
+          guild_id: guild.id,
+          user_name: member.displayName,
+          pick_left: 10,
+        });
         message.channel.send(`add user: ${member.displayName} | guild: ${guild.name}`);
       }
     }

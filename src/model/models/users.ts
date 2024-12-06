@@ -7,7 +7,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryColumn,
   Relation,
   UpdateDateColumn
@@ -55,7 +54,7 @@ export class Users extends BaseEntity {
   @JoinColumn({ name: 'guild_id', referencedColumnName: 'id' })
   guild!: Relation<Guild>;
 
-  @OneToOne(() => UserSetting, (userSetting) => userSetting.user_id)
+  @ManyToOne(() => UserSetting, (userSetting) => userSetting.user_id)
   @JoinColumn({ name: 'id', referencedColumnName: 'user_id' })
   userSetting!: Relation<UserSetting>;
 }
