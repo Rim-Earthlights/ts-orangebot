@@ -28,6 +28,7 @@ export class TypeOrm {
       Models.Color,
       Models.Room,
       Models.Speaker,
+      Models.UserSetting,
     ], // 利用するエンティティ。パスでの指定も可能
   });
 }

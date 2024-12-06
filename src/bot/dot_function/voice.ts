@@ -1,10 +1,10 @@
 import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'discord.js';
-import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants.js';
-import { extermAudioPlayer } from './music.js';
-import { RoomRepository } from '../../model/repository/roomRepository.js';
 import { Logger } from '../../common/logger.js';
-import { LogLevel } from '../../type/types.js';
+import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants.js';
+import { RoomRepository } from '../../model/repository/roomRepository.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
+import { LogLevel } from '../../type/types.js';
+import { extermAudioPlayer } from './music.js';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -123,8 +123,7 @@ export async function joinVoiceChannel(guild: Guild, userId: string, voiceState:
     }
   }
   const userRepository = new UsersRepository();
-
-  const user = await userRepository.get(userId);
+  const user = await userRepository.get(voiceState.guild.id, userId);
 
   if (!user) {
     return;

@@ -6,13 +6,13 @@
 import dayjs from 'dayjs';
 import { CacheType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, Message } from 'discord.js';
 import { checkUserType, getRndNumber } from '../../common/common.js';
-import { GachaRepository } from '../../model/repository/gachaRepository.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
-import * as Models from '../../model/models/index.js';
-import { ItemRepository } from '../../model/repository/itemRepository.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
+import * as Models from '../../model/models/index.js';
 import { UsersType } from '../../model/models/users.js';
+import { GachaRepository } from '../../model/repository/gachaRepository.js';
+import { ItemRepository } from '../../model/repository/itemRepository.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
 
 export class GachaList {
   static allItemList: Models.Item[] = [];
@@ -210,13 +210,16 @@ async function pickNormal(
   if (interaction.channel?.type !== ChannelType.GuildText && interaction.channel?.type !== ChannelType.GuildVoice) {
     return;
   }
+  if (!interaction.guild) {
+    return;
+  }
 
   let num = 10;
 
   const gachaList = [];
 
   const users = new UsersRepository();
-  const user = await users.get(interaction.user.id);
+  const user = await users.get(interaction.guild.id, interaction.user.id);
 
   if (limit) {
     num = user?.pick_left ? user.pick_left : 1;
@@ -362,11 +365,14 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
   if (interaction.channel?.type !== ChannelType.GuildText && interaction.channel?.type !== ChannelType.GuildVoice) {
     return;
   }
+  if (!interaction.guild) {
+    return;
+  }
 
   if (uid == undefined) {
     getUid = interaction.user.id;
   } else {
-    if (!checkUserType(interaction.user.id, UsersType.OWNER)) {
+    if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER)) {
       interaction.reply({
         content: `他ユーザーのプレゼントの閲覧権限がないよ！`,
       });
@@ -376,7 +382,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
   }
   const gachaRepository = new GachaRepository();
   const users = new UsersRepository();
-  const user = await users.get(getUid);
+  const user = await users.get(interaction.guild.id, getUid);
   const pickLeft = user?.pick_left;
   const gachaList = await gachaRepository.getPresents(getUid, false);
 
@@ -408,7 +414,10 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
  *
  */
 export async function usePresent(interaction: ChatInputCommandInteraction<CacheType>, args: string[]): Promise<void> {
-  if (!checkUserType(interaction.user.id, UsersType.OWNER)) {
+  if (!interaction.guild) {
+    return;
+  }
+  if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER)) {
     interaction.editReply({
       content: `プレゼントの使用権限がないよ！`,
     });
@@ -445,7 +454,10 @@ export async function usePresent(interaction: ChatInputCommandInteraction<CacheT
  * @returns
  */
 export async function givePresent(message: Message, uid: string, itemId: number): Promise<void> {
-  if (!checkUserType(message.author.id, UsersType.OWNER)) {
+  if (!message.guild) {
+    return;
+  }
+  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
     message.reply({
       content: `プレゼントを渡す権限がないよ！`,
     });

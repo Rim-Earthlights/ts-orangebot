@@ -67,9 +67,9 @@ export function arrayEquals(t: number[], v: number[]): boolean {
   return true;
 }
 
-export const checkUserType = async (uid: string, type: UsersType): Promise<boolean> => {
+export const checkUserType = async (gid: string, uid: string, type: UsersType): Promise<boolean> => {
   const usersRepository = new UsersRepository();
-  const userType = await usersRepository.getUsersType(uid);
+  const userType = await usersRepository.getUsersType(gid, uid);
 
   if (!userType) {
     return false;

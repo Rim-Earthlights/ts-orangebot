@@ -24,7 +24,9 @@ export async function save(message: Message, args?: string[]): Promise<void> {
       await users.save({
         id: userId,
         user_name: message.author.displayName,
-        pref: regName[0],
+        userSetting: {
+          pref: regName[0],
+        },
       });
 
       const send = new EmbedBuilder().setColor('#ff9900').setTitle(`登録`).setDescription(`居住地: ${regName}`);
@@ -52,7 +54,9 @@ export async function save(message: Message, args?: string[]): Promise<void> {
         await users.save({
           id: userId,
           user_name: message.author.displayName,
-          birth_date: `1900-${month}-${day} 00:00:00`,
+          userSetting: {
+            birth_date: `1900-${month}-${day} 00:00:00`,
+          },
         });
 
         const send = new EmbedBuilder()

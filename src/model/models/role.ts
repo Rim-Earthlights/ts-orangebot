@@ -4,9 +4,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
   UpdateDateColumn,
 } from 'typeorm';
+import { Guild } from './guild.js';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class Role extends BaseEntity {
@@ -33,6 +37,10 @@ export class Role extends BaseEntity {
 
   @CreateDateColumn({ type: 'datetime', nullable: false })
   created_at!: Date;
+
+  @ManyToOne(() => Guild, (guild) => guild.id)
+  @JoinColumn({ name: 'guild_id', referencedColumnName: 'id' })
+  guild!: Relation<Guild>;
 }
 
 export enum RoleType {

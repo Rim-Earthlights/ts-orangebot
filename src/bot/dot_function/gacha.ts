@@ -1,16 +1,16 @@
 import dayjs from 'dayjs';
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
-import { GachaRepository } from '../../model/repository/gachaRepository.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
-import { ItemRepository } from '../../model/repository/itemRepository.js';
-import { DISCORD_CLIENT } from '../../constant/constants.js';
-import { getGachaOnce } from '../function/gacha.js';
-import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
 import { checkUserType } from '../../common/common.js';
-import { UsersType } from '../../model/models/users.js';
 import { Logger } from '../../common/logger.js';
-import { LogLevel } from '../../type/types.js';
 import { CONFIG } from '../../config/config.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
+import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
+import { UsersType } from '../../model/models/users.js';
+import { GachaRepository } from '../../model/repository/gachaRepository.js';
+import { ItemRepository } from '../../model/repository/itemRepository.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
+import { LogLevel } from '../../type/types.js';
+import { getGachaOnce } from '../function/gacha.js';
 
 /**
  * ガチャを引く
@@ -45,15 +45,21 @@ export async function pickGacha(message: Message, args?: string[]) {
  * @returns
  */
 async function reset(message: Message, id?: string, num?: string) {
-  if (!checkUserType(message.author.id, UsersType.OWNER)) {
+  if (!message.guild) {
+    return;
+  }
+  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
     await message.reply({
       content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`,
     });
     return;
   }
+  if (!message.guild) {
+    return;
+  }
   if (id) {
     const users = new UsersRepository();
-    const user = await users.get(id);
+    const user = await users.get(message.guild.id, id);
     if (!user) {
       await message.reply({
         content: `リセットしようとするユーザが登録されてないみたい…？`,
@@ -61,13 +67,13 @@ async function reset(message: Message, id?: string, num?: string) {
       return;
     }
     if (num) {
-      await users.resetGacha(id, Number(num));
+      await users.resetGacha(message.guild.id, id, Number(num));
       await message.reply({
         content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を${num}に再セットしたよ！`,
       });
       return;
     }
-    await users.resetGacha(id, 10);
+    await users.resetGacha(message.guild.id, id, 10);
     await message.reply({
       content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を10に再セットしたよ！`,
     });
@@ -158,6 +164,9 @@ async function pickNormal(message: Message, gnum = '10') {
   if (message.channel.type === ChannelType.GuildStageVoice) {
     return;
   }
+  if (!message.guild) {
+    return;
+  }
 
   let limitFlag = false;
   let num = 10;
@@ -165,7 +174,7 @@ async function pickNormal(message: Message, gnum = '10') {
   const gachaList = [];
 
   const users = new UsersRepository();
-  const user = await users.get(message.author.id);
+  const user = await users.get(message.guild.id, message.author.id);
 
   if (gnum === 'limit' || gnum === 'l') {
     limitFlag = true;
@@ -362,13 +371,13 @@ async function pickNormal(message: Message, gnum = '10') {
  */
 export async function getPresent(message: Message, uid?: string, hist?: boolean) {
   let getUid: string;
-  if (message.channel.type === ChannelType.GuildStageVoice) {
+  if (message.channel.type === ChannelType.GuildStageVoice || !message.guild) {
     return;
   }
   if (uid == undefined) {
     getUid = message.author.id;
   } else {
-    if (!checkUserType(message.author.id, UsersType.OWNER)) {
+    if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
       message.reply({
         content: `他ユーザーのプレゼントの閲覧権限がないよ！`,
       });
@@ -376,22 +385,12 @@ export async function getPresent(message: Message, uid?: string, hist?: boolean)
     }
     getUid = uid;
   }
-  const gachaRepository = new GachaRepository();
   const users = new UsersRepository();
-  const user = await users.get(getUid);
+  const user = await users.get(message.guild.id, getUid);
   const pickLeft = user?.pick_left;
-  const gachaList = await gachaRepository.getPresents(getUid, hist ?? false);
-  const list = gachaList.map((p) => {
-    return `${p.id}: [${p.items.rare}]${p.items.icon ? p.items.icon : ''} ${p.items.name} ${
-      p.is_used ? '(**使用済み**)' : ''
-    }`;
-  });
 
   if (pickLeft != undefined) {
-    const presentDescription = list.join('\n');
-    const money = gachaList.reduce((prev, current) => {
-      return prev + current.items.price;
-    }, 0);
+
     const send = new EmbedBuilder()
       .setColor('#ff9900')
       .setTitle(`${user?.user_name} さんのガチャ情報だよ！`)
@@ -411,7 +410,10 @@ export async function getPresent(message: Message, uid?: string, hist?: boolean)
  *
  */
 export async function usePresent(message: Message, args: string[]) {
-  if (!checkUserType(message.author.id, UsersType.OWNER)) {
+  if (!message.guild) {
+    return;
+  }
+  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
     await message.reply({
       content: `プレゼントの使用権限がないよ！`,
     });
@@ -448,7 +450,10 @@ export async function usePresent(message: Message, args: string[]) {
  * @returns
  */
 export async function givePresent(message: Message, uid: string, itemId: number) {
-  if (!checkUserType(message.author.id, UsersType.OWNER)) {
+  if (!message.guild) {
+    return;
+  }
+  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
     await message.reply({
       content: `プレゼントを渡す権限がないよ！`,
     });

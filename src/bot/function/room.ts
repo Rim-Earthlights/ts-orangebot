@@ -5,8 +5,7 @@ import {
   ChatInputCommandInteraction,
   GuildMember,
   PermissionsBitField,
-  User,
-  VoiceChannel,
+  VoiceChannel
 } from 'discord.js';
 import { GuildRepository } from '../../model/repository/guildRepository.js';
 import { RoleRepository } from '../../model/repository/roleRepository.js';
@@ -107,7 +106,7 @@ export async function addPermission(interaction: ChatInputCommandInteraction<Cac
   }
 
   const userRepository = new UsersRepository();
-  const userInfo = await userRepository.get(user.id);
+  const userInfo = await userRepository.get(guild.id, user.id);
   if (userInfo?.type === 'owner') {
     await interaction.editReply({ content: 'owner権限は追加/削除できません' });
     return;
@@ -145,7 +144,7 @@ export async function removePermission(interaction: ChatInputCommandInteraction<
   }
 
   const userRepository = new UsersRepository();
-  const userInfo = await userRepository.get(user.id);
+  const userInfo = await userRepository.get(guild.id, user.id);
   if (userInfo?.type === 'owner') {
     await interaction.editReply({ content: 'owner権限は追加/削除できません' });
     return;

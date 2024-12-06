@@ -1,14 +1,14 @@
-import { AttachmentBuilder, EmbedBuilder, Message } from 'discord.js';
-import dayjs from 'dayjs';
-import { GPTMode, Role, gptList, initalize } from '../../constant/chat/chat.js';
-import { ChatGPTModel, CONFIG } from '../../config/config.js';
-import { Logger } from '../../common/logger.js';
-import { LogLevel } from '../../type/types.js';
-import { ChatCompletionContentPart } from 'openai/resources/index.js';
-import OpenAI from 'openai';
-import { Forecast } from './index.js';
 import axios from 'axios';
+import dayjs from 'dayjs';
+import { AttachmentBuilder, EmbedBuilder, Message } from 'discord.js';
 import iconv from 'iconv-lite';
+import OpenAI from 'openai';
+import { ChatCompletionContentPart } from 'openai/resources/index.js';
+import { Logger } from '../../common/logger.js';
+import { ChatGPTModel, CONFIG } from '../../config/config.js';
+import { gptList, GPTMode, initalize, Role } from '../../constant/chat/chat.js';
+import { LogLevel } from '../../type/types.js';
+import { Forecast } from './index.js';
 
 /**
  * ChatGPTで会話する
