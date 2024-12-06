@@ -1,30 +1,29 @@
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import 'dayjs/locale/ja.js';
+import { ChannelType, Message, REST, Routes, TextChannel } from 'discord.js';
+import dotenv from 'dotenv';
 import Express from 'express';
 import helmet from 'helmet';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import { ChannelType, EmbedBuilder, Message, REST, Routes, TextChannel } from 'discord.js';
 import { commandSelector, interactionSelector } from './bot/commands.js';
-import { wordSelector } from './bot/mention.js';
-import dotenv from 'dotenv';
-import 'dayjs/locale/ja.js';
-import { routers } from './routers.js';
-import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
-import { CONFIG } from './config/config.js';
+import { Chat, Room } from './bot/dot_function/index.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
-import { TypeOrm } from './model/typeorm/typeorm.js';
-import { ItemRepository } from './model/repository/itemRepository.js';
-import { GACHA_LIST } from './constant/gacha/gachaList.js';
-import { initJob } from './job/job.js';
-import { switchFunctionByAPIKey } from './common/common.js';
 import { GachaList } from './bot/function/gacha.js';
 import { reactionSelector } from './bot/reactions.js';
-import { DM_SLASH_COMMANDS, SERVER_SLASH_COMMANDS } from './constant/slashCommands.js';
-import { LogLevel } from './type/types.js';
+import { switchFunctionByAPIKey } from './common/common.js';
 import { Logger } from './common/logger.js';
-import { GuildRepository } from './model/repository/guildRepository.js';
-import { Chat, Room } from './bot/dot_function/index.js';
+import { CONFIG } from './config/config.js';
 import { GPTMode } from './constant/chat/chat.js';
-import ytdl from '@distube/ytdl-core';
+import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
+import { GACHA_LIST } from './constant/gacha/gachaList.js';
+import { DM_SLASH_COMMANDS, SERVER_SLASH_COMMANDS } from './constant/slashCommands.js';
+import { initJob } from './job/job.js';
+import { GuildRepository } from './model/repository/guildRepository.js';
+import { ItemRepository } from './model/repository/itemRepository.js';
+import { UsersRepository } from './model/repository/usersRepository.js';
+import { TypeOrm } from './model/typeorm/typeorm.js';
+import { routers } from './routers.js';
+import { LogLevel } from './type/types.js';
 
 dotenv.config();
 
@@ -266,6 +265,14 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
  * メンバーが退出した
  */
 DISCORD_CLIENT.on('guildMemberRemove', async (member) => {
+
+  // user delete from guild
+  const userRepository = new UsersRepository();
+  const user = await userRepository.get(member.guild.id, member.user.id);
+  if (user) {
+    await userRepository.delete(member.guild.id, user.id);
+  }
+
   const channel = (await member.guild.channels.fetch('1239718107073875978')) as TextChannel;
   if (!channel) {
     return;

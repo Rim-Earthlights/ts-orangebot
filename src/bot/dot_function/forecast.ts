@@ -351,16 +351,6 @@ async function weatherToday(forecast: Forecast, onecall: Onecall): Promise<Embed
     { name: 'UV指数', value: `${uvi}`, inline: true },
   ]);
 
-  const ret = [
-    { name: '天候', value: `${weather} (雲の量: ${cloud} ％)` },
-    { name: '気温', value: `${temp} ℃ (${tempMin} ℃/${tempMax} ℃)` },
-    { name: '体感', value: `${feelLike} ℃` },
-    { name: '降水確率', value: `${popDay} ％` },
-    { name: '湿度', value: `${humidityDay} ％` },
-    { name: '風速', value: `${windDeg} ${windSpeed}m/s` },
-    { name: 'UV指数', value: `${uvi}` },
-  ];
-
   return embed;
 }
 
@@ -515,10 +505,10 @@ async function weatherDayJson(
  */
 export async function getPref(uid: string): Promise<string | null> {
   const users = new UsersRepository();
-  const user = await users.get(uid);
+  const user = await users.getByUid(uid);
   if (user) {
-    if (user.pref) {
-      return user.pref;
+    if (user.userSetting.pref) {
+      return user.userSetting.pref;
     }
   }
   return null;

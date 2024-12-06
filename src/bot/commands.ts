@@ -1,32 +1,32 @@
+import ytdl from '@distube/ytdl-core';
 import {
-  Message,
-  EmbedBuilder,
-  VoiceBasedChannel,
-  ChatInputCommandInteraction,
+  BaseGuildVoiceChannel,
   CacheType,
   ChannelType,
-  BaseGuildVoiceChannel,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  Message,
+  VoiceBasedChannel,
 } from 'discord.js';
-import ytdl from '@distube/ytdl-core';
-import * as DotBotFunctions from './dot_function/index.js';
-import * as BotFunctions from './function/index.js';
-import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import ytpl from 'ytpl';
-import { CONFIG, ChatGPTModel } from '../config/config.js';
 import { checkUserType, getIntArray, getRndNumber, isEnableFunction } from '../common/common.js';
-import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
-import { GPTMode } from '../constant/chat/chat.js';
-import { UsersRepository } from '../model/repository/usersRepository.js';
-import { RoleRepository } from '../model/repository/roleRepository.js';
-import { RoleType } from '../model/models/role.js';
-import { ColorRepository } from '../model/repository/colorRepository.js';
-import { getDefaultRoomName } from './dot_function/voice.js';
-import { Users, UsersType } from '../model/models/users.js';
 import { Logger } from '../common/logger.js';
-import { LogLevel } from '../type/types.js';
-import { TOPIC } from '../constant/words/topic.js';
-import { LogRepository } from '../model/repository/logRepository.js';
+import { CONFIG, ChatGPTModel } from '../config/config.js';
+import { GPTMode } from '../constant/chat/chat.js';
+import { DISCORD_CLIENT, HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { ITO_TOPICS } from '../constant/words/ito.js';
+import { TOPIC } from '../constant/words/topic.js';
+import { RoleType } from '../model/models/role.js';
+import { Users, UsersType } from '../model/models/users.js';
+import { ColorRepository } from '../model/repository/colorRepository.js';
+import { LogRepository } from '../model/repository/logRepository.js';
+import { PlaylistRepository } from '../model/repository/playlistRepository.js';
+import { RoleRepository } from '../model/repository/roleRepository.js';
+import { UsersRepository } from '../model/repository/usersRepository.js';
+import { LogLevel } from '../type/types.js';
+import * as DotBotFunctions from './dot_function/index.js';
+import { getDefaultRoomName } from './dot_function/voice.js';
+import * as BotFunctions from './function/index.js';
 
 let ITO_NUMS = getIntArray(100);
 
@@ -348,8 +348,7 @@ export async function commandSelector(message: Message) {
         const description = playlists
           .map(
             (p) =>
-              `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${p.loop ? 'ON' : 'OFF'} | シャッフル: ${
-                p.shuffle ? 'ON' : 'OFF'
+              `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${p.loop ? 'ON' : 'OFF'} | シャッフル: ${p.shuffle ? 'ON' : 'OFF'
               }`
           )
           .join('\n');
@@ -692,7 +691,10 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'dc': {
-      if (!checkUserType(message.author.id, UsersType.ADMIN)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.ADMIN)) {
         return;
       }
       const id = content[0];
@@ -770,11 +772,14 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'relief': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
         return;
       }
       const channel = message.channel;
       if (!channel) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
         return;
       }
 
@@ -784,7 +789,7 @@ export async function commandSelector(message: Message) {
       }
 
       const userRepository = new UsersRepository();
-      await userRepository.relief(num);
+      await userRepository.relief(message.guild.id, num);
 
       const send = new EmbedBuilder()
         .setColor('#ffcc00')
@@ -794,7 +799,10 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'popup-rule': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
         return;
       }
       const channel = message.channel;
@@ -811,7 +819,10 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'popup-gamelist': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
         return;
       }
       const channel = message.channel;
@@ -827,11 +838,11 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'add-role-all': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
         return;
       }
-      if (!message.guild) {
-        break;
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+        return;
       }
 
       const members = await message.guild.members.fetch();
@@ -849,7 +860,7 @@ export async function commandSelector(message: Message) {
           return;
         }
         const userRepository = new UsersRepository();
-        const user = await userRepository.get(m.id);
+        const user = await userRepository.get(m.guild.id, m.id);
         if (!user) {
           await userRepository.save({
             id: m.id,
@@ -926,7 +937,10 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'role': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
         return;
       }
       if (content.length <= 0) return;
@@ -945,7 +959,10 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'last-vc-join': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
         return;
       }
 
@@ -965,7 +982,7 @@ export async function commandSelector(message: Message) {
         if (m.user.bot) {
           return;
         }
-        const user = await userRepository.get(m.id);
+        const user = await userRepository.get(m.guild.id, m.id);
         if (!user) {
           return;
         }
@@ -993,7 +1010,10 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'color': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
         return;
       }
       if (content.length <= 0) return;
@@ -1018,18 +1038,24 @@ export async function commandSelector(message: Message) {
       }
       if (message.guild) {
         const usersRepository = new UsersRepository();
-        const user = await usersRepository.get(message.author.id);
+        const user = await usersRepository.get(message.guild.id, message.author.id);
         if (!user) {
           await message.reply({ content: `あなたのことが登録されていないみたい……？` });
           return;
         }
-        await usersRepository.save({ ...user, nickname: name });
+        await usersRepository.save({ ...user, userSetting: { ...user.userSetting, nickname: name } });
         await message.reply({ content: `はーい！これから「${name}」って呼ぶね～！` });
       }
       break;
     }
     case 'user-type': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+        return;
+      }
+      if (!message.guild) {
         return;
       }
       const uid = content[0];
@@ -1040,7 +1066,7 @@ export async function commandSelector(message: Message) {
       }
 
       const userRepository = new UsersRepository();
-      const user = await userRepository.updateUsersType(uid, type);
+      const user = await userRepository.updateUsersType(message.guild.id, uid, type);
 
       const send = new EmbedBuilder()
         .setColor('#ffcc00')
@@ -1050,7 +1076,10 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'restart': {
-      if (!checkUserType(message.author.id, UsersType.OWNER)) {
+      if (!message.guild) {
+        return;
+      }
+      if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
         return;
       }
       throw new Error('再起動');
@@ -1242,7 +1271,10 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       // required option is not null
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const user = interaction.options.getUser('user')!;
-      if (!checkUserType(interaction.user.id, UsersType.ADMIN)) {
+      if (!interaction.guild) {
+        return;
+      }
+      if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.ADMIN)) {
         const send = new EmbedBuilder()
           .setColor('#ff0000')
           .setTitle(`エラー`)
@@ -1299,8 +1331,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       if (!guild) {
         return;
       }
-
-      if (!checkUserType(interaction.user.id, UsersType.ADMIN)) {
+      if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.ADMIN)) {
         const send = new EmbedBuilder()
           .setColor('#ff0000')
           .setTitle(`エラー`)
@@ -1392,7 +1423,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
 
         // register user
         const userRepository = new UsersRepository();
-        const userEntity = await userRepository.get(user.id);
+        const userEntity = await userRepository.get(interaction.guild.id, user.id);
         if (!userEntity) {
           const saveUser: Partial<Users> = {
             id: user.id,
@@ -1445,8 +1476,8 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
           break;
         }
         case 'add': {
-          const user = interaction.options.getUser('user')!;
-          const member = interaction.guild?.members.cache.get(user.id);
+          const user = interaction.options.getUser('user');
+          const member = interaction.guild?.members.cache.get(user?.id ?? '');
           if (!member) {
             await interaction.editReply({ content: 'ユーザーが見つかりません' });
             return;
@@ -1455,8 +1486,8 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
           break;
         }
         case 'remove': {
-          const user = interaction.options.getUser('user')!;
-          const member = interaction.guild?.members.cache.get(user.id);
+          const user = interaction.options.getUser('user');
+          const member = interaction.guild?.members.cache.get(user?.id ?? '');
           if (!member) {
             await interaction.editReply({ content: 'ユーザーが見つかりません' });
             return;
@@ -1478,12 +1509,12 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       }
       if (interaction.guild) {
         const usersRepository = new UsersRepository();
-        const user = await usersRepository.get(interaction.user.id);
+        const user = await usersRepository.get(interaction.guild.id, interaction.user.id);
         if (!user) {
           await interaction.reply({ content: `あなたのことが登録されていないみたい……？` });
           return;
         }
-        await usersRepository.save({ ...user, nickname: name });
+        await usersRepository.save({ ...user, userSetting: { ...user.userSetting, nickname: name } });
         await interaction.reply({ content: `はーい！これから「${name}」って呼ぶね～！` });
       }
       break;
@@ -1512,25 +1543,37 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-  // const channel = message.member?.voice.channel as VoiceBasedChannel;
-  // await DotBotFunctions.Music.playMusic(channel);
 
-  // ギルドユーザーを全て取得する
-  const userRepository = new UsersRepository();
-  const users = await userRepository.getAll();
-  const guild = message.guild;
-  if (!guild) {
-    return;
-  }
-  const members = await guild.members.fetch();
-  for (const [, member] of members) {
-    const user = users.find((u) => u.id === member.id);
-    if (!user) {
+  // 参加しているすべてのギルドを取得する
+  const guilds = await DISCORD_CLIENT.guilds.fetch();
+  for (const [, guild] of guilds) {
+    // ギルドユーザーを全て取得する
+    const userRepository = new UsersRepository();
+    const users = await userRepository.getAll(guild.id);
+    if (!guild) {
       return;
     }
-    user.nickname = member.displayName;
-    await userRepository.save(user);
+    const members = await (await guild.fetch()).members.fetch();
+
+    // ユーザーが存在しない場合は削除する
+    for (const user of users) {
+      const member = members.find((m) => m.id === user.id);
+      if (!member) {
+        await userRepository.delete(user.guild_id, user.id);
+        message.channel.send(`delete user: ${user.user_name} | guild: ${guild.name}`);
+      }
+    }
+
+    // ユーザーが存在しない場合は追加する
+    for (const [, member] of members) {
+      const user = await userRepository.get(guild.id, member.id);
+      if (!user) {
+        await userRepository.save({ id: member.id, user_name: member.displayName, pick_left: 10 });
+        message.channel.send(`add user: ${member.displayName} | guild: ${guild.name}`);
+      }
+    }
   }
+
 }
 
 /**

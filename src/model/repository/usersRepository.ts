@@ -1,7 +1,7 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
 import { UsersType } from '../models/users.js';
+import { TypeOrm } from '../typeorm/typeorm.js';
 
 export class UsersRepository {
   private repository: Repository<Models.Users>;
@@ -12,20 +12,32 @@ export class UsersRepository {
 
   /**
    * UIDからユーザを取得する.
+   * @param gid guild.id
    * @param uid user.id
    * @returns Promise<Users | null>
    */
-  public async get(uid: string): Promise<Models.Users | null> {
-    const user = await this.repository.findOne({ where: { id: uid } });
+  public async get(gid: string, uid: string): Promise<Models.Users | null> {
+    const user = await this.repository.findOne({ relations: { guild: true, userSetting: true }, where: { id: uid, guild_id: gid } });
+    return user;
+  }
+
+  /**
+   * UIDからユーザを取得する.
+   * @param uid user.id
+   * @returns Promise<Users | null>
+   */
+  public async getByUid(uid: string): Promise<Models.Users | null> {
+    const user = await this.repository.findOne({ relations: { userSetting: true }, where: { id: uid } });
     return user;
   }
 
   /**
    * すべてのユーザを取得する.
+   * @param gid guild.id
    * @returns Promise<Users[]>
    */
-  public async getAll(): Promise<Models.Users[]> {
-    const user = await this.repository.find();
+  public async getAll(gid: string): Promise<Models.Users[]> {
+    const user = await this.repository.find({ relations: { guild: true, userSetting: true }, where: { guild_id: gid } });
     return user;
   }
 
@@ -39,11 +51,30 @@ export class UsersRepository {
   }
 
   /**
+   * ユーザを削除する
+   * @param gid guild.id
+   * @param uid user.id
+   */
+  public async delete(gid: string, uid: string): Promise<void> {
+    await this.repository.softDelete({ id: uid, guild_id: gid });
+  }
+
+  /**
+   * ユーザを完全に削除する
+   * @param gid guild.id
+   * @param uid user.id
+   */
+  public async hardDelete(gid: string, uid: string): Promise<void> {
+    await this.repository.delete({ id: uid, guild_id: gid });
+  }
+
+  /**
    * ユーザーの権限を取得する
-   * @param uid
+   * @param gid guild.id
+   * @param uid user.id
    * @returns
    */
-  public async getUsersType(uid: string): Promise<UsersType | null> {
+  public async getUsersType(gid: string, uid: string): Promise<UsersType | null> {
     const users = await this.repository.findOne({ where: { id: uid } });
     if (!users) {
       return null;
@@ -54,27 +85,30 @@ export class UsersRepository {
 
   /**
    * ユーザーの権限を更新する
-   * @param uid
+   * @param gid guild.id
+   * @param uid user.id
    * @param type
    */
-  public async updateUsersType(uid: string, type: UsersType): Promise<Models.Users | null> {
-    await this.repository.save({ id: uid, type });
+  public async updateUsersType(gid: string, uid: string, type: UsersType): Promise<Models.Users | null> {
+    await this.repository.save({ id: uid, type, guild_id: gid });
 
-    const user = this.get(uid);
+    const user = this.get(gid, uid);
     return user;
   }
 
   /**
    * ガチャ回数をpickLeft回に再セットする
-   * @param uid user id
+   * @param gid guild.id
+   * @param uid user.id
    * @param pickLeft 再セットするピック数
    */
-  public async resetGacha(uid: string, pickLeft: number): Promise<void> {
-    await this.repository.save({ id: uid, pick_left: pickLeft });
+  public async resetGacha(gid: string, uid: string, pickLeft: number): Promise<void> {
+    await this.repository.save({ id: uid, pick_left: pickLeft, guild_id: gid });
   }
 
   /**
    * ユーザの残りピック数を10増やす
+   * @param gid guild.id
    */
   public async addPickLeft(): Promise<void> {
     const users = await this.repository.find();
@@ -90,9 +124,11 @@ export class UsersRepository {
 
   /**
    * 詫び石を配布する
+   * @param gid guild.id
+   * @param num 配布する詫び石の数
    */
-  public async relief(num: number): Promise<void> {
-    const users = await this.repository.find();
+  public async relief(gid: string, num: number): Promise<void> {
+    const users = await this.repository.find({ where: { guild_id: gid } });
     const saveUsers = users.map((u) => {
       u.pick_left += num;
       return { ...u };

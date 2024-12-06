@@ -46,6 +46,7 @@ export const reactionSelector = async (
         if (!reaction.message.guild) {
           return;
         }
+        // adminに送信
         const channel = (await reaction.message.guild.channels.fetch('1239718107073875978')) as TextChannel;
         if (!channel) {
           return;
@@ -100,7 +101,7 @@ export const reactionSelector = async (
 
         // register user
         const userRepository = new UsersRepository();
-        const userEntity = await userRepository.get(user.id);
+        const userEntity = await userRepository.get(reaction.message.guild.id, user.id);
         if (!userEntity) {
           const saveUser: Partial<Users> = {
             id: user.id,
