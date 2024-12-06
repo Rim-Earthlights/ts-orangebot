@@ -1,10 +1,10 @@
 /**
  * GET
- * https://api.openweathermap.org/data/2.5/onecall
+ * https://api.openweathermap.org/data/3.0/onecall
  * ?lat={lat}&lon={lon}&exclude=current,minutely,hourly&appid={appid}
  */
 
-export const ONECALL_URI = 'https://api.openweathermap.org/data/2.5/onecall';
+export const ONECALL_URI = 'https://api.openweathermap.org/data/3.0/onecall';
 
 export interface Onecall {
   lat: number;
