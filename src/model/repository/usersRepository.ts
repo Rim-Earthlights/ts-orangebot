@@ -53,6 +53,16 @@ export class UsersRepository {
   }
 
   /**
+   * ユーザー設定を取得する
+   * @param uid user.id
+   * @returns Promise<UserSetting | null>
+   */
+  public async getUserSetting(uid: string): Promise<Models.UserSetting | null> {
+    const userSetting = await this.userSettingRepository.findOne({ where: { user_id: uid } });
+    return userSetting;
+  }
+
+  /**
    * ユーザー設定を登録・更新する
    * @param userSetting
    */

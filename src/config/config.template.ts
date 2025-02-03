@@ -48,6 +48,8 @@ export const CONFIG = {
   // TOKEN:
   // GET > https://chat.openai.com/api/auth/session and find accessToken
   OPENAI: {
+    // base url
+    BASE_URL: 'https://api.openai.com/v1',
     /// org id / project id (optional)
     ORG: undefined,
     PROJECT: undefined,

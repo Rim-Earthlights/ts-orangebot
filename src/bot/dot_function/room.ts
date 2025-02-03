@@ -3,17 +3,13 @@ import {
   ChannelType,
   Collection,
   EmbedBuilder,
-  Guild,
   Message,
   PermissionsBitField,
   User,
-  VoiceChannel,
+  VoiceChannel
 } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
 import { RoomRepository } from '../../model/repository/roomRepository.js';
-import { getDefaultRoomName } from './voice.js';
-import { DISCORD_CLIENT } from '../../constant/constants.js';
-import { CONFIG } from '../../config/config.js';
 
 const teamName = ['赤', '青', '黄', '緑', '紫', '桃', '茶', '白', 'アタッカー', 'ディフェンダー'];
 
@@ -28,6 +24,9 @@ export async function changeRoomName(message: Message, roomName: string): Promis
   }
 
   if (message.channel.type !== ChannelType.GuildVoice) {
+    if (message.channel.type === ChannelType.GroupDM) {
+      return;
+    }
     await message.channel.send('DM内では使えない機能だよ！');
     return;
   }
@@ -57,6 +56,9 @@ export async function changeRoomName(message: Message, roomName: string): Promis
  */
 export async function changeRoomSetting(message: Message, mode: 'delete' | 'live', value?: string): Promise<void> {
   if (message.channel.type !== ChannelType.GuildVoice) {
+    if (message.channel.type === ChannelType.GroupDM) {
+      return;
+    }
     await message.channel.send('DM内では使えない機能だよ！');
     return;
   }
@@ -81,17 +83,20 @@ export async function changeRoomSetting(message: Message, mode: 'delete' | 'live
       break;
     }
     case 'live': {
+      if (!value) {
+        return;
+      }
       if (roomInfo.is_live) {
         roomInfo.is_live = false;
         if (message.channel) {
-          roomInfo.name = value!.replace('[L] ', '');
-          await message.channel.setName(value!.replace('[L] ', ''), '部屋名変更: ' + message.author.displayName);
+          roomInfo.name = value.replace('[L] ', '');
+          await message.channel.setName(value.replace('[L] ', ''), '部屋名変更: ' + message.author.displayName);
         }
         await message.reply('配信フラグを外したよ！');
       } else {
         roomInfo.is_live = true;
         if (message.channel) {
-          roomInfo.name = value!.replace('[L] ', '');
+          roomInfo.name = value.replace('[L] ', '');
           await message.channel.setName('[L] ' + value, '部屋名変更: ' + message.author.displayName);
         }
         await message.reply('配信フラグをつけたよ！');
@@ -141,11 +146,17 @@ export async function team(message: Message, num: number, move: boolean): Promis
   }
 
   if (!message.guild) {
+    if (message.channel.type === ChannelType.GroupDM) {
+      return;
+    }
     await message.channel.send('DM内では使えない機能だよ！');
     return;
   }
 
   if (!message.member?.voice.channel) {
+    if (message.channel.type === ChannelType.GroupDM) {
+      return;
+    }
     await message.channel.send('ボイスチャンネルに接続していないよ！');
     return;
   }

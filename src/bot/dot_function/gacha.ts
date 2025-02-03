@@ -161,7 +161,7 @@ async function pickExtra(message: Message, args: string[]) {
  * @returns
  */
 async function pickNormal(message: Message, gnum = '10') {
-  if (message.channel.type === ChannelType.GuildStageVoice) {
+  if (message.channel.type === ChannelType.GuildStageVoice || message.channel.type === ChannelType.GroupDM) {
     return;
   }
   if (!message.guild) {
@@ -229,6 +229,7 @@ async function pickNormal(message: Message, gnum = '10') {
   } else {
     await users.save({
       id: message.author.id,
+      guild_id: message.guild.id,
       user_name: message.author.displayName,
       pick_left: 10,
       voice_channel_data: [{ gid: message.guild?.id ?? 'DM', date: new Date() }],
@@ -301,6 +302,7 @@ async function pickNormal(message: Message, gnum = '10') {
 
   await users.save({
     id: message.author.id,
+    guild_id: message.guild.id,
     user_name: message.author.displayName,
     last_pick_date: dayjs().toDate(),
     pick_left: pickLeft,
@@ -371,7 +373,7 @@ async function pickNormal(message: Message, gnum = '10') {
  */
 export async function getPresent(message: Message, uid?: string, hist?: boolean) {
   let getUid: string;
-  if (message.channel.type === ChannelType.GuildStageVoice || !message.guild) {
+  if (!message.guild || message.channel.type === ChannelType.GuildStageVoice || message.channel.type === ChannelType.GroupDM) {
     return;
   }
   if (uid == undefined) {
@@ -395,7 +397,7 @@ export async function getPresent(message: Message, uid?: string, hist?: boolean)
       .setColor('#ff9900')
       .setTitle(`${user?.user_name} さんのガチャ情報だよ！`)
       .setDescription(
-        `${CONFIG.COMMON.HOST_URL}:${CONFIG.COMMON.PORT}/gacha/history?uid=${getUid}&hist=${hist ?? false}`
+        `${CONFIG.COMMON.HOST_URL}/gacha/history?uid=${getUid}&hist=${hist ?? false}`
       );
     await message.channel.send({ embeds: [send] });
   } else {

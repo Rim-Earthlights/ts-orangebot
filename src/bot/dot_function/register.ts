@@ -12,6 +12,10 @@ export async function save(message: Message, args?: string[]): Promise<void> {
     return;
   }
 
+  if (!message.guild) {
+    return;
+  }
+
   const regType = args[0];
   args.shift();
   const regName = args;
@@ -23,6 +27,7 @@ export async function save(message: Message, args?: string[]): Promise<void> {
       const users = new UsersRepository();
       await users.save({
         id: userId,
+        guild_id: message.guild.id,
         user_name: message.author.displayName,
         userSetting: {
           pref: regName[0],
@@ -53,6 +58,7 @@ export async function save(message: Message, args?: string[]): Promise<void> {
         const users = new UsersRepository();
         await users.save({
           id: userId,
+          guild_id: message.guild.id,
           user_name: message.author.displayName,
           userSetting: {
             birth_date: `1900-${month}-${day} 00:00:00`,

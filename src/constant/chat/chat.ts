@@ -1,8 +1,8 @@
-import { OpenAI } from 'openai';
-import { CHATBOT_TEMPLATE } from '../constants.js';
-import { CONFIG, ChatGPTModel } from '../../config/config.js';
 import dayjs from 'dayjs';
+import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
+import { CONFIG, ChatGPTModel } from '../../config/config.js';
+import { CHATBOT_TEMPLATE } from '../constants.js';
 
 export const gptList = { gpt: [] as ChatGPT[] };
 
@@ -12,6 +12,7 @@ export async function initalize(id: string, model: ChatGPTModel, mode: GPTMode, 
     project: CONFIG.OPENAI.PROJECT,
     apiKey: CONFIG.OPENAI.KEY,
     maxRetries: 3,
+    baseURL: CONFIG.OPENAI.BASE_URL,
   });
   const gpt: ChatGPT = {
     id,
@@ -19,6 +20,7 @@ export async function initalize(id: string, model: ChatGPTModel, mode: GPTMode, 
     model: model,
     chat: [],
     isGuild: isGuild,
+    memory: false,
     timestamp: dayjs(),
   };
   if (mode === GPTMode.DEFAULT) {
@@ -36,6 +38,7 @@ export type ChatGPT = {
   model: ChatGPTModel;
   chat: ChatCompletionMessageParam[];
   isGuild: boolean;
+  memory: boolean;
   timestamp: dayjs.Dayjs;
 };
 

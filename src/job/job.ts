@@ -1,8 +1,8 @@
-import * as cron from 'node-cron';
-import { UsersRepository } from '../model/repository/usersRepository.js';
 import dayjs from 'dayjs';
-import { gptList } from '../constant/chat/chat.js';
+import * as cron from 'node-cron';
 import { Logger } from '../common/logger.js';
+import { gptList } from '../constant/chat/chat.js';
+import { UsersRepository } from '../model/repository/usersRepository.js';
 import { LogLevel } from '../type/types.js';
 
 export async function initJob() {
@@ -27,7 +27,7 @@ export async function initJob() {
    */
   cron.schedule('* * * * *', async () => {
     gptList.gpt.map(async (c) => {
-      if (c.timestamp.isBefore(dayjs().subtract(30, 'minute'))) {
+      if (c.timestamp.isBefore(dayjs().subtract(30, 'minute')) && !c.memory) {
         gptList.gpt = gptList.gpt.filter((g) => g.id !== c.id);
         await Logger.put({
           guild_id: c.isGuild ? c.id : undefined,

@@ -297,7 +297,6 @@ export const CHATBOT_TEMPLATE = [
   '- You can recognition uploaded text and images.',
   '  - support image type: jpg, png, webp, gif(non-animated)',
   '  - support text type: txt, md, json, js, ts, py, csv, html',
-  '- You are in a place where everyone can see what you are talking about. Please speak as you get the story regardless of the user.',
   '',
   'Other information:',
   '- れもんちゃん:',

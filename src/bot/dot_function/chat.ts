@@ -7,9 +7,55 @@ import { ChatCompletionContentPart } from 'openai/resources/index.js';
 import { Logger } from '../../common/logger.js';
 import { ChatGPTModel, CONFIG } from '../../config/config.js';
 import { gptList, GPTMode, initalize, Role } from '../../constant/chat/chat.js';
+import { ModelResponse } from '../../type/openai.js';
 import { LogLevel } from '../../type/types.js';
 import { Forecast } from './index.js';
 
+/**
+ * モデルを設定する
+ * @param message
+ * @param model
+ * @param mode
+ */
+export async function setModel(message: Message, model: ChatGPTModel, mode: GPTMode) {
+  const { id, isGuild } = getIdInfo(message);
+  let gpt = gptList.gpt.find((c) => c.id === id);
+  if (!gpt) {
+    gpt = await initalize(id, model, mode, isGuild);
+    gptList.gpt.push(gpt);
+  }
+  gpt.model = model;
+  await message.reply(`モデルを設定. Model: ${model}`);
+}
+
+export async function getModel(message: Message) {
+  const response = await axios.get<ModelResponse>(`${CONFIG.OPENAI.BASE_URL}/model/info`, {
+    headers: {
+      Authorization: `Bearer ${CONFIG.OPENAI.KEY}`,
+    },
+  });
+  const models = response.data.data;
+  const content = models.map((m) => {
+    const provider = m.litellm_params.custom_llm_provider;
+    const modelName = m.litellm_params.model;
+    const inputCostPerToken = m.model_info.input_cost_per_token ? m.model_info.input_cost_per_token * 1000000 : 0;
+    const outputCostPerToken = m.model_info.output_cost_per_token ? m.model_info.output_cost_per_token * 1000000 : 0;
+    return `${provider}/${modelName} | input: ${inputCostPerToken}, output: ${outputCostPerToken}`;
+  });
+  const send = new EmbedBuilder().setColor('#00cc00').setTitle(`モデル一覧`).setDescription(content.join('\n'));
+  await message.reply({ embeds: [send] });
+}
+
+export async function setMemory(message: Message) {
+  const { id } = getIdInfo(message);
+  const gpt = gptList.gpt.find((c) => c.id === id);
+  if (!gpt) {
+    await message.reply(`履歴が存在しません。`);
+    return;
+  }
+  gpt.memory = !gpt.memory;
+  await message.reply(`メモリ機能を${gpt.memory ? '有効化' : '無効化'}したよ！`);
+}
 /**
  * ChatGPTで会話する
  */
@@ -121,54 +167,59 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
     });
   }
 
-  const response = await openai.chat.completions.create({
-    model: model,
-    messages: gpt.chat,
-  });
+  try {
+    const response = await openai.chat.completions.create({
+      model: gpt.model,
+      messages: gpt.chat,
+    });
+    const completion = response.choices[0].message;
 
-  const completion = response.choices[0].message;
+    if (!completion.content) {
+      const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`contentがnull`);
+      await message.reply({ embeds: [send] });
+      return;
+    }
 
-  if (!completion.content) {
-    const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`contentがnull`);
-    await message.reply({ embeds: [send] });
+    gpt.chat.push({ role: Role.ASSISTANT, content: completion.content });
+    gpt.timestamp = dayjs();
+
+    if (completion.content.length > 2000) {
+      const texts = completion.content.split('\n');
+      let chunk = '';
+      for (const text of texts) {
+        if (chunk.length + text.length > 2000) {
+          await message.reply(chunk + '\n');
+          chunk = '';
+        } else {
+          chunk += text + '\n';
+        }
+      }
+      if (chunk.length > 0) {
+        await message.reply(chunk);
+      }
+    } else {
+      await message.reply(completion.content);
+    }
+
+    await Logger.put({
+      guild_id: message.guild?.id,
+      channel_id: message.channel.id,
+      user_id: message.author.id,
+      level: LogLevel.INFO,
+      event: 'ChatGPT',
+      message: [
+        `ResponseId: ${response.id}`,
+        `Usage: ${JSON.stringify(response.usage)}`,
+        `Model: ${response.model}`,
+        `Response:`,
+        `${completion.content}`,
+      ],
+    });
+  } catch (e) {
+    console.error(e);
+    await message.reply(`エラーが発生しました。\n\`\`\`\n${(e as Error).message}\n\`\`\``);
     return;
   }
-
-  gpt.chat.push({ role: Role.ASSISTANT, content: completion.content });
-  gpt.timestamp = dayjs();
-
-  if (completion.content.length > 2000) {
-    const texts = completion.content.split('\n');
-    let chunk = '';
-    for (const text of texts) {
-      if (chunk.length + text.length > 2000) {
-        await message.reply(chunk + '\n');
-        chunk = '';
-      } else {
-        chunk += text + '\n';
-      }
-    }
-    if (chunk.length > 0) {
-      await message.reply(chunk);
-    }
-  } else {
-    await message.reply(completion.content);
-  }
-
-  await Logger.put({
-    guild_id: message.guild?.id,
-    channel_id: message.channel.id,
-    user_id: message.author.id,
-    level: LogLevel.INFO,
-    event: 'ChatGPT',
-    message: [
-      `ResponseId: ${response.id}`,
-      `Usage: ${JSON.stringify(response.usage)}`,
-      `Model: ${response.model}`,
-      `Response:`,
-      `${completion.content}`,
-    ],
-  });
 }
 
 /**

@@ -6,14 +6,14 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   Message,
-  VoiceBasedChannel,
+  VoiceBasedChannel
 } from 'discord.js';
 import ytpl from 'ytpl';
 import { checkUserType, getIntArray, getRndNumber, isEnableFunction } from '../common/common.js';
 import { Logger } from '../common/logger.js';
 import { CONFIG, ChatGPTModel } from '../config/config.js';
 import { GPTMode } from '../constant/chat/chat.js';
-import { DISCORD_CLIENT, HELP_COMMANDS, functionNames } from '../constant/constants.js';
+import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { ITO_TOPICS } from '../constant/words/ito.js';
 import { TOPIC } from '../constant/words/topic.js';
 import { RoleType } from '../model/models/role.js';
@@ -79,7 +79,7 @@ export async function commandSelector(message: Message) {
         return;
       }
       const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4_O, GPTMode.NOPROMPT);
+      await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4O, GPTMode.NOPROMPT);
       break;
     }
     case 'gpt':
@@ -123,7 +123,24 @@ export async function commandSelector(message: Message) {
       }
 
       const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL as ChatGPTModel, GPTMode.DEFAULT);
+      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL, GPTMode.DEFAULT);
+      break;
+    }
+    case 'memory': {
+      await DotBotFunctions.Chat.setMemory(message);
+      break;
+    }
+    case 'model': {
+      const model = content[0];
+      // if (!Object.values(ChatGPTModel).includes(model as ChatGPTModel)) {
+      //   await message.reply(`モデルが存在しません。`);
+      //   return;
+      // }
+      await DotBotFunctions.Chat.setModel(message, model as ChatGPTModel, GPTMode.DEFAULT);
+      break;
+    }
+    case 'model-info': {
+      await DotBotFunctions.Chat.getModel(message);
       break;
     }
     case 'pic': {
@@ -621,6 +638,7 @@ export async function commandSelector(message: Message) {
 
       switch (mode) {
         case 'name': {
+          content.shift();
           let roomName;
           if (!value) {
             // 初期名(お部屋: #NUM)に変更
@@ -630,7 +648,7 @@ export async function commandSelector(message: Message) {
             }
             roomName = getDefaultRoomName(message.guild);
           } else {
-            roomName = value;
+            roomName = content.join(' ');
           }
           await DotBotFunctions.Room.changeRoomName(message, roomName);
           break;
@@ -638,6 +656,7 @@ export async function commandSelector(message: Message) {
         case 'limit': {
           if (!value || Number(value) <= 0) {
             await DotBotFunctions.Room.changeLimit(message, 0);
+            return;
           }
           let limit = Number(value);
           if (limit > 99) {
@@ -675,7 +694,7 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'rn': {
-      const value = content[0];
+      const value = content.join(' ');
       let roomName;
       if (!value) {
         // 初期名(お部屋: #NUM)に変更
@@ -776,7 +795,7 @@ export async function commandSelector(message: Message) {
         return;
       }
       const channel = message.channel;
-      if (!channel) {
+      if (!channel || channel.type === ChannelType.GroupDM) {
         return;
       }
       if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
@@ -806,16 +825,16 @@ export async function commandSelector(message: Message) {
         return;
       }
       const channel = message.channel;
-      if (channel) {
+      if (channel && channel.type !== ChannelType.GroupDM) {
         const send = new EmbedBuilder()
           .setColor('#ffcc00')
           .setTitle(`ルールを読んだ`)
           .setDescription('リアクションをすると全ての機能が使えるようになります');
-        const result = await channel?.send({ embeds: [send] });
+        const result = await channel.send({ embeds: [send] });
         result.react('✅');
+        const m = await channel.send('pop-up success.');
+        await m.delete();
       }
-      const m = await channel.send('pop-up success.');
-      await m.delete();
       break;
     }
     case 'popup-gamelist': {
@@ -826,12 +845,12 @@ export async function commandSelector(message: Message) {
         return;
       }
       const channel = message.channel;
-      if (channel) {
+      if (channel && channel.type !== ChannelType.GroupDM) {
         const send = new EmbedBuilder()
           .setColor('#ffcc00')
           .setTitle(`ゲームの選択`)
           .setDescription('リアクションをすると全ての機能が使えるようになります');
-        const result = await channel?.send({ embeds: [send] });
+        const result = await channel.send({ embeds: [send] });
         result.react('✅');
       }
 
@@ -1250,9 +1269,57 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         return;
       }
       await interaction.deferReply();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const text = interaction.options.getString('text')!;
+      const text = interaction.options.getString('text') ?? '';
       await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL, GPTMode.DEFAULT);
+      break;
+    }
+    case 'o1': {
+      if (!isEnableFunction(functionNames.GPT)) {
+        const send = new EmbedBuilder()
+          .setColor('#ff0000')
+          .setTitle(`エラー`)
+          .setDescription(`機能が有効化されていません。`);
+
+        interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
+        return;
+      }
+      const text = interaction.options.getString('text') ?? '';
+      await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_O1, GPTMode.DEFAULT);
+      break;
+    }
+    case 'o1m': {
+      if (!isEnableFunction(functionNames.GPT)) {
+        const send = new EmbedBuilder()
+          .setColor('#ff0000')
+          .setTitle(`エラー`)
+          .setDescription(`機能が有効化されていません。`);
+
+        interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
+        return;
+      }
+      const text = interaction.options.getString('text') ?? '';
+      await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_O1_MINI, GPTMode.DEFAULT);
+      break;
+    }
+    case 'ai': {
+      const type = interaction.options.getSubcommand();
+      switch (type) {
+        case 'start': {
+          await interaction.deferReply();
+          await BotFunctions.Vchat.initVc(interaction);
+          break;
+        }
+        case 'stop': {
+          await interaction.deferReply();
+          BotFunctions.Vchat.closeVc(interaction.guild?.id ?? '');
+          await interaction.editReply({ content: '切断しました' });
+          break;
+        }
+      }
+      break;
+    }
+    case 'memory': {
+      await BotFunctions.Chat.setMemory(interaction);
       break;
     }
     case 'erase': {
@@ -1358,6 +1425,55 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         return;
       }
 
+      const dmChannel = member.user.dmChannel;
+      if (!dmChannel) {
+        // 見つからないことはないはず
+        const send = new EmbedBuilder()
+          .setColor('#ff0000')
+          .setTitle(`エラー`)
+          .setDescription('DMが見つかりません');
+        await interaction.reply({ embeds: [send] });
+        return;
+      }
+
+      const message = `
+この度のサーバー内での深刻な違反行為、もしくは度重なる違反により、
+サーバー内管理者(<@${interaction.user.id}>)により、サーバー利用が一時的に制限されました。
+
+▼ 違反内容
+・${reason}
+
+▼ 制限内容
+・サーバー全体の書き込み禁止
+・ボイスチャットの使用禁止
+・禁止期間：${time.toString()} 時間
+
+▼ 注意事項
+・制限中はサーバー内のすべてのチャンネルでの書き込みができません
+・ボイスチャットの使用も禁止されます
+・この処分をサブアカウントなどで回避する行為は追加処分の対象となります
+・違反が継続される場合、以下の措置を取らせていただきます：
+
+1. タイムアウト期間の延長
+2. サーバーからの追放措置
+
+このサーバーは、コミュニティの秩序と快適な環境維持のため、
+ルール違反に対して毅然とした対応を取らせていただいております。
+
+処分解除後は、ルールを順守し、
+より良いコミュニティづくりにご協力いただきますようお願いいたします。
+
+このメッセージからは返信できません。
+処分についてのご質問や異議申し立ては、
+<@246007305156558848> までDMにてご連絡ください。
+`;
+
+      const dmSend = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle(`⚠️警告：タイムアウト処分が行われました`)
+        .setDescription(message);
+      await dmChannel.send({ embeds: [dmSend] });
+
       await member.timeout(time * 60 * 60 * 1000, reason);
 
       const send = new EmbedBuilder()
@@ -1370,6 +1486,94 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         );
       await interaction.reply({ embeds: [send] });
       return;
+    }
+    case 'mute': {
+      const guild = interaction.guild;
+      if (!guild) {
+        return;
+      }
+      if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.ADMIN)) {
+        const send = new EmbedBuilder()
+          .setColor('#ff0000')
+          .setTitle(`エラー`)
+          .setDescription(`このコマンドは管理者のみ使用できます。`);
+
+        interaction.reply({ embeds: [send] });
+        return;
+      }
+
+      const user = interaction.options.getUser('user')!;
+      const time = interaction.options.getNumber('time')!;
+      const reason = interaction.options.getString('reason')!;
+      const member = guild.members.cache.find((member) => member.id === user.id);
+
+      if (!member) {
+        const send = new EmbedBuilder()
+          .setColor('#ff0000')
+          .setTitle(`エラー`)
+          .setDescription('ユーザーが見つからなかった');
+        await interaction.reply({ embeds: [send] });
+        return;
+      }
+
+      member.voice.setMute(true, reason);
+
+      let dmChannel = user.dmChannel;
+      if (!dmChannel) {
+        // 一度もDMを送信していない場合
+        dmChannel = await user.createDM();
+      }
+
+      const message = `
+サーバー内管理者(<@${interaction.user.id}>)により、あなたのマイク使用が一時的に制限されました。
+
+▼ 違反内容
+・${reason}
+
+▼ 制限内容
+・ボイスチャット時のマイク使用が禁止されます
+・禁止期間：${time.toString()} 分
+
+▼ 注意事項
+・制限中はボイスチャットでのマイク使用ができません
+・この処分をサブアカウントなどで回避する行為は追加処分の対象となります
+・改善が見られない場合、以下の追加措置を取らせていただきます：
+
+1. タイムアウト処分（サーバー全体の書き込み禁止）
+2. より長期の制限期間の適用
+3. 場合によってはサーバーからの追放
+ｄｓ
+ルールを理解し、お互いを尊重した行動をお願いします。
+
+このメッセージからは返信できません。
+ご不明な点やご意見がございましたら、<@246007305156558848> までご連絡ください。
+`;
+
+      const dmSend = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle(`⚠️警告：マイクミュート処分が行われました`)
+        .setDescription(message);
+      await dmChannel.send({ embeds: [dmSend] });
+
+      const send = new EmbedBuilder()
+        .setColor('#00ff00')
+        .setTitle(`ミュートの実行`)
+        .setDescription(`${member.user.displayName}をサーバーミュートしました.`);
+      send.addFields({ name: '規制時間', value: `${time.toString()} 分` });
+      send.addFields({ name: '事由', value: reason });
+      await interaction.reply({ embeds: [send] });
+
+
+      setTimeout(async () => {
+        const dmSend = new EmbedBuilder()
+          .setColor('#00ff00')
+          .setTitle(`マイクミュートの解除`)
+          .setDescription(`${member.user.displayName}のマイクミュートを解除しました.`);
+        await dmChannel.send({ embeds: [dmSend] });
+        member.voice.setMute(false);
+      }, time * 60 * 1000);
+
+      break;
     }
     case 'accept': {
       if (!interaction.guild) {
@@ -1543,42 +1747,7 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-
-  // 参加しているすべてのギルドを取得する
-  const guilds = await DISCORD_CLIENT.guilds.fetch();
-  for (const [, guild] of guilds) {
-    // ギルドユーザーを全て取得する
-    const userRepository = new UsersRepository();
-    const users = await userRepository.getAll(guild.id);
-    const members = await (await guild.fetch()).members.fetch();
-    // ユーザーが存在しない場合は削除する
-    for (const user of users) {
-      console.log(guild.id, user.id);
-      const member = members.find((m) => m.id === user.id);
-      if (!member) {
-        await userRepository.delete(user.guild_id, user.id);
-        message.channel.send(`delete user: ${user.user_name} | guild: ${guild.name}`);
-      }
-    }
-
-    // ユーザーが存在しない場合は追加する
-    for (const [, member] of members) {
-      console.log(guild.id, member.id);
-      const user = await userRepository.get(guild.id, member.id);
-      if (!user) {
-        await userRepository.saveUserSetting({ user_id: member.id, nickname: member.displayName });
-
-        await userRepository.save({
-          id: member.id,
-          guild_id: guild.id,
-          user_name: member.displayName,
-          pick_left: 10,
-        });
-        message.channel.send(`add user: ${member.displayName} | guild: ${guild.name}`);
-      }
-    }
-  }
-
+  message.reply('debug');
 }
 
 /**
@@ -1587,7 +1756,12 @@ export async function debug(message: Message, args?: string[]) {
  */
 export async function help(message: Message | ChatInputCommandInteraction<CacheType>) {
   if (message instanceof Message) {
-    HELP_COMMANDS.map(async (c) => await message.channel.send({ embeds: [c] }));
+    HELP_COMMANDS.map(async (c) => {
+      if (message.channel.type === ChannelType.GroupDM) {
+        return;
+      }
+      await message.channel.send({ embeds: [c] })
+    });
   } else if (message instanceof ChatInputCommandInteraction) {
     await message.reply({ content: 'ヘルプを表示', ephemeral: true });
     HELP_COMMANDS.map(async (c) => await message.followUp({ embeds: [c], ephemeral: true }));

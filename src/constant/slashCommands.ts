@@ -77,7 +77,13 @@ export const SERVER_SLASH_COMMANDS = [
     .setName('timeout')
     .setDescription('特定のユーザーをタイムアウトします')
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))
-    .addNumberOption((option) => option.setName('time').setDescription('タイムアウト時間').setRequired(true))
+    .addNumberOption((option) => option.setName('time').setDescription('タイムアウト時間(h)').setRequired(true))
+    .addStringOption((option) => option.setName('reason').setDescription('事由').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('mute')
+    .setDescription('特定のユーザーをミュートします')
+    .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))
+    .addNumberOption((option) => option.setName('time').setDescription('ミュート時間(m)').setRequired(true))
     .addStringOption((option) => option.setName('reason').setDescription('事由').setRequired(true)),
   new SlashCommandBuilder().setName('topic').setDescription('ランダムなお題を表示します'),
   new SlashCommandBuilder().setName('accept').setDescription('ルールに同意します'),
@@ -95,6 +101,14 @@ export const SERVER_SLASH_COMMANDS = [
     .setName('ito')
     .setDescription('itoのダイスを振ります')
     .addNumberOption((option) => option.setName('round').setDescription('ラウンド数').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('ai')
+    .setDescription('AIと会話します')
+    .addSubcommand((sc) => sc.setName('start').setDescription('会話を開始します'))
+    .addSubcommand((sc) => sc.setName('stop').setDescription('会話を停止します')),
+  new SlashCommandBuilder()
+    .setName('memory')
+    .setDescription('メモリ機能を切り替えます'),
   // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
   // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
   // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

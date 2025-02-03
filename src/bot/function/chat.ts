@@ -1,9 +1,26 @@
-import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import dayjs from 'dayjs';
-import { GPTMode, Role, gptList, initalize } from '../../constant/chat/chat.js';
+import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { Logger } from '../../common/logger.js';
-import { LogLevel } from '../../type/types.js';
 import { ChatGPTModel } from '../../config/config.js';
+import { GPTMode, Role, gptList, initalize } from '../../constant/chat/chat.js';
+import { LogLevel } from '../../type/types.js';
+
+/**
+ * メモリ機能を切り替える
+ * @param interaction
+ */
+export async function setMemory(interaction: ChatInputCommandInteraction<CacheType>) {
+  const { id } = getIdInfo(interaction);
+  if (!id) {
+    return;
+  }
+  const gpt = gptList.gpt.find((c) => c.id === id);
+  if (!gpt) {
+    return;
+  }
+  gpt.memory = !gpt.memory;
+  await interaction.reply(`メモリ機能を${gpt.memory ? '有効化' : '無効化'}したよ！`);
+}
 
 /**
  * ChatGPTで会話する

@@ -240,7 +240,12 @@ async function pickNormal(
       return;
     }
   } else {
-    await users.save({ id: interaction.user.id, user_name: interaction.user.displayName, pick_left: 10 });
+    await users.save({
+      id: interaction.user.id,
+      guild_id: interaction.guild.id,
+      user_name: interaction.user.displayName,
+      pick_left: 10,
+    });
   }
 
   for (let i = 0; i < num; i++) {
@@ -308,6 +313,7 @@ async function pickNormal(
 
   await users.save({
     id: interaction.user.id,
+    guild_id: interaction.guild.id,
     user_name: interaction.user.displayName,
     last_pick_date: dayjs().toDate(),
     pick_left: pickLeft,

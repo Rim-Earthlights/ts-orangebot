@@ -1,6 +1,6 @@
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { arrayEquals, getRndNumber } from '../../common/common.js';
-import { DiceRole, DICE_ROLE } from '../../constant/dice/dice.js';
+import { DICE_ROLE, DiceRole } from '../../constant/dice/dice.js';
 
 /**
  * サイコロを振る
@@ -64,6 +64,14 @@ export async function roll(message: Message, args?: string[]) {
           return sum + el;
         }, 0)
         .toString(),
+    })
+    .addFields({
+      name: '最大値',
+      value: Math.max(...result).toString(),
+    })
+    .addFields({
+      name: '最小値',
+      value: Math.min(...result).toString(),
     })
     .addFields({
       name: '平均値',

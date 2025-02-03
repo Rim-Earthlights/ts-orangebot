@@ -1,6 +1,6 @@
 import { ChannelType, MessageReaction, PartialMessageReaction, PartialUser, TextChannel, User } from 'discord.js';
 import { Logger } from '../common/logger.js';
-import { Users } from '../model/models';
+import { Users, UserSetting } from '../model/models';
 import { RoleRepository } from '../model/repository/roleRepository.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import { LogLevel } from '../type/types.js';
@@ -101,6 +101,15 @@ export const reactionSelector = async (
 
         // register user
         const userRepository = new UsersRepository();
+        const userSetting = await userRepository.getUserSetting(user.id);
+        if (!userSetting) {
+          const saveUserSetting: Partial<UserSetting> = {
+            user_id: user.id,
+            nickname: user.displayName
+          };
+          await userRepository.saveUserSetting(saveUserSetting);
+        }
+
         const userEntity = await userRepository.get(reaction.message.guild.id, user.id);
         if (!userEntity) {
           const saveUser: Partial<Users> = {
