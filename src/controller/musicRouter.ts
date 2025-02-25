@@ -1,7 +1,7 @@
 import Express from 'express';
-import { MusicRepository } from '../model/repository/musicRepository.js';
-import { MusicInfoRepository } from '../model/repository/musicInfoRepository.js';
 import { Logger } from '../common/logger.js';
+import { MusicInfoRepository } from '../model/repository/musicInfoRepository.js';
+import { MusicRepository } from '../model/repository/musicRepository.js';
 import { LogLevel } from '../type/types.js';
 
 export const musicRouter = Express.Router();
@@ -34,7 +34,7 @@ musicRouter.get('/music', async (req: Express.Request, res: Express.Response) =>
   const musics = await musicRepository.getAll(gid, cid);
   const infoRepository = new MusicInfoRepository();
   const info = await infoRepository.get(gid, cid);
-  if (musics.length <= 0) {
+  if (musics.length === 0) {
     res.status(404).send({ code: 404, message: 'not found musics.' });
   }
 
