@@ -5,22 +5,21 @@ import {
   DiscordGatewayAdapterCreator,
   entersState,
   getVoiceConnection,
-  joinVoiceChannel,
-  StreamType,
+  joinVoiceChannel
 } from '@discordjs/voice';
+import ytdl from '@distube/ytdl-core';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import pldl, { SpotifyAlbum, SpotifyTrack } from 'play-dl';
 import { getRndArray } from '../../common/common.js';
+import { Logger } from '../../common/logger.js';
 import { CONFIG, YT_AGENT } from '../../config/config.js';
+import { Music, PlayerData } from '../../constant/music/music.js';
 import { Playlist } from '../../model/models/index.js';
 import { MusicInfoRepository } from '../../model/repository/musicInfoRepository.js';
 import { MusicRepository } from '../../model/repository/musicRepository.js';
 import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
-import { getPlaylistItems } from '../request/youtube.js';
-import { Music, PlayerData } from '../../constant/music/music.js';
-import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
-import ytdl from '@distube/ytdl-core';
+import { getPlaylistItems } from '../request/youtube.js';
 
 /**
  * キューに音楽を追加する
@@ -169,6 +168,10 @@ export async function addYoutubeMusic(
       },
       !!interrupt
     );
+    if (interrupt) {
+      return true;
+    }
+
     const musics = await repository.getQueue(channel.guild.id, channel.id);
 
     if (status === AudioPlayerStatus.Playing) {
@@ -614,10 +617,9 @@ export async function playMusic(channel: VoiceBasedChannel) {
   });
   try {
     const p = await updateAudioPlayer(channel);
-    const stream = ytdl(playing.url, { filter: 'audioonly', highWaterMark: 1 << 25, agent: YT_AGENT });
-    const resource = createAudioResource(stream, {
-      inputType: StreamType.WebmOpus,
-    });
+
+    const stream = ytdl(playing.url, { filter: 'audioonly' , highWaterMark: 1 << 25, agent: YT_AGENT });
+    const resource = createAudioResource(stream);
 
     if (info?.silent === 0) {
       const slicedMusics = musics.slice(0, 4);
@@ -632,7 +634,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
         .addFields({
           name: '再生キュー',
           value: `${
-            CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
+            CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
           }`,
         });
       (channel as VoiceChannel).send({ embeds: [send] });
@@ -660,7 +662,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
       .addFields({
         name: '再生キュー',
         value: `${
-          CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
+          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
         }`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
@@ -834,7 +836,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
       .addFields({
         name: '再生キュー',
         value: `${
-          CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
+          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
         }`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
@@ -848,7 +850,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
       .addFields({
         name: '再生キュー',
         value: `${
-          CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
+          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
         }`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
@@ -985,7 +987,7 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
       .addFields({
         name: '再生キュー',
         value: `${
-          CONFIG.COMMON.HOST_URL + ':' + CONFIG.COMMON.PORT + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
+          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
         }`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
