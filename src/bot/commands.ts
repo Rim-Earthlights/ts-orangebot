@@ -1542,7 +1542,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
 1. タイムアウト処分（サーバー全体の書き込み禁止）
 2. より長期の制限期間の適用
 3. 場合によってはサーバーからの追放
-ｄｓ
+
 ルールを理解し、お互いを尊重した行動をお願いします。
 
 このメッセージからは返信できません。
