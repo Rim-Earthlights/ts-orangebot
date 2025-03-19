@@ -109,6 +109,9 @@ export const SERVER_SLASH_COMMANDS = [
   new SlashCommandBuilder()
     .setName('memory')
     .setDescription('メモリ機能を切り替えます'),
+  new SlashCommandBuilder()
+    .setName('speak')
+    .setDescription('読み上げボットを呼び出します')
   // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
   // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
   // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

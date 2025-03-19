@@ -11,8 +11,8 @@ import {
 import ytpl from 'ytpl';
 import { checkUserType, getIntArray, getRndNumber, isEnableFunction } from '../common/common.js';
 import { Logger } from '../common/logger.js';
-import { CONFIG, ChatGPTModel } from '../config/config.js';
-import { GPTMode } from '../constant/chat/chat.js';
+import { CONFIG, LiteLLMModel } from '../config/config.js';
+import { LiteLLMMode } from '../constant/chat/chat.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { ITO_TOPICS } from '../constant/words/ito.js';
 import { TOPIC } from '../constant/words/topic.js';
@@ -23,6 +23,7 @@ import { LogRepository } from '../model/repository/logRepository.js';
 import { PlaylistRepository } from '../model/repository/playlistRepository.js';
 import { RoleRepository } from '../model/repository/roleRepository.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
+import * as ChatService from '../service/chat.service.js';
 import { LogLevel } from '../type/types.js';
 import * as DotBotFunctions from './dot_function/index.js';
 import { getDefaultRoomName } from './dot_function/voice.js';
@@ -79,7 +80,7 @@ export async function commandSelector(message: Message) {
         return;
       }
       const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, ChatGPTModel.GPT_4O, GPTMode.NOPROMPT);
+      await DotBotFunctions.Chat.talk(message, chat, LiteLLMModel.GPT_4O, LiteLLMMode.NOPROMPT);
       break;
     }
     case 'gpt':
@@ -94,7 +95,7 @@ export async function commandSelector(message: Message) {
         return;
       }
       const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
+      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
       break;
     }
     case 'g3': {
@@ -108,7 +109,7 @@ export async function commandSelector(message: Message) {
         return;
       }
       const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G3_MODEL, GPTMode.DEFAULT);
+      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G3_MODEL, LiteLLMMode.DEFAULT);
       break;
     }
     case 'g4': {
@@ -123,7 +124,7 @@ export async function commandSelector(message: Message) {
       }
 
       const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL, GPTMode.DEFAULT);
+      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL, LiteLLMMode.DEFAULT);
       break;
     }
     case 'memory': {
@@ -131,12 +132,26 @@ export async function commandSelector(message: Message) {
       break;
     }
     case 'model': {
-      const model = content[0];
-      // if (!Object.values(ChatGPTModel).includes(model as ChatGPTModel)) {
-      //   await message.reply(`モデルが存在しません。`);
-      //   return;
-      // }
-      await DotBotFunctions.Chat.setModel(message, model as ChatGPTModel, GPTMode.DEFAULT);
+      const dest = content[0];
+      const model = content[1];
+
+      if (dest == null || model == null) {
+        const send = new EmbedBuilder()
+          .setColor('#ff0000')
+          .setTitle(`エラー`)
+          .setDescription(`宛先とモデルを指定してください。`);
+
+        message.reply({ embeds: [send] });
+        return;
+      }
+
+      await ChatService.setModel(dest as 'default' | 'g3' | 'g4', model as LiteLLMModel);
+      const send = new EmbedBuilder()
+        .setColor('#00ffff')
+        .setTitle(`モデル変更`)
+        .setDescription(`モデルを${model}に変更`);
+
+      message.reply({ embeds: [send] });
       break;
     }
     case 'model-info': {
@@ -1239,7 +1254,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       await interaction.deferReply();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const text = interaction.options.getString('text')!;
-      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
+      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
       break;
     }
     case 'g3': {
@@ -1255,7 +1270,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       await interaction.deferReply();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const text = interaction.options.getString('text')!;
-      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G3_MODEL, GPTMode.DEFAULT);
+      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G3_MODEL, LiteLLMMode.DEFAULT);
       break;
     }
     case 'g4': {
@@ -1270,7 +1285,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       }
       await interaction.deferReply();
       const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL, GPTMode.DEFAULT);
+      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL, LiteLLMMode.DEFAULT);
       break;
     }
     case 'o1': {
@@ -1284,7 +1299,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         return;
       }
       const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_O1, GPTMode.DEFAULT);
+      await BotFunctions.Chat.talk(interaction, text, LiteLLMModel.GPT_O1, LiteLLMMode.DEFAULT);
       break;
     }
     case 'o1m': {
@@ -1298,7 +1313,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         return;
       }
       const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, ChatGPTModel.GPT_O1_MINI, GPTMode.DEFAULT);
+      await BotFunctions.Chat.talk(interaction, text, LiteLLMModel.GPT_O3_MINI, LiteLLMMode.DEFAULT);
       break;
     }
     case 'ai': {
@@ -1316,6 +1331,10 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
           break;
         }
       }
+      break;
+    }
+    case 'speak': {
+      await BotFunctions.Speak.call(interaction);
       break;
     }
     case 'memory': {
@@ -1747,6 +1766,8 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
+  const presence = message.guild?.presences.cache.get(message.author.id);
+  console.dir(presence, { depth: null });
   message.reply('debug');
 }
 

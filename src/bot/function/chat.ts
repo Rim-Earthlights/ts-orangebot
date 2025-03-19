@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { Logger } from '../../common/logger.js';
-import { ChatGPTModel } from '../../config/config.js';
-import { GPTMode, Role, gptList, initalize } from '../../constant/chat/chat.js';
+import { LiteLLMModel } from '../../config/config.js';
+import { LiteLLMMode, Role, gptList, initalize } from '../../constant/chat/chat.js';
 import { LogLevel } from '../../type/types.js';
 
 /**
@@ -28,19 +28,19 @@ export async function setMemory(interaction: ChatInputCommandInteraction<CacheTy
 export async function talk(
   interaction: ChatInputCommandInteraction<CacheType>,
   content: string,
-  model: ChatGPTModel,
-  mode: GPTMode
+  model: LiteLLMModel,
+  mode: LiteLLMMode
 ) {
   const { id, isGuild } = getIdInfo(interaction);
   if (!id) {
     return;
   }
-  let gpt = gptList.gpt.find((c) => c.id === id);
-  if (!gpt) {
-    gpt = await initalize(id, model, mode, isGuild);
-    gptList.gpt.push(gpt);
+  let liteLLM = gptList.gpt.find((c) => c.id === id);
+  if (!liteLLM) {
+    liteLLM = await initalize(id, model, mode, isGuild);
+    gptList.gpt.push(liteLLM);
   }
-  const openai = gpt.openai;
+  const llm = liteLLM.litellm;
 
   const systemContent = {
     server: { name: interaction.guild?.name },
@@ -48,16 +48,18 @@ export async function talk(
     date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
   };
 
+  console.log(systemContent);
+
   const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
-  gpt.chat.push({
+  liteLLM.chat.push({
     role: Role.USER,
     content: sendContent,
   });
 
-  const response = await openai.chat.completions.create({
+  const response = await llm.chat.completions.create({
     model: model,
-    messages: gpt.chat,
+    messages: liteLLM.chat,
   });
 
   const completion = response.choices[0].message;
@@ -68,8 +70,8 @@ export async function talk(
     return;
   }
 
-  gpt.chat.push({ role: Role.ASSISTANT, content: completion.content });
-  gpt.timestamp = dayjs();
+  liteLLM.chat.push({ role: Role.ASSISTANT, content: completion.content });
+  liteLLM.timestamp = dayjs();
 
   if (completion.content.length > 2000) {
     const texts = completion.content.split('\n');

@@ -1,12 +1,12 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { AttachmentBuilder, EmbedBuilder, Message } from 'discord.js';
+import { ActivityType, AttachmentBuilder, EmbedBuilder, Message } from 'discord.js';
 import iconv from 'iconv-lite';
 import OpenAI from 'openai';
 import { ChatCompletionContentPart } from 'openai/resources/index.js';
 import { Logger } from '../../common/logger.js';
-import { ChatGPTModel, CONFIG } from '../../config/config.js';
-import { gptList, GPTMode, initalize, Role } from '../../constant/chat/chat.js';
+import { CONFIG, LiteLLMModel } from '../../config/config.js';
+import { gptList, initalize, LiteLLMMode, Role } from '../../constant/chat/chat.js';
 import { ModelResponse } from '../../type/openai.js';
 import { LogLevel } from '../../type/types.js';
 import { Forecast } from './index.js';
@@ -17,7 +17,7 @@ import { Forecast } from './index.js';
  * @param model
  * @param mode
  */
-export async function setModel(message: Message, model: ChatGPTModel, mode: GPTMode) {
+export async function setModel(message: Message, model: LiteLLMModel, mode: LiteLLMMode) {
   const { id, isGuild } = getIdInfo(message);
   let gpt = gptList.gpt.find((c) => c.id === id);
   if (!gpt) {
@@ -29,18 +29,14 @@ export async function setModel(message: Message, model: ChatGPTModel, mode: GPTM
 }
 
 export async function getModel(message: Message) {
-  const response = await axios.get<ModelResponse>(`${CONFIG.OPENAI.BASE_URL}/model/info`, {
+  const response = await axios.get<ModelResponse>(`${CONFIG.OPENAI.BASE_URL}/models`, {
     headers: {
       Authorization: `Bearer ${CONFIG.OPENAI.KEY}`,
     },
   });
   const models = response.data.data;
   const content = models.map((m) => {
-    const provider = m.litellm_params.custom_llm_provider;
-    const modelName = m.litellm_params.model;
-    const inputCostPerToken = m.model_info.input_cost_per_token ? m.model_info.input_cost_per_token * 1000000 : 0;
-    const outputCostPerToken = m.model_info.output_cost_per_token ? m.model_info.output_cost_per_token * 1000000 : 0;
-    return `${provider}/${modelName} | input: ${inputCostPerToken}, output: ${outputCostPerToken}`;
+    return `${m.id}`;
   });
   const send = new EmbedBuilder().setColor('#00cc00').setTitle(`モデル一覧`).setDescription(content.join('\n'));
   await message.reply({ embeds: [send] });
@@ -56,17 +52,18 @@ export async function setMemory(message: Message) {
   gpt.memory = !gpt.memory;
   await message.reply(`メモリ機能を${gpt.memory ? '有効化' : '無効化'}したよ！`);
 }
+
 /**
  * ChatGPTで会話する
  */
-export async function talk(message: Message, content: string, model: ChatGPTModel, mode: GPTMode) {
+export async function talk(message: Message, content: string, model: LiteLLMModel, mode: LiteLLMMode) {
   const { id, isGuild } = getIdInfo(message);
   let gpt = gptList.gpt.find((c) => c.id === id);
   if (!gpt) {
     gpt = await initalize(id, model, mode, isGuild);
     gptList.gpt.push(gpt);
   }
-  const openai = gpt.openai;
+  const openai = gpt.litellm;
   let weather = undefined;
 
   if (content.includes(`天気`)) {
@@ -91,15 +88,33 @@ export async function talk(message: Message, content: string, model: ChatGPTMode
   }
 
   const user = message.mentions.users.map((u) => {
+    const presence = message.guild?.presences.cache.get(u.id);
     return {
       mention_id: `<@${u.id}>`,
       name: u.displayName,
+      activity: presence?.activities.map((a) => {
+        return {
+          type: ActivityType[a.type],
+          name: a.name,
+          details: a.details,
+          state: a.state,
+        };
+      }),
     };
   });
   if (!user.find((u) => u.mention_id === `<@${message.author.id}>`)) {
+    const presence = message.guild?.presences.cache.get(message.author.id);
     user.push({
       mention_id: `<@${message.author.id}>`,
       name: message.author.displayName,
+      activity: presence?.activities.map((a) => {
+        return {
+          type: ActivityType[a.type],
+          name: a.name,
+          details: a.details,
+          state: a.state,
+        };
+      }),
     });
   }
 

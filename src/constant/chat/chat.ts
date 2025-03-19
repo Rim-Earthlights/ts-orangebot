@@ -1,48 +1,48 @@
 import dayjs from 'dayjs';
 import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
-import { CONFIG, ChatGPTModel } from '../../config/config.js';
+import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { CHATBOT_TEMPLATE } from '../constants.js';
 
-export const gptList = { gpt: [] as ChatGPT[] };
+export const gptList = { gpt: [] as LiteLLM[] };
 
-export async function initalize(id: string, model: ChatGPTModel, mode: GPTMode, isGuild: boolean) {
-  const openai = new OpenAI({
+export async function initalize(id: string, model: LiteLLMModel, mode: LiteLLMMode, isGuild: boolean) {
+  const litellm = new OpenAI({
     organization: CONFIG.OPENAI.ORG,
     project: CONFIG.OPENAI.PROJECT,
     apiKey: CONFIG.OPENAI.KEY,
     maxRetries: 3,
     baseURL: CONFIG.OPENAI.BASE_URL,
   });
-  const gpt: ChatGPT = {
+  const llm: LiteLLM = {
     id,
-    openai: openai,
+    litellm: litellm,
     model: model,
     chat: [],
     isGuild: isGuild,
     memory: false,
     timestamp: dayjs(),
   };
-  if (mode === GPTMode.DEFAULT) {
-    gpt.chat.push({
+  if (mode === LiteLLMMode.DEFAULT) {
+    llm.chat.push({
       role: Role.SYSTEM,
       content: CHATBOT_TEMPLATE,
     });
   }
-  return gpt;
+  return llm;
 }
 
-export type ChatGPT = {
+export type LiteLLM = {
   id: string;
-  openai: OpenAI;
-  model: ChatGPTModel;
+  litellm: OpenAI;
+  model: LiteLLMModel;
   chat: ChatCompletionMessageParam[];
   isGuild: boolean;
   memory: boolean;
   timestamp: dayjs.Dayjs;
 };
 
-export enum GPTMode {
+export enum LiteLLMMode {
   DEFAULT = 'default',
   NOPROMPT = 'no_prompt',
 }

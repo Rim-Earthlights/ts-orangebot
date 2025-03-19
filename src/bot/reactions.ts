@@ -112,13 +112,17 @@ export const reactionSelector = async (
 
         const userEntity = await userRepository.get(reaction.message.guild.id, user.id);
         if (!userEntity) {
+          if (!reaction.message.guild) {
+            return;
+          }
           const saveUser: Partial<Users> = {
             id: user.id,
+            guild_id: reaction.message.guild.id,
             user_name: user.displayName,
             pick_left: 10,
             voice_channel_data: [
               {
-                gid: reaction.message.guild?.id ?? 'DM',
+                gid: reaction.message.guild.id,
                 date: new Date(),
               },
             ],

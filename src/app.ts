@@ -13,13 +13,14 @@ import { reactionSelector } from './bot/reactions.js';
 import { switchFunctionByAPIKey } from './common/common.js';
 import { Logger } from './common/logger.js';
 import { CONFIG } from './config/config.js';
-import { GPTMode } from './constant/chat/chat.js';
+import { LiteLLMMode } from './constant/chat/chat.js';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { DM_SLASH_COMMANDS, SERVER_SLASH_COMMANDS } from './constant/slashCommands.js';
 import { initJob } from './job/job.js';
 import { GuildRepository } from './model/repository/guildRepository.js';
 import { ItemRepository } from './model/repository/itemRepository.js';
+import { RoomRepository } from './model/repository/roomRepository.js';
 import { UsersRepository } from './model/repository/usersRepository.js';
 import { TypeOrm } from './model/typeorm/typeorm.js';
 import { routers } from './routers.js';
@@ -134,7 +135,8 @@ DISCORD_CLIENT.once('ready', async () => {
 
   // コマンド登録
   const guilds = await repository.getAll();
-  guilds.map((guild) => {
+  guilds.map(async (guild) => {
+    await new RoomRepository().init(guild.id);
     rest
       .put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, guild.id), { body: commands })
       .then(
@@ -209,7 +211,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
       message.content.includes(`<@${DISCORD_CLIENT.user?.id}>`) &&
       message.content.trimEnd() !== `<@${DISCORD_CLIENT.user?.id}>`
     ) {
-      await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
+      await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
     }
     // await wordSelector(message);
     return;
@@ -231,7 +233,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
   }
 
   if (message.channel.type === ChannelType.DM) {
-    await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, GPTMode.DEFAULT);
+    await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
     return;
   }
 });

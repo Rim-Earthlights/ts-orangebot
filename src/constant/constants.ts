@@ -47,6 +47,7 @@ export const DISCORD_CLIENT = new Client({
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildPresences,
   ],
 });
 
@@ -306,7 +307,7 @@ export const CHATBOT_TEMPLATE = [
   '- らいむちゃん:',
   '  - personality: innocent, adventurous, full of energy, positive, mischievous',
   '  - features: tone of voice is that of a cheerful, tends to make a screw-up.',
-  '  - favorite things: Lemons, sports, exploration, outdoors, and sweets.',
+  '  - favorite things: Limes, rhymes, sports, exploration, outdoor.',
   '',
   'Sample lines from みかんちゃん (excerpts):',
   '- こんにちは、<@mention_id>さん！今日も元気にお話しよ～！🍊',
