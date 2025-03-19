@@ -6,7 +6,7 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   Message,
-  VoiceBasedChannel
+  VoiceBasedChannel,
 } from 'discord.js';
 import ytpl from 'ytpl';
 import { checkUserType, getIntArray, getRndNumber, isEnableFunction } from '../common/common.js';
@@ -25,6 +25,7 @@ import { RoleRepository } from '../model/repository/roleRepository.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import * as ChatService from '../service/chat.service.js';
 import { LogLevel } from '../type/types.js';
+import { CommandSelector } from './commandSelector.js';
 import * as DotBotFunctions from './dot_function/index.js';
 import { getDefaultRoomName } from './dot_function/voice.js';
 import * as BotFunctions from './function/index.js';
@@ -380,7 +381,8 @@ export async function commandSelector(message: Message) {
         const description = playlists
           .map(
             (p) =>
-              `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${p.loop ? 'ON' : 'OFF'} | シャッフル: ${p.shuffle ? 'ON' : 'OFF'
+              `登録名: ${p.name}\n> プレイリスト名: ${p.title} | ループ: ${p.loop ? 'ON' : 'OFF'} | シャッフル: ${
+                p.shuffle ? 'ON' : 'OFF'
               }`
           )
           .join('\n');
@@ -513,7 +515,6 @@ export async function commandSelector(message: Message) {
             });
             return;
           }
-          break;
         }
         case 'loop':
         case 'lp': {
@@ -935,39 +936,42 @@ export async function commandSelector(message: Message) {
 
       message.reply(`set ${description} timer ${time} min.`);
 
-      setTimeout(async () => {
-        if (message.channel?.type === ChannelType.GuildVoice) {
-          const channel = message.channel as BaseGuildVoiceChannel;
-          const member = channel.members.find((member) => member.id === message.author.id);
-          if (!member) {
+      setTimeout(
+        async () => {
+          if (message.channel?.type === ChannelType.GuildVoice) {
+            const channel = message.channel as BaseGuildVoiceChannel;
+            const member = channel.members.find((member) => member.id === message.author.id);
+            if (!member) {
+              const send = new EmbedBuilder()
+                .setColor('#ff0000')
+                .setTitle(`エラー`)
+                .setDescription(`id not found or invalid`);
+
+              message.reply({ embeds: [send] });
+              return;
+            }
+            await member.voice.disconnect();
+
+            await Logger.put({
+              guild_id: message.guild?.id,
+              channel_id: message.channel?.id,
+              user_id: message.author.id,
+              level: LogLevel.INFO,
+              event: 'disconnect-user',
+              message: [`disconnect ${member.user.displayName} by ${message.author.displayName}`],
+            });
+
             const send = new EmbedBuilder()
-              .setColor('#ff0000')
-              .setTitle(`エラー`)
-              .setDescription(`id not found or invalid`);
+              .setColor('#00ff00')
+              .setTitle(`成功`)
+              .setDescription(`${member.user.displayName}を切断しました`);
 
             message.reply({ embeds: [send] });
-            return;
           }
-          await member.voice.disconnect();
-
-          await Logger.put({
-            guild_id: message.guild?.id,
-            channel_id: message.channel?.id,
-            user_id: message.author.id,
-            level: LogLevel.INFO,
-            event: 'disconnect-user',
-            message: [`disconnect ${member.user.displayName} by ${message.author.displayName}`],
-          });
-
-          const send = new EmbedBuilder()
-            .setColor('#00ff00')
-            .setTitle(`成功`)
-            .setDescription(`${member.user.displayName}を切断しました`);
-
-          message.reply({ embeds: [send] });
-        }
-        return;
-      }, time * 1000 * 60);
+          return;
+        },
+        time * 1000 * 60
+      );
       break;
     }
     case 'role': {
@@ -1447,10 +1451,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       const dmChannel = member.user.dmChannel;
       if (!dmChannel) {
         // 見つからないことはないはず
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription('DMが見つかりません');
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription('DMが見つかりません');
         await interaction.reply({ embeds: [send] });
         return;
       }
@@ -1582,15 +1583,17 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       send.addFields({ name: '事由', value: reason });
       await interaction.reply({ embeds: [send] });
 
-
-      setTimeout(async () => {
-        const dmSend = new EmbedBuilder()
-          .setColor('#00ff00')
-          .setTitle(`マイクミュートの解除`)
-          .setDescription(`${member.user.displayName}のマイクミュートを解除しました.`);
-        await dmChannel.send({ embeds: [dmSend] });
-        member.voice.setMute(false);
-      }, time * 60 * 1000);
+      setTimeout(
+        async () => {
+          const dmSend = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle(`マイクミュートの解除`)
+            .setDescription(`${member.user.displayName}のマイクミュートを解除しました.`);
+          await dmChannel.send({ embeds: [dmSend] });
+          member.voice.setMute(false);
+        },
+        time * 60 * 1000
+      );
 
       break;
     }
@@ -1766,9 +1769,8 @@ export async function ping(message: Message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
-  const presence = message.guild?.presences.cache.get(message.author.id);
-  console.dir(presence, { depth: null });
-  message.reply('debug');
+  const commandSelector = new CommandSelector(message);
+  commandSelector.executeCommand('chat', args ?? []);
 }
 
 /**
@@ -1781,7 +1783,7 @@ export async function help(message: Message | ChatInputCommandInteraction<CacheT
       if (message.channel.type === ChannelType.GroupDM) {
         return;
       }
-      await message.channel.send({ embeds: [c] })
+      await message.channel.send({ embeds: [c] });
     });
   } else if (message instanceof ChatInputCommandInteraction) {
     await message.reply({ content: 'ヘルプを表示', ephemeral: true });

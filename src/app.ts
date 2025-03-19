@@ -5,7 +5,8 @@ import { ChannelType, Message, REST, Routes, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
 import Express from 'express';
 import helmet from 'helmet';
-import { commandSelector, interactionSelector } from './bot/commands.js';
+import { interactionSelector } from './bot/commands.js';
+import { CommandSelector } from './bot/commandSelector.js';
 import { Chat, Room } from './bot/dot_function/index.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { GachaList } from './bot/function/gacha.js';
@@ -228,7 +229,13 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
 
   // command
   if (message.content.startsWith('.')) {
-    await commandSelector(message);
+    const selector = new CommandSelector(message);
+
+    const content = message.content.replace('.', '').replace(/　/g, ' ').trimEnd().split(' ');
+    const command = content[0];
+    content.shift();
+
+    await selector.executeCommand(command, content);
     return;
   }
 
@@ -267,7 +274,6 @@ DISCORD_CLIENT.on('messageReactionAdd', async (reaction, user) => {
  * メンバーが退出した
  */
 DISCORD_CLIENT.on('guildMemberRemove', async (member) => {
-
   // user delete from guild
   const userRepository = new UsersRepository();
   const user = await userRepository.get(member.guild.id, member.user.id);

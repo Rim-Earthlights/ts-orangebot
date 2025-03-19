@@ -6,5 +6,5 @@ node_modules/*
 src/config/config.ts
 src/test.ts
 .data/*.data
-.vscode
 output/*
+youtubeCookie.json
