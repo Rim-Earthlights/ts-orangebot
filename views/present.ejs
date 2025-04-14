@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ガチャ結果</title>
+</head>
+
+<body>
+    <div class="title"><h3><%- gachaList[0].users.user_name %> さんのプレゼント履歴</h3></div>
+    <div class="state">
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>レア度</th>
+                <th>アイテム名</th>
+                <th>日時</th>
+                <th>使用フラグ</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% for (let g of gachaList) { %>
+                <tr>
+                    <td>
+                        <%- g.id %>
+                    </td>
+                    <td>
+                        <%- g.items.rare %>
+                    </td>
+                    <td>
+                        <%- g.items.name %>
+                    </td>
+                    <td>
+                        <%- g.pick_date.toLocaleDateString('ja-JP') %>
+                    </td>
+                    <% if (g.is_used) { %>
+                        <td style="background-color: #00ff44; color: #000000;">
+                    <% } else  { %>
+                        <td style="background-color: #FFAA00; color: #FFFFFF;">
+                    <% } %>
+                        <%- g.is_used ? '済' : '未' %>
+                    </td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+
+</body>
+
+</html>

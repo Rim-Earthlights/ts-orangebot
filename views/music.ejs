@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music List</title>
+</head>
+
+<body>
+    <div class="title"><p>Queue ID: <%- current.guild_id %> / <%- current.channel_id %></p></div>
+    <div class="state">
+        <p>現在の曲: <%- current.title %></p>
+        <p>URL: <a href="<%- current.url %>"><%- current.url %></a></p>
+        <p>ループ: <%- current.is_loop ? '有効' : '無効' %> | シャッフル: <%- current.is_shuffle ? '有効' : '無効' %></p>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>状態</th>
+                <th>タイトル</th>
+                <th>URL</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% for (let music of musics) { %>
+                <tr>
+                    <td>
+                        <%- music.music_id %>
+                    </td>
+                    <% if(music.music_id >= 0) { %>
+                        <% if(music.is_play) { %>
+                            <% if(current.url === music.url) { %>
+                                <td style="background-color: #00FFFF; color: #000000;">再生中</td>
+                            <% } else { %>
+                                <td style="background-color: #508000;color: #FFFFFF;">済</td>
+                            <% } %>
+                        <% } else { %>
+                            <td style="background-color: #FFAA00; color: #FFFFFF;">未</td>
+                        <% } %>
+                    <% } else { %>
+                        <% if(music.is_play) { %>
+                            <% if(current.url === music.url) { %>
+                                <td style="background-color: #00FFFF; color: #000000;">再生中</td>
+                            <% } else { %>
+                                <td style="background-color: #508000;color: #FFFFFF;">済</td>
+                            <% } %>
+                        <% } else { %>
+                            <td style="background-color: #CC99CC; color: #FFFFFF;">割込</td>
+                        <% } %>
+                    <% } %>
+                    <td>
+                        <%- music.title %>
+                    </td>
+                    <td>
+                        <a href="<%- music.url %>">
+                            <%- music.url %>
+                        </a>
+                    </td>
+                </tr>
+                <% } %>
+        </tbody>
+    </table>
+
+</body>
+
+</html>
