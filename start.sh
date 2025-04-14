@@ -6,5 +6,5 @@ do
   yarn run build
   yarn run dist
   echo "server restarting..."
-  sleep 5s
+  sleep 3s
 done
