@@ -132,7 +132,6 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
     const urls = await Promise.all(
       message.attachments.map(async (a) => {
         const fileName = a.name;
-        console.log(a.contentType);
 
         const contentTypes = a.contentType?.split('; ');
         const contentType = contentTypes?.[0];
@@ -146,10 +145,10 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
 
           if (data.length > 1 * 1024 * 1024) {
             const pictureService = new PictureService();
-            const compressedImage = await pictureService.compressImage(data, 1);
+            const compressedImage = await pictureService.compressImage(data, contentType, 1);
             return { type: 'image_url', image_url: { url: compressedImage } };
           } else {
-            const base64Image = `data:image/jpeg;base64,${data.toString('base64')}`;
+            const base64Image = `data:${contentType};base64,${data.toString('base64')}`;
             return { type: 'image_url', image_url: { url: base64Image } };
           }
         }
