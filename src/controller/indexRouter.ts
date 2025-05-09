@@ -8,5 +8,5 @@ export const indexRouter = Express.Router();
  * Botの管理UIでも作りたい所存.
  */
 indexRouter.get('/', (req: Express.Request, res: Express.Response) => {
-    res.status(200).send({ result: true });
+  res.status(200).send({ result: true });
 });

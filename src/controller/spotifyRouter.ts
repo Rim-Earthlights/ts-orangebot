@@ -11,19 +11,19 @@ export const spotifyAuthRouter = Express.Router();
  *
  */
 spotifyAuthRouter.post('/spotify/callback', async (req: CallbackRequest, res: CallbackResponse) => {
-    if (!req.query.code || !req.query.state) {
-        res.status(400).send({ result: 'ERR_BAD_REQUEST' });
-        return;
-    }
+  if (!req.query.code || !req.query.state) {
+    res.status(400).send({ result: 'ERR_BAD_REQUEST' });
+    return;
+  }
 
-    Logger.put({
-        guild_id: undefined,
-        channel_id: undefined,
-        user_id: undefined,
-        level: LogLevel.SYSTEM,
-        event: 'POST /spotify/callback',
-        message: [`ip: ${req.ip}`, `code: ${req.query.code}`, `state: ${req.query.state}`]
-    });
+  Logger.put({
+    guild_id: undefined,
+    channel_id: undefined,
+    user_id: undefined,
+    level: LogLevel.SYSTEM,
+    event: 'POST /spotify/callback',
+    message: [`ip: ${req.ip}`, `code: ${req.query.code}`, `state: ${req.query.state}`],
+  });
 
-    res.status(200).send({ result: 'OK' });
+  res.status(200).send({ result: 'OK' });
 });

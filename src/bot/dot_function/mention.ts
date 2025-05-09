@@ -9,7 +9,7 @@ import * as GREETING from '../../constant/words/greeting.js';
  * @returns
  */
 export async function morning(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.morning));
+  message.reply(await getWord(GREETING.morning));
 }
 
 /**
@@ -18,7 +18,7 @@ export async function morning(message: Message): Promise<void> {
  * @returns
  */
 export async function hello(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.noon));
+  message.reply(await getWord(GREETING.noon));
 }
 
 /**
@@ -27,7 +27,7 @@ export async function hello(message: Message): Promise<void> {
  * @returns
  */
 export async function evening(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.evening));
+  message.reply(await getWord(GREETING.evening));
 }
 
 /**
@@ -36,7 +36,7 @@ export async function evening(message: Message): Promise<void> {
  * @returns
  */
 export async function goodNight(message: Message): Promise<void> {
-    message.reply(await getWord(GREETING.sleep));
+  message.reply(await getWord(GREETING.sleep));
 }
 
 /**
@@ -46,29 +46,29 @@ export async function goodNight(message: Message): Promise<void> {
  * @returns
  */
 async function getWord(word: GREETING.Word): Promise<string> {
-    const hour = getHour();
-    if (hour >= 19 || hour === 0) {
-        // 19:00 - 0:59
-        const num = getRndNumber(0, word.night.length - 1);
-        return word.night[num];
-    } else if (hour < 5) {
-        // 1:00 - 4:59
-        const num = getRndNumber(0, word.midnight.length - 1);
-        return word.midnight[num];
-    } else if (hour < 11) {
-        // 5:00 - 10:59
-        const num = getRndNumber(0, word.morning.length - 1);
-        return word.morning[num];
-    } else if (hour < 17) {
-        // 11:00 - 16:59
-        const num = getRndNumber(0, word.noon.length - 1);
-        return word.noon[num];
-    } else if (hour < 19) {
-        // 17:00 - 18:59
-        const num = getRndNumber(0, word.evening.length - 1);
-        return word.evening[num];
-    }
-    return 'ごめんなさい、わからなかった……';
+  const hour = getHour();
+  if (hour >= 19 || hour === 0) {
+    // 19:00 - 0:59
+    const num = getRndNumber(0, word.night.length - 1);
+    return word.night[num];
+  } else if (hour < 5) {
+    // 1:00 - 4:59
+    const num = getRndNumber(0, word.midnight.length - 1);
+    return word.midnight[num];
+  } else if (hour < 11) {
+    // 5:00 - 10:59
+    const num = getRndNumber(0, word.morning.length - 1);
+    return word.morning[num];
+  } else if (hour < 17) {
+    // 11:00 - 16:59
+    const num = getRndNumber(0, word.noon.length - 1);
+    return word.noon[num];
+  } else if (hour < 19) {
+    // 17:00 - 18:59
+    const num = getRndNumber(0, word.evening.length - 1);
+    return word.evening[num];
+  }
+  return 'ごめんなさい、わからなかった……';
 }
 
 /**
@@ -76,5 +76,5 @@ async function getWord(word: GREETING.Word): Promise<string> {
  * @returns
  */
 function getHour(): number {
-    return Number(dayjs().format('HH'));
+  return Number(dayjs().format('HH'));
 }

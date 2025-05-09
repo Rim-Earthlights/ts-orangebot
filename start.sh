@@ -3,8 +3,8 @@ echo "server starting..."
 while :
 do
   git pull
-  yarn run compile
+  yarn run build
   yarn run dist
   echo "server restarting..."
-  sleep 5s
+  sleep 3s
 done

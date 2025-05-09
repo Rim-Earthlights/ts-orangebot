@@ -8,3 +8,4 @@ export * as Register from './register.js';
 export * as Photo from './photo.js';
 export * as Room from './room.js';
 export * as Chat from './chat.js';
+export * as Debug from './debug.js';
