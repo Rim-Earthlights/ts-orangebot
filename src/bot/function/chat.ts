@@ -123,7 +123,7 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
 
   if (lastFlag) {
     const eraseData = gpt.chat[gpt.chat.length - 1];
-    gpt.chat.splice(gpt.chat.length - 1, 1);
+    gpt.chat.splice(gpt.chat.length - 2, 2);
 
     const send = new EmbedBuilder()
       .setColor('#00cc00')

@@ -27,7 +27,7 @@ export async function initJob() {
    */
   cron.schedule('* * * * *', async () => {
     llmList.gpt.map(async (c) => {
-      if (c.timestamp.isBefore(dayjs().subtract(30, 'minute')) && !c.memory) {
+      if (c.timestamp.isBefore(dayjs().subtract(1, 'hour')) && !c.memory) {
         llmList.gpt = llmList.gpt.filter((g) => g.id !== c.id);
         await Logger.put({
           guild_id: c.isGuild ? c.id : undefined,

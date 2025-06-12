@@ -11,7 +11,6 @@ export class PictureService {
    * @returns 圧縮後のbase64形式の画像
    */
   async compressImage(buffer: Buffer, contentType: string = 'image/jpeg', maxSizeMB: number = 10): Promise<string> {
-    console.log('compressImage', buffer.length);
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     // 現在のサイズを確認
