@@ -9,3 +9,4 @@ src/test.ts
 .vscode
 output/*
 youtubeCookie.json
+*-player-script.js
