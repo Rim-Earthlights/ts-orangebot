@@ -11,7 +11,7 @@ import {
 import ytpl from 'ytpl';
 import { checkUserType, getIntArray, getRndNumber, isEnableFunction } from '../common/common.js';
 import { Logger } from '../common/logger.js';
-import { CONFIG, LiteLLMModel } from '../config/config.js';
+import { CONFIG, LiteLLMModel, LITELLM_MODEL } from '../config/config.js';
 import { LiteLLMMode, Role } from '../constant/chat/chat.js';
 import { HELP_COMMANDS, functionNames } from '../constant/constants.js';
 import { ITO_TOPICS } from '../constant/words/ito.js';
@@ -80,7 +80,7 @@ export async function commandSelector(message: Message) {
         return;
       }
       const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, LiteLLMModel.GPT_4O, LiteLLMMode.NOPROMPT);
+      await DotBotFunctions.Chat.talk(message, chat, LITELLM_MODEL.GPT_4O, LiteLLMMode.NOPROMPT);
       break;
     }
     case 'gpt':
@@ -135,11 +135,15 @@ export async function commandSelector(message: Message) {
       const dest = content[0];
       const model = content[1];
 
+      const defaultModel = CONFIG.OPENAI.DEFAULT_MODEL;
+      const g3Model = CONFIG.OPENAI.G3_MODEL;
+      const g4Model = CONFIG.OPENAI.G4_MODEL;
+
       if (dest == null || model == null) {
         const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`宛先とモデルを指定してください。`);
+          .setColor('#00ff00')
+          .setTitle(`現在のモデル`)
+          .setDescription(`default: ${defaultModel}\ng3: ${g3Model}\ng4: ${g4Model}`);
 
         message.reply({ embeds: [send] });
         return;
@@ -1303,7 +1307,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         return;
       }
       const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, LiteLLMModel.GPT_O1, LiteLLMMode.DEFAULT);
+      await BotFunctions.Chat.talk(interaction, text, LITELLM_MODEL.GPT_O1, LiteLLMMode.DEFAULT);
       break;
     }
     case 'o1m': {
@@ -1317,7 +1321,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         return;
       }
       const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, LiteLLMModel.GPT_O3_MINI, LiteLLMMode.DEFAULT);
+      await BotFunctions.Chat.talk(interaction, text, LITELLM_MODEL.GPT_O3_MINI, LiteLLMMode.DEFAULT);
       break;
     }
     case 'ai': {

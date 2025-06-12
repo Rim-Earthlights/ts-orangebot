@@ -5,7 +5,7 @@ import {
   DiscordGatewayAdapterCreator,
   entersState,
   getVoiceConnection,
-  joinVoiceChannel
+  joinVoiceChannel,
 } from '@discordjs/voice';
 import ytdl from '@distube/ytdl-core';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
@@ -618,7 +618,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
   try {
     const p = await updateAudioPlayer(channel);
 
-    const stream = ytdl(playing.url, { filter: 'audioonly' , highWaterMark: 1 << 25, agent: YT_AGENT });
+    const stream = ytdl(playing.url, { filter: 'audioonly', highWaterMark: 1 << 25, agent: YT_AGENT });
     const resource = createAudioResource(stream);
 
     if (info?.silent === 0) {
@@ -633,9 +633,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
         .setThumbnail(playing.thumbnail)
         .addFields({
           name: '再生キュー',
-          value: `${
-            CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
-          }`,
+          value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
         });
       (channel as VoiceChannel).send({ embeds: [send] });
     }
@@ -661,9 +659,7 @@ export async function playMusic(channel: VoiceBasedChannel) {
       .setDescription(JSON.stringify(err.message))
       .addFields({
         name: '再生キュー',
-        value: `${
-          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
-        }`,
+        value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
   }
@@ -835,9 +831,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
       .setThumbnail(info.thumbnail)
       .addFields({
         name: '再生キュー',
-        value: `${
-          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
-        }`,
+        value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
   } else {
@@ -849,9 +843,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
       .setThumbnail(info.thumbnail)
       .addFields({
         name: '再生キュー',
-        value: `${
-          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
-        }`,
+        value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
   }
@@ -986,9 +978,7 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
       .setDescription(JSON.stringify(error.message))
       .addFields({
         name: '再生キュー',
-        value: `${
-          CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id
-        }`,
+        value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
       });
     (channel as VoiceChannel).send({ embeds: [send] });
   }
