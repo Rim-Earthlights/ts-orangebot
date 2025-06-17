@@ -25,6 +25,7 @@ import { UsersRepository } from './model/repository/usersRepository.js';
 import { TypeOrm } from './model/typeorm/typeorm.js';
 import { routers } from './routers.js';
 import { LogLevel } from './type/types.js';
+import { InteractionManager } from './bot/manager/interaction.manager.js';
 
 dotenv.config();
 
@@ -253,7 +254,12 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
     event: 'interaction-received',
     message: [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.displayName}`, `content: ${interaction}`],
   });
-  await interactionSelector(interaction);
+
+  if (interaction.commandName === 'ping') {
+    await new InteractionManager(interaction).handle();
+  } else {
+    await interactionSelector(interaction);
+  }
 });
 
 /**
