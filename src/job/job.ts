@@ -4,6 +4,7 @@ import { Logger } from '../common/logger.js';
 import { llmList } from '../constant/chat/chat.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import { LogLevel } from '../type/types.js';
+import { UserJob } from './user.job.js';
 
 export async function initJob() {
   /**
@@ -18,8 +19,7 @@ export async function initJob() {
       event: 'Cron job: 0 0 * * *',
       message: undefined,
     });
-    const user = new UsersRepository();
-    await user.addPickLeft();
+    await new UserJob().execute();
   });
 
   /**
