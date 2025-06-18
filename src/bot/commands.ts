@@ -1132,6 +1132,7 @@ export async function commandSelector(message: Message) {
 /**
  * 渡されたスラッシュコマンドを処理する
  * @param interaction
+ * @deprecated interaction.managerが実装完了後移行する
  * @returns
  */
 export async function interactionSelector(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {

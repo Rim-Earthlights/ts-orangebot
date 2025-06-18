@@ -255,11 +255,8 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
     message: [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.displayName}`, `content: ${interaction}`],
   });
 
-  if (interaction.commandName === 'ping') {
-    await new InteractionManager(interaction).handle();
-  } else {
-    await interactionSelector(interaction);
-  }
+  await new InteractionManager(interaction).handle();
+  return;
 });
 
 /**

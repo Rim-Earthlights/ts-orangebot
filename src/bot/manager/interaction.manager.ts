@@ -1,8 +1,11 @@
 import { CacheType, ChatInputCommandInteraction } from 'discord.js';
 import { InteractionHandler } from './interaction.handler.js';
 import { PingHandler } from '../interactions/ping.handler.js';
+import { DcHandler } from '../interactions/dc.handler.js';
+import { MuteHandler } from '../interactions/mute.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import { interactionSelector } from '../commands.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -15,6 +18,8 @@ export class InteractionManager {
   constructor(interaction: ChatInputCommandInteraction<CacheType>) {
     this.interaction = interaction;
     this.handlers.set('ping', new PingHandler());
+    this.handlers.set('dc', new DcHandler());
+    this.handlers.set('mute', new MuteHandler());
   }
 
   /**
@@ -22,11 +27,6 @@ export class InteractionManager {
    * @returns
    */
   async handle() {
-    const handler = this.handlers.get(this.interaction.commandName);
-    if (!handler) {
-      return;
-    }
-
     await Logger.put({
       guild_id: this.interaction.guild?.id,
       channel_id: this.interaction.channel?.id,
@@ -39,6 +39,13 @@ export class InteractionManager {
         `content: ${this.interaction}`,
       ],
     });
+
+    const handler = this.handlers.get(this.interaction.commandName);
+    if (!handler) {
+      /** 実装終了後削除予定 */
+      await interactionSelector(this.interaction);
+      return;
+    }
     await handler.execute(this.interaction);
   }
 }
