@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { LogRepository } from '../model/repository/logRepository.js';
-import { LogData, LogLevel } from '../type/types';
+import { LogData, LogLevel } from '../type/types.js';
 import { GuildRepository } from '../model/repository/guildRepository.js';
 import { CONFIG } from '../config/config.js';
 
@@ -43,7 +43,14 @@ export class Logger {
     }
   }
 
-  private async log(level: LogLevel, event: string, message?: string[], guild_id?: string, channel_id?: string, user_id?: string) {
+  private async log(
+    level: LogLevel,
+    event: string,
+    message?: string[],
+    guild_id?: string,
+    channel_id?: string,
+    user_id?: string
+  ) {
     const logData: LogData = {
       guild_id,
       channel_id,
@@ -59,7 +66,7 @@ export class Logger {
         bot_id: CONFIG.DISCORD.APP_ID,
         message: logData.message ? logData.message.join('\n') : '',
       });
-      
+
       if (logData.guild_id) {
         const guild = await this.guildRepository.get(logData.guild_id);
         console.log(`[${dayjs().format('YYYY/MM/DD HH:mm:ss')}/${logData.level}]: ${guild?.name} | ${logData.event}`);

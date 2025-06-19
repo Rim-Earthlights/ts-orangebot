@@ -1,7 +1,7 @@
-import { Logger } from '../common/logger';
-import { DISCORD_CLIENT } from '../constant/constants';
-import { UsersRepository } from '../model/repository/usersRepository';
-import { LogLevel } from '../type/types';
+import { Logger } from '../common/logger.js';
+import { DISCORD_CLIENT } from '../constant/constants.js';
+import { UsersRepository } from '../model/repository/usersRepository.js';
+import { LogLevel } from '../type/types.js';
 
 export class UserJob {
   private readonly logger = new Logger();
