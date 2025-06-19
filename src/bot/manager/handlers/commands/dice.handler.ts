@@ -1,6 +1,7 @@
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { Logger } from '../../../../common/logger.js';
 import * as DiceService from '../../../services/dice.service.js';
+import * as DotBotFunctions from '../../../dot_function/index.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class DiceHandler extends BaseMessageHandler {
@@ -16,6 +17,14 @@ export class DiceHandler extends BaseMessageHandler {
       }
       case 'dall': {
         await this.handleDiceAll(message);
+        break;
+      }
+      case 'celo': {
+        await this.handleCelo(message);
+        break;
+      }
+      case 'celovs': {
+        await this.handleCeloVs(message);
         break;
       }
     }
@@ -119,5 +128,13 @@ export class DiceHandler extends BaseMessageHandler {
       message.reply({ content: `ボイスチャンネルで実行してね！`, embeds: [send] });
       return;
     }
+  }
+
+  private async handleCelo(message: Message): Promise<void> {
+    await DotBotFunctions.Dice.celo(message);
+  }
+
+  private async handleCeloVs(message: Message): Promise<void> {
+    await DotBotFunctions.Dice.celovs(message);
   }
 }
