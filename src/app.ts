@@ -5,7 +5,6 @@ import { ChannelType, Message, REST, Routes, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
 import Express from 'express';
 import helmet from 'helmet';
-import { commandSelector, interactionSelector } from './bot/commands.js';
 import { Chat, Room } from './bot/dot_function/index.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { GachaList } from './bot/function/gacha.js';
@@ -25,6 +24,8 @@ import { UsersRepository } from './model/repository/usersRepository.js';
 import { TypeOrm } from './model/typeorm/typeorm.js';
 import { routers } from './routers.js';
 import { LogLevel } from './type/types.js';
+import { InteractionManager } from './bot/manager/interaction.manager.js';
+import { MessageManager } from './bot/manager/message.manager.js';
 
 dotenv.config();
 
@@ -190,27 +191,27 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     return;
   }
 
-  await Logger.put({
-    guild_id: message.guild ? message.guild.id : undefined,
-    channel_id: message.channel.id ? message.channel.id : undefined,
-    user_id: message.author.id,
-    level: LogLevel.INFO,
-    event: 'message-received',
-    message: [
-      `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
-      `cid: ${message.channel.id}, cname: ${message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'}`,
-      `author : ${message.author.displayName}`,
-      `content: ${message.content}`,
-      ...message.attachments.map((a) => `file   : ${a.url}`),
-    ],
-  });
-
   // mention to bot
   if (message.mentions.users.find((x) => x.id === DISCORD_CLIENT.user?.id)) {
     if (
       message.content.includes(`<@${DISCORD_CLIENT.user?.id}>`) &&
       message.content.trimEnd() !== `<@${DISCORD_CLIENT.user?.id}>`
     ) {
+      await Logger.put({
+        guild_id: message.guild ? message.guild.id : undefined,
+        channel_id: message.channel.id ? message.channel.id : undefined,
+        user_id: message.author.id,
+        level: LogLevel.INFO,
+        event: 'message-received | Mention',
+        message: [
+          `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
+          `cid: ${message.channel.id}, cname: ${message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'}`,
+          `author : ${message.author.displayName}`,
+          `content: ${message.content}`,
+          ...message.attachments.map((a) => `file   : ${a.url}`),
+        ],
+      });
+
       await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
     }
     // await wordSelector(message);
@@ -228,11 +229,25 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
 
   // command
   if (message.content.startsWith('.')) {
-    await commandSelector(message);
+    await new MessageManager(message).handle();
     return;
   }
 
   if (message.channel.type === ChannelType.DM || message.channel.id === '1020972071460814868') {
+    await Logger.put({
+      guild_id: message.guild ? message.guild.id : undefined,
+      channel_id: message.channel.id ? message.channel.id : undefined,
+      user_id: message.author.id,
+      level: LogLevel.INFO,
+      event: 'message-received | DM',
+      message: [
+        `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
+        `cid: ${message.channel.id}, cname: ${message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'}`,
+        `author : ${message.author.displayName}`,
+        `content: ${message.content}`,
+        ...message.attachments.map((a) => `file   : ${a.url}`),
+      ],
+    });
     await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
     return;
   }
@@ -245,15 +260,9 @@ DISCORD_CLIENT.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) {
     return;
   }
-  await Logger.put({
-    guild_id: interaction.guild ? interaction.guild.id : undefined,
-    channel_id: interaction.channel?.id,
-    user_id: interaction.user.id,
-    level: LogLevel.INFO,
-    event: 'interaction-received',
-    message: [`cid: ${interaction.channel?.id}`, `author: ${interaction.user.displayName}`, `content: ${interaction}`],
-  });
-  await interactionSelector(interaction);
+
+  await new InteractionManager(interaction).handle();
+  return;
 });
 
 /**

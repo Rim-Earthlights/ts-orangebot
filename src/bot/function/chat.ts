@@ -14,7 +14,7 @@ export async function setMemory(interaction: ChatInputCommandInteraction<CacheTy
   if (!id) {
     return;
   }
-  const gpt = llmList.gpt.find((c) => c.id === id);
+  const gpt = llmList.llm.find((c) => c.id === id);
   if (!gpt) {
     return;
   }
@@ -35,10 +35,10 @@ export async function talk(
   if (!id) {
     return;
   }
-  let liteLLM = llmList.gpt.find((c) => c.id === id);
+  let liteLLM = llmList.llm.find((c) => c.id === id);
   if (!liteLLM) {
     liteLLM = await initalize(id, model, mode, isGuild);
-    llmList.gpt.push(liteLLM);
+    llmList.llm.push(liteLLM);
   }
   const llm = liteLLM.litellm;
 
@@ -116,7 +116,7 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
   if (!id) {
     return;
   }
-  const gpt = llmList.gpt.find((c) => c.id === id);
+  const gpt = llmList.llm.find((c) => c.id === id);
   if (!gpt) {
     return;
   }
@@ -132,7 +132,7 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
     await interaction.reply({ embeds: [send] });
     return;
   }
-  llmList.gpt = llmList.gpt.filter((c) => c.id !== id);
+  llmList.llm = llmList.llm.filter((c) => c.id !== id);
   Logger.put({
     guild_id: interaction.guild?.id,
     channel_id: interaction.channel?.id,

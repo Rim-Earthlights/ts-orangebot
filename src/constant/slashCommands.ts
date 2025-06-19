@@ -40,8 +40,8 @@ export const SERVER_SLASH_COMMANDS = [
     ),
   new SlashCommandBuilder().setName('gl').setDescription('/gacha limitの短縮形コマンドです.'),
   new SlashCommandBuilder()
-    .setName('gpt')
-    .setDescription('GPT-4oでおしゃべりします')
+    .setName('chat')
+    .setDescription('みかんちゃんとおしゃべりします')
     .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
   new SlashCommandBuilder()
     .setName('room')
@@ -106,12 +106,22 @@ export const SERVER_SLASH_COMMANDS = [
     .setDescription('AIと会話します')
     .addSubcommand((sc) => sc.setName('start').setDescription('会話を開始します'))
     .addSubcommand((sc) => sc.setName('stop').setDescription('会話を停止します')),
+  new SlashCommandBuilder().setName('memory').setDescription('メモリ機能を切り替えます'),
+  new SlashCommandBuilder().setName('speak').setDescription('読み上げボットを呼び出します'),
   new SlashCommandBuilder()
-    .setName('memory')
-    .setDescription('メモリ機能を切り替えます'),
-  new SlashCommandBuilder()
-    .setName('speak')
-    .setDescription('読み上げボットを呼び出します')
+    .setName('user-type')
+    .setDescription('ユーザーの権限を変更します')
+    .addStringOption((option) => option.setName('user_id').setDescription('ユーザーID').setRequired(true))
+    .addStringOption((option) => 
+      option.setName('type').setDescription('権限タイプ')
+        .setRequired(true)
+        .addChoices(
+          { name: 'OWNER', value: 'OWNER' },
+          { name: 'ADMIN', value: 'ADMIN' },
+          { name: 'MEMBER', value: 'MEMBER' },
+          { name: 'GUEST', value: 'GUEST' }
+        )
+    ),
   // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
   // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
   // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
@@ -124,6 +134,6 @@ export const SERVER_SLASH_COMMANDS = [
 export const DM_SLASH_COMMANDS = [
   new SlashCommandBuilder()
     .setName('erase')
-    .setDescription('ChatGPTとのチャット履歴を削除します')
+    .setDescription('みかんちゃんとのチャット履歴を削除します')
     .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
 ];

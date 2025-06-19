@@ -22,12 +22,12 @@ import { UsersRepository } from '../../model/repository/usersRepository.js';
  */
 export async function setModel(message: Message, model: LiteLLMModel, mode: LiteLLMMode) {
   const { id, isGuild } = getIdInfo(message);
-  let gpt = llmList.gpt.find((c) => c.id === id);
-  if (!gpt) {
-    gpt = await initalize(id, model, mode, isGuild);
-    llmList.gpt.push(gpt);
+  let llm = llmList.llm.find((c) => c.id === id);
+  if (!llm) {
+    llm = await initalize(id, model, mode, isGuild);
+    llmList.llm.push(llm);
   }
-  gpt.model = model;
+  llm.model = model;
   await message.reply(`モデルを設定. Model: ${model}`);
 }
 
@@ -47,7 +47,7 @@ export async function getModel(message: Message) {
 
 export async function setMemory(message: Message) {
   const { id } = getIdInfo(message);
-  const gpt = llmList.gpt.find((c) => c.id === id);
+  const gpt = llmList.llm.find((c) => c.id === id);
   if (!gpt) {
     await message.reply(`履歴が存在しません。`);
     return;
@@ -61,10 +61,10 @@ export async function setMemory(message: Message) {
  */
 export async function talk(message: Message, content: string, model: LiteLLMModel, mode: LiteLLMMode) {
   const { id, isGuild } = getIdInfo(message);
-  let gpt = llmList.gpt.find((c) => c.id === id);
+  let gpt = llmList.llm.find((c) => c.id === id);
   if (!gpt) {
     gpt = await initalize(id, model, mode, isGuild);
-    llmList.gpt.push(gpt);
+    llmList.llm.push(gpt);
   }
   const openai = gpt.litellm;
   let weather = undefined;
@@ -313,7 +313,7 @@ export async function generatePicture(message: Message<boolean>, chat: string) {
 export async function deleteChatData(message: Message, idx?: string) {
   const { id } = getIdInfo(message);
 
-  const llm = llmList.gpt.find((c) => c.id === id);
+  const llm = llmList.llm.find((c) => c.id === id);
   if (!llm) {
     return;
   }
@@ -329,7 +329,7 @@ export async function deleteChatData(message: Message, idx?: string) {
     await message.reply({ embeds: [send] });
     return;
   }
-  llmList.gpt = llmList.gpt.filter((c) => c.id !== id);
+  llmList.llm = llmList.llm.filter((c) => c.id !== id);
   Logger.put({
     guild_id: message.guild?.id,
     channel_id: message.channel.id,

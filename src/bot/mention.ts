@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
-import { EmbedBuilder, Message } from 'discord.js';
-import * as Commands from './commands.js';
+import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import * as BotFunctions from './dot_function/index.js';
 import * as reactions from '../constant/words/reactions.js';
 import { getRndNumber, isEnableFunction } from '../common/common.js';
@@ -13,10 +12,6 @@ import { TOPIC } from '../constant/words/topic.js';
  * @returns
  */
 export async function wordSelector(message: Message) {
-  if (message.content.match('(言語は|ヘルプ|help)')) {
-    Commands.help(message);
-    return;
-  }
   if (message.content.match('話題')) {
     const num = getRndNumber(0, TOPIC.length - 1);
 

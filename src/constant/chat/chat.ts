@@ -4,7 +4,7 @@ import { ChatCompletionMessageParam } from 'openai/resources';
 import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { CHATBOT_TEMPLATE } from '../constants.js';
 
-export const llmList = { gpt: [] as LiteLLM[] };
+export const llmList = { llm: [] as LiteLLM[] };
 
 export async function initalize(id: string, model: LiteLLMModel, mode: LiteLLMMode, isGuild: boolean) {
   const litellm = new OpenAI({
