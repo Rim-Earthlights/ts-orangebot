@@ -5,6 +5,7 @@ import { DcHandler } from './handlers/interactions/dc.handler.js';
 import { MuteHandler } from './handlers/interactions/mute.handler.js';
 import { EraseHandler } from './handlers/interactions/erase.handler.js';
 import { ChatHandler } from './handlers/interactions/chat.handler.js';
+import { SpeakHandler } from './handlers/interactions/speak.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 import { interactionSelector } from '../commands.js';
@@ -24,6 +25,7 @@ export class InteractionManager {
     this.handlers.set('mute', new MuteHandler(this.logger));
     this.handlers.set('erase', new EraseHandler(this.logger));
     this.handlers.set('chat', new ChatHandler(this.logger));
+    this.handlers.set('speak', new SpeakHandler(this.logger));
   }
 
   /**

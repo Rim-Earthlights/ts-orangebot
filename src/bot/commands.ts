@@ -43,14 +43,6 @@ export async function commandSelector(message: Message) {
   content.shift();
 
   switch (command) {
-    case 'help': {
-      await help(message);
-      break;
-    }
-    case 'ping': {
-      await ping(message);
-      break;
-    }
     case 'debug': {
       await DotBotFunctions.Debug.debug(message, content);
       break;
@@ -83,83 +75,8 @@ export async function commandSelector(message: Message) {
       await DotBotFunctions.Chat.talk(message, chat, LITELLM_MODEL.GPT_4O, LiteLLMMode.NOPROMPT);
       break;
     }
-    case 'gpt':
-    case 'mikan': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        message.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-      const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
-      break;
-    }
-    case 'g3': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        message.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-      const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G3_MODEL, LiteLLMMode.DEFAULT);
-      break;
-    }
-    case 'g4': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        message.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-
-      const chat = content.join(' ');
-      await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL, LiteLLMMode.DEFAULT);
-      break;
-    }
     case 'memory': {
       await DotBotFunctions.Chat.setMemory(message);
-      break;
-    }
-    case 'model': {
-      const dest = content[0];
-      const model = content[1];
-
-      const defaultModel = CONFIG.OPENAI.DEFAULT_MODEL;
-      const g3Model = CONFIG.OPENAI.G3_MODEL;
-      const g4Model = CONFIG.OPENAI.G4_MODEL;
-
-      if (dest == null || model == null) {
-        const send = new EmbedBuilder()
-          .setColor('#00ff00')
-          .setTitle(`現在のモデル`)
-          .setDescription(`default: ${defaultModel}\ng3: ${g3Model}\ng4: ${g4Model}`);
-
-        message.reply({ embeds: [send] });
-        return;
-      }
-
-      await ChatService.setModel(dest as 'default' | 'g3' | 'g4', model as LiteLLMModel);
-      const send = new EmbedBuilder()
-        .setColor('#00ffff')
-        .setTitle(`モデル変更`)
-        .setDescription(`モデルを${model}に変更`);
-
-      message.reply({ embeds: [send] });
-      break;
-    }
-    case 'model-info': {
-      await DotBotFunctions.Chat.getModel(message);
       break;
     }
     case 'pic': {
@@ -175,25 +92,6 @@ export async function commandSelector(message: Message) {
       }
       const chat = content.join(' ');
       await DotBotFunctions.Chat.generatePicture(message, chat);
-      break;
-    }
-    case 'topic': {
-      const num = getRndNumber(0, TOPIC.length - 1);
-      const send = new EmbedBuilder().setColor('#ff9900').setTitle(`こんなのでました～！`).setDescription(TOPIC[num]);
-
-      message.reply({ embeds: [send] });
-      break;
-    }
-    case 'erase': {
-      await DotBotFunctions.Chat.deleteChatData(message, content[0]);
-      break;
-    }
-    case 'dice': {
-      await DotBotFunctions.Dice.roll(message, content);
-      break;
-    }
-    case 'dall': {
-      await DotBotFunctions.Dice.rollAll(message);
       break;
     }
     case 'tenki': {
@@ -1250,109 +1148,8 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       interaction.editReply({ content: `貴方の数は${sendNums.join(', ')}です.` });
       break;
     }
-    case 'gpt': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-      await interaction.deferReply();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const text = interaction.options.getString('text')!;
-      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
-      break;
-    }
-    case 'g3': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-      await interaction.deferReply();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const text = interaction.options.getString('text')!;
-      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G3_MODEL, LiteLLMMode.DEFAULT);
-      break;
-    }
-    case 'g4': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-      await interaction.deferReply();
-      const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.G4_MODEL, LiteLLMMode.DEFAULT);
-      break;
-    }
-    case 'o1': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-      const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, LITELLM_MODEL.GPT_O1, LiteLLMMode.DEFAULT);
-      break;
-    }
-    case 'o1m': {
-      if (!isEnableFunction(functionNames.GPT)) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`機能が有効化されていません。`);
-
-        interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
-        return;
-      }
-      const text = interaction.options.getString('text') ?? '';
-      await BotFunctions.Chat.talk(interaction, text, LITELLM_MODEL.GPT_O3_MINI, LiteLLMMode.DEFAULT);
-      break;
-    }
-    case 'ai': {
-      const type = interaction.options.getSubcommand();
-      switch (type) {
-        case 'start': {
-          await interaction.deferReply();
-          await BotFunctions.Vchat.initVc(interaction);
-          break;
-        }
-        case 'stop': {
-          await interaction.deferReply();
-          BotFunctions.Vchat.closeVc(interaction.guild?.id ?? '');
-          await interaction.editReply({ content: '切断しました' });
-          break;
-        }
-      }
-      break;
-    }
-    case 'speak': {
-      await BotFunctions.Speak.call(interaction);
-      break;
-    }
     case 'memory': {
       await BotFunctions.Chat.setMemory(interaction);
-      break;
-    }
-    case 'erase': {
-      const last = interaction.options.getBoolean('last') ?? undefined;
-      await BotFunctions.Chat.deleteChatData(interaction, last);
       break;
     }
     case 'topic': {
