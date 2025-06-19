@@ -33,7 +33,7 @@ let ITO_NUMS = getIntArray(100);
 
 /**
  * 渡されたコマンドから処理を実行する
- *
+ * @deprecated message.managerが実装完了後移行する
  * @param command 渡されたメッセージ
  */
 export async function commandSelector(message: Message) {
@@ -1479,7 +1479,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
         );
       await interaction.reply({ embeds: [send] });
 
-      const chatService = new ChatService.ChatService(interaction);
+      const chatService = new ChatService.InteractionChatService(interaction);
       await chatService.addChat(Role.USER, message);
       return;
     }
@@ -1536,7 +1536,7 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
       send.addFields({ name: '事由', value: reason });
       await interaction.reply({ embeds: [send] });
 
-      const chatService = new ChatService.ChatService(interaction);
+      const chatService = new ChatService.InteractionChatService(interaction);
       await chatService.addChat(Role.USER, message);
 
       setTimeout(

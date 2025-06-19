@@ -1,19 +1,16 @@
 import { BaseGuildVoiceChannel, ChannelType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
-import { checkUserType } from '../../common/common.js';
-import { Logger } from '../../common/logger.js';
-import { UsersType } from '../../model/models/users.js';
-import { LogLevel } from '../../type/types.js';
-import { InteractionHandler } from '../manager/interaction.handler.js';
+import { checkUserType } from '../../../../common/common.js';
+import { Logger } from '../../../../common/logger.js';
+import { UsersType } from '../../../../model/models/users.js';
+import { BaseInteractionHandler } from '../../interaction.handler.js';
 
 /**
  * /dc
  * 特定のユーザーをボイスチャンネルから切断する
  */
-export class DcHandler implements InteractionHandler {
-  logger = new Logger();
-
-  constructor() {
-    this.logger = new Logger();
+export class DcHandler extends BaseInteractionHandler {
+  constructor(logger?: Logger) {
+    super(logger);
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -52,14 +49,13 @@ export class DcHandler implements InteractionHandler {
       }
       await member.voice.disconnect();
 
-      await Logger.put({
-        guild_id: interaction.guild?.id,
-        channel_id: interaction.channel?.id,
-        user_id: interaction.user.id,
-        level: LogLevel.INFO,
-        event: 'disconnect-user',
-        message: [`disconnect ${member.user.displayName} by ${interaction.user}`],
-      });
+      await this.logger.info(
+        'disconnect-user',
+        [`disconnect ${member.user.displayName} by ${interaction.user}`],
+        interaction.guild?.id,
+        interaction.channel?.id,
+        interaction.user.id
+      );
 
       const send = new EmbedBuilder()
         .setColor('#00ff00')

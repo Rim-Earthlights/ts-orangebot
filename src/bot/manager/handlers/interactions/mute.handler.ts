@@ -1,20 +1,18 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
-import { checkUserType } from '../../common/common.js';
-import { Logger } from '../../common/logger.js';
-import { Role } from '../../constant/chat/chat.js';
-import { UsersType } from '../../model/models/users.js';
-import * as ChatService from '../../service/chat.service.js';
-import { InteractionHandler } from '../manager/interaction.handler.js';
+import { checkUserType } from '../../../../common/common.js';
+import { Logger } from '../../../../common/logger.js';
+import { Role } from '../../../../constant/chat/chat.js';
+import { UsersType } from '../../../../model/models/users.js';
+import * as ChatService from '../../../../service/chat.service.js';
+import { BaseInteractionHandler } from '../../interaction.handler.js';
 
 /**
  * /mute
  * 特定のユーザーを一時的にミュートする
  */
-export class MuteHandler implements InteractionHandler {
-  logger = new Logger();
-
-  constructor() {
-    this.logger = new Logger();
+export class MuteHandler extends BaseInteractionHandler {
+  constructor(logger?: Logger) {
+    super(logger);
   }
 
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -70,7 +68,7 @@ export class MuteHandler implements InteractionHandler {
     send.addFields({ name: '事由', value: reason });
     await interaction.reply({ embeds: [send] });
 
-    const chatService = new ChatService.ChatService(interaction);
+    const chatService = new ChatService.InteractionChatService(interaction);
     await chatService.addChat(Role.USER, message);
 
     setTimeout(

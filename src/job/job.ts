@@ -26,9 +26,9 @@ export async function initJob() {
    * 1分毎に実行されるタスク
    */
   cron.schedule('* * * * *', async () => {
-    llmList.gpt.map(async (c) => {
+    llmList.llm.map(async (c) => {
       if (c.timestamp.isBefore(dayjs().subtract(1, 'hour')) && !c.memory) {
-        llmList.gpt = llmList.gpt.filter((g) => g.id !== c.id);
+        llmList.llm = llmList.llm.filter((g) => g.id !== c.id);
         await Logger.put({
           guild_id: c.isGuild ? c.id : undefined,
           channel_id: c.isGuild ? undefined : c.id,
