@@ -9,11 +9,11 @@ export class HelpHandler extends BaseMessageHandler {
   }
 
   async execute(message: Message, command: string, args: string[]): Promise<void> {
-    HELP_COMMANDS.map(async (c) => {
+    for (const c of HELP_COMMANDS) {
       if (message.channel.type === ChannelType.GroupDM) {
-        return;
+        continue;
       }
       await message.channel.send({ embeds: [c] });
-    });
+    }
   }
 }

@@ -64,7 +64,7 @@ export class RoomHandler extends BaseMessageHandler {
         if (limit > 99) {
           limit = 99;
         }
-        await DotBotFunctions.Room.changeLimit(message, Number(value));
+        await DotBotFunctions.Room.changeLimit(message, limit);
         break;
       }
       case 'delete':
@@ -115,10 +115,7 @@ export class RoomHandler extends BaseMessageHandler {
     if (args.length > 0) {
       const number = Number(args[0]);
       if (number < 1) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`1以上の数字を入れてね`);
+        const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`1以上の数字を入れてね`);
 
         message.reply({ embeds: [send] });
         return;
