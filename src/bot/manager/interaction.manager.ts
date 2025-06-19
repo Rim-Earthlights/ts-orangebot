@@ -3,6 +3,8 @@ import { InteractionHandler } from './interaction.handler.js';
 import { PingHandler } from './handlers/interactions/ping.handler.js';
 import { DcHandler } from './handlers/interactions/dc.handler.js';
 import { MuteHandler } from './handlers/interactions/mute.handler.js';
+import { EraseHandler } from './handlers/interactions/erase.handler.js';
+import { ChatHandler } from './handlers/interactions/chat.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 import { interactionSelector } from '../commands.js';
@@ -20,6 +22,8 @@ export class InteractionManager {
     this.handlers.set('ping', new PingHandler(this.logger));
     this.handlers.set('dc', new DcHandler(this.logger));
     this.handlers.set('mute', new MuteHandler(this.logger));
+    this.handlers.set('erase', new EraseHandler(this.logger));
+    this.handlers.set('chat', new ChatHandler(this.logger));
   }
 
   /**
