@@ -108,6 +108,20 @@ export const SERVER_SLASH_COMMANDS = [
     .addSubcommand((sc) => sc.setName('stop').setDescription('会話を停止します')),
   new SlashCommandBuilder().setName('memory').setDescription('メモリ機能を切り替えます'),
   new SlashCommandBuilder().setName('speak').setDescription('読み上げボットを呼び出します'),
+  new SlashCommandBuilder()
+    .setName('user-type')
+    .setDescription('ユーザーの権限を変更します')
+    .addStringOption((option) => option.setName('user_id').setDescription('ユーザーID').setRequired(true))
+    .addStringOption((option) => 
+      option.setName('type').setDescription('権限タイプ')
+        .setRequired(true)
+        .addChoices(
+          { name: 'OWNER', value: 'OWNER' },
+          { name: 'ADMIN', value: 'ADMIN' },
+          { name: 'MEMBER', value: 'MEMBER' },
+          { name: 'GUEST', value: 'GUEST' }
+        )
+    ),
   // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
   // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
   // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

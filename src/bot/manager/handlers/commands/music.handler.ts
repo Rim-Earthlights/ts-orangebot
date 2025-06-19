@@ -3,6 +3,7 @@ import { EmbedBuilder, Message, VoiceBasedChannel } from 'discord.js';
 import { isEnableFunction } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
 import { functionNames } from '../../../../constant/constants.js';
+import { LogLevel } from '../../../../type/types.js';
 import * as DotBotFunctions from '../../../dot_function/index.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 
@@ -49,6 +50,19 @@ export class MusicHandler extends BaseMessageHandler {
       case 'silent':
       case 'si': {
         await this.handleSilent(message);
+        break;
+      }
+      case 'mode': {
+        await this.handleMode(message, args);
+        break;
+      }
+      case 'shuffle':
+      case 'sf': {
+        await this.handleShuffle(message);
+        break;
+      }
+      case 'seek': {
+        await this.handleSeek(message, args);
         break;
       }
     }
@@ -264,5 +278,62 @@ export class MusicHandler extends BaseMessageHandler {
     }
 
     await DotBotFunctions.Music.changeNotify(channel);
+  }
+
+  private async handleMode(message: Message, args: string[]): Promise<void> {
+    const name = args[0];
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+      await this.logger?.info(
+        'received-command/mode',
+        [`missing channel`],
+        message.guild?.id,
+        message.channel?.id,
+        message.author.id
+      );
+      return;
+    }
+    if (!name) {
+      await DotBotFunctions.Music.getPlayerInfo(channel);
+      return;
+    }
+
+    await DotBotFunctions.Music.editPlayerInfo(channel, name);
+  }
+
+  private async handleShuffle(message: Message): Promise<void> {
+    const channel = message.member?.voice.channel;
+    if (!channel) {
+      return;
+    }
+    DotBotFunctions.Music.shuffleMusic(channel);
+  }
+
+  private async handleSeek(message: Message, args: string[]): Promise<void> {
+    if (args.length <= 0) {
+      const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`時間を指定してください`);
+
+      message.reply({ embeds: [send] });
+      return;
+    }
+
+    let seek = 0;
+    if (args[0].includes(':')) {
+      const time = args[0].split(':');
+
+      const min = Number(time[0]);
+      const sec = Number(time[1]);
+      seek = min * 60 + sec;
+    } else {
+      seek = Number(args[0]);
+    }
+
+    const channel = message.member?.voice.channel;
+
+    if (!channel) {
+      return;
+    }
+
+    await DotBotFunctions.Music.seek(channel, seek);
   }
 }

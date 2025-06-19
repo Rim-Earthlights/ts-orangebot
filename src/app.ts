@@ -5,7 +5,6 @@ import { ChannelType, Message, REST, Routes, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
 import Express from 'express';
 import helmet from 'helmet';
-import { commandSelector, interactionSelector } from './bot/commands.js';
 import { Chat, Room } from './bot/dot_function/index.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { GachaList } from './bot/function/gacha.js';

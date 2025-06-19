@@ -27,6 +27,12 @@ export class DiceHandler extends BaseMessageHandler {
         await this.handleCeloVs(message);
         break;
       }
+      case 'choose':
+      case 'choice':
+      case 'ch': {
+        await this.handleChoose(message, args);
+        break;
+      }
     }
   }
 
@@ -136,5 +142,25 @@ export class DiceHandler extends BaseMessageHandler {
 
   private async handleCeloVs(message: Message): Promise<void> {
     await DotBotFunctions.Dice.celovs(message);
+  }
+
+  private async handleChoose(message: Message, args: string[]): Promise<void> {
+    if (args.length <= 0) {
+      const send = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle(`エラー`)
+        .setDescription(`選択肢を入力してください`);
+
+      message.reply({ embeds: [send] });
+      return;
+    }
+
+    const item = DotBotFunctions.Dice.choose(args);
+    const send = new EmbedBuilder()
+      .setColor('#ff9900')
+      .setTitle(`選択結果: ${item}`)
+      .setDescription(`選択肢: ${args.join(', ')}`);
+
+    message.reply({ embeds: [send] });
   }
 }

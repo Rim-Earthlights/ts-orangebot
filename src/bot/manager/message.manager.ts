@@ -1,7 +1,6 @@
 import { Message } from 'discord.js';
 import { Logger } from '../../common/logger.js';
 import { MessageHandler } from './message.handler.js';
-import { commandSelector } from '../commands.js';
 import { ModelHandler } from './handlers/commands/model.handler.js';
 import { DiceHandler } from './handlers/commands/dice.handler.js';
 import { ChatHandler } from './handlers/commands/chat.handler.js';
@@ -15,6 +14,10 @@ import { LuckHandler } from './handlers/commands/luck.handler.js';
 import { GachaHandler } from './handlers/commands/gacha.handler.js';
 import { MusicHandler } from './handlers/commands/music.handler.js';
 import { MusicListHandler } from './handlers/commands/musiclist.handler.js';
+import { RegisterHandler } from './handlers/commands/register.handler.js';
+import { RoomHandler } from './handlers/commands/room.handler.js';
+import { PopupRuleHandler } from './handlers/commands/popup-rule.handler.js';
+import { ReliefHandler } from './handlers/commands/relief.handler.js';
 
 export class MessageManager {
   logger = new Logger();
@@ -56,6 +59,9 @@ export class MessageManager {
     this.handlers.set('dall', diceHandler);
     this.handlers.set('celo', diceHandler);
     this.handlers.set('celovs', diceHandler);
+    this.handlers.set('choose', diceHandler);
+    this.handlers.set('choice', diceHandler);
+    this.handlers.set('ch', diceHandler);
 
     const chatHandler = new ChatHandler(this.logger);
     this.handlers.set('gpt', chatHandler);
@@ -80,24 +86,45 @@ export class MessageManager {
     this.handlers.set('q', musicHandler);
     this.handlers.set('silent', musicHandler);
     this.handlers.set('si', musicHandler);
+    this.handlers.set('mode', musicHandler);
+    this.handlers.set('shuffle', musicHandler);
+    this.handlers.set('sf', musicHandler);
+    this.handlers.set('seek', musicHandler);
 
     // Music list commands
     const musicListHandler = new MusicListHandler(this.logger);
     this.handlers.set('list', musicListHandler);
+
+    // Register command
+    const registerHandler = new RegisterHandler(this.logger);
+    this.handlers.set('reg', registerHandler);
+
+    // Room commands
+    const roomHandler = new RoomHandler(this.logger);
+    this.handlers.set('room', roomHandler);
+    this.handlers.set('rn', roomHandler);
+    this.handlers.set('team', roomHandler);
+    this.handlers.set('custom', roomHandler);
+
+    // Popup rule command
+    const popupRuleHandler = new PopupRuleHandler(this.logger);
+    this.handlers.set('popup-rule', popupRuleHandler);
+
+    // Relief command
+    const reliefHandler = new ReliefHandler(this.logger);
+    this.handlers.set('relief', reliefHandler);
   }
 
   async handle() {
     const handler = this.handlers.get(this.command);
     if (!handler) {
-      /** 実装完了後削除 */
       await this.logger.info(
-        'handler-not-implemented',
+        'handler-not-found',
         [`Command: ${this.command}`],
         this.message.guild?.id,
         this.message.channel?.id,
         this.message.author.id
       );
-      await commandSelector(this.message);
       return;
     }
     await this.logger.info(
