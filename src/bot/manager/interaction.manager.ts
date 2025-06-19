@@ -6,9 +6,18 @@ import { MuteHandler } from './handlers/interactions/mute.handler.js';
 import { EraseHandler } from './handlers/interactions/erase.handler.js';
 import { ChatHandler } from './handlers/interactions/chat.handler.js';
 import { SpeakHandler } from './handlers/interactions/speak.handler.js';
+import { HelpHandler } from './handlers/interactions/help.handler.js';
+import { GachaHandler } from './handlers/interactions/gacha.handler.js';
+import { DiceHandler } from './handlers/interactions/dice.handler.js';
+import { ItoHandler } from './handlers/interactions/ito.handler.js';
+import { TimeoutHandler } from './handlers/interactions/timeout.handler.js';
+import { RoomHandler } from './handlers/interactions/room.handler.js';
+import { NicknameHandler } from './handlers/interactions/nickname.handler.js';
+import { MemoryHandler } from './handlers/interactions/memory.handler.js';
+import { TopicHandler } from './handlers/interactions/topic.handler.js';
+import { AcceptHandler } from './handlers/interactions/accept.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
-import { interactionSelector } from '../commands.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -26,6 +35,27 @@ export class InteractionManager {
     this.handlers.set('erase', new EraseHandler(this.logger));
     this.handlers.set('chat', new ChatHandler(this.logger));
     this.handlers.set('speak', new SpeakHandler(this.logger));
+    this.handlers.set('help', new HelpHandler(this.logger));
+    
+    // Gacha commands
+    const gachaHandler = new GachaHandler(this.logger);
+    this.handlers.set('gacha', gachaHandler);
+    this.handlers.set('gc', gachaHandler);
+    this.handlers.set('gl', gachaHandler);
+    
+    this.handlers.set('dice', new DiceHandler(this.logger));
+    
+    // ITO game commands
+    const itoHandler = new ItoHandler(this.logger);
+    this.handlers.set('genito', itoHandler);
+    this.handlers.set('ito', itoHandler);
+    
+    this.handlers.set('timeout', new TimeoutHandler(this.logger));
+    this.handlers.set('room', new RoomHandler(this.logger));
+    this.handlers.set('nickname', new NicknameHandler(this.logger));
+    this.handlers.set('memory', new MemoryHandler(this.logger));
+    this.handlers.set('topic', new TopicHandler(this.logger));
+    this.handlers.set('accept', new AcceptHandler(this.logger));
   }
 
   /**
@@ -48,15 +78,14 @@ export class InteractionManager {
 
     const handler = this.handlers.get(this.interaction.commandName);
     if (!handler) {
-      /** 実装終了後削除予定 */
-      await this.logger.info(
-        'interaction-handler-not-implemented',
+      await this.logger.error(
+        'interaction-handler-not-found',
         [`Command: ${this.interaction.commandName}`],
         this.interaction.guild?.id,
         this.interaction.channel?.id,
         this.interaction.user.id
       );
-      await interactionSelector(this.interaction);
+      await this.interaction.reply({ content: 'コマンドが見つかりませんでした。', ephemeral: true });
       return;
     }
     await handler.execute(this.interaction);
