@@ -58,6 +58,13 @@ export class MessageManager {
       await commandSelector(this.message);
       return;
     }
+    await this.logger.info(
+      'message-received | Command',
+      [`Command: ${this.command}`],
+      this.message.guild?.id,
+      this.message.channel?.id,
+      this.message.author.id
+    );
     await handler.execute(this.message, this.command, this.args);
   }
 }
