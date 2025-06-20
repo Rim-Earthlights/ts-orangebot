@@ -112,8 +112,10 @@ export const SERVER_SLASH_COMMANDS = [
     .setName('user-type')
     .setDescription('ユーザーの権限を変更します')
     .addStringOption((option) => option.setName('user_id').setDescription('ユーザーID').setRequired(true))
-    .addStringOption((option) => 
-      option.setName('type').setDescription('権限タイプ')
+    .addStringOption((option) =>
+      option
+        .setName('type')
+        .setDescription('権限タイプ')
         .setRequired(true)
         .addChoices(
           { name: 'OWNER', value: 'OWNER' },
@@ -136,4 +138,8 @@ export const DM_SLASH_COMMANDS = [
     .setName('erase')
     .setDescription('みかんちゃんとのチャット履歴を削除します')
     .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
+  new SlashCommandBuilder()
+    .setName('revert')
+    .setDescription('最新のチャット履歴を復元します')
+    .addStringOption((option) => option.setName('uuid').setDescription('会話ID').setRequired(false)),
 ];
