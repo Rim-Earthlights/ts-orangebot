@@ -2,15 +2,17 @@ import dayjs from 'dayjs';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { Logger } from '../../common/logger.js';
 import { LiteLLMModel } from '../../config/config.js';
-import { LiteLLMMode, Role, llmList, initalize } from '../../constant/chat/chat.js';
+import { LiteLLMMode, Role, llmList, initalize, getIdInfoInteraction } from '../../constant/chat/chat.js';
 import { LogLevel } from '../../type/types.js';
+import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
+import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
 
 /**
  * メモリ機能を切り替える
  * @param interaction
  */
 export async function setMemory(interaction: ChatInputCommandInteraction<CacheType>) {
-  const { id } = getIdInfo(interaction);
+  const { id } = getIdInfoInteraction(interaction);
   if (!id) {
     return;
   }
@@ -31,7 +33,7 @@ export async function talk(
   model: LiteLLMModel,
   mode: LiteLLMMode
 ) {
-  const { id, isGuild } = getIdInfo(interaction);
+  const { id, name, isGuild } = getIdInfoInteraction(interaction);
   if (!id) {
     return;
   }
@@ -92,6 +94,18 @@ export async function talk(
   } else {
     await interaction.editReply(completion.content);
   }
+
+  const chatHistoryRepository = new ChatHistoryRepository();
+  await chatHistoryRepository.save({
+    uuid: liteLLM.uuid,
+    channel_id: id,
+    name: name,
+    content: liteLLM.chat,
+    model: model,
+    mode: LiteLLMMode.DEFAULT,
+    channel_type: isGuild ? ChatHistoryChannelType.GUILD : ChatHistoryChannelType.DM,
+  });
+
   await Logger.put({
     guild_id: interaction.guild?.id,
     channel_id: interaction.channel?.id,
@@ -112,7 +126,7 @@ export async function talk(
  * ChatGPTの会話データの削除
  */
 export async function deleteChatData(interaction: ChatInputCommandInteraction<CacheType>, lastFlag?: boolean) {
-  const { id } = getIdInfo(interaction);
+  const { id } = getIdInfoInteraction(interaction);
   if (!id) {
     return;
   }
@@ -142,12 +156,4 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
     message: [`Delete: ${gpt.id}`],
   });
   await interaction.reply('会話データを削除したよ～！');
-}
-
-function getIdInfo(interaction: ChatInputCommandInteraction<CacheType>) {
-  const guild = interaction.guild;
-  if (!guild) {
-    return { id: interaction.channel?.id ?? interaction.user.dmChannel?.id, isGuild: false };
-  }
-  return { id: guild.id, isGuild: true };
 }

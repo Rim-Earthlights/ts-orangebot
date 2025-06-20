@@ -3,6 +3,7 @@ import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources';
 import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { CHATBOT_TEMPLATE } from '../constants.js';
+import { CacheType, ChatInputCommandInteraction, Message } from 'discord.js';
 
 export const llmList = { llm: [] as LiteLLM[] };
 
@@ -16,6 +17,7 @@ export async function initalize(id: string, model: LiteLLMModel, mode: LiteLLMMo
   });
   const llm: LiteLLM = {
     id,
+    uuid: crypto.randomUUID(),
     litellm: litellm,
     model: model,
     chat: [],
@@ -32,8 +34,29 @@ export async function initalize(id: string, model: LiteLLMModel, mode: LiteLLMMo
   return llm;
 }
 
+export function getIdInfoMessage(message: Message) {
+  const guild = message.guild;
+  if (!guild) {
+    return { id: message.channel.id, name: message.author.displayName, isGuild: false };
+  }
+  return { id: guild.id, name: message.guild?.name, isGuild: true };
+}
+
+export function getIdInfoInteraction(interaction: ChatInputCommandInteraction<CacheType>) {
+  const guild = interaction.guild;
+  if (!guild) {
+    return {
+      id: interaction.channel?.id ?? interaction.user.dmChannel?.id,
+      name: interaction.user.displayName,
+      isGuild: false,
+    };
+  }
+  return { id: guild.id, name: interaction.guild?.name, isGuild: true };
+}
+
 export type LiteLLM = {
   id: string;
+  uuid: string;
   litellm: OpenAI;
   model: LiteLLMModel;
   chat: ChatCompletionMessageParam[];

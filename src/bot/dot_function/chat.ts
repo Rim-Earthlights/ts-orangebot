@@ -6,13 +6,15 @@ import OpenAI from 'openai';
 import { ChatCompletionContentPart } from 'openai/resources/index.js';
 import { Logger } from '../../common/logger.js';
 import { CONFIG, LiteLLMModel } from '../../config/config.js';
-import { llmList, initalize, LiteLLMMode, Role } from '../../constant/chat/chat.js';
+import { llmList, initalize, LiteLLMMode, Role, getIdInfoMessage } from '../../constant/chat/chat.js';
 import { PictureService } from '../../service/picture.service.js';
 import { ModelResponse } from '../../type/openai.js';
 import { LogLevel } from '../../type/types.js';
 import { Forecast } from './index.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
+import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
+import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
 
 /**
  * モデルを設定する
@@ -21,7 +23,7 @@ import { UsersRepository } from '../../model/repository/usersRepository.js';
  * @param mode
  */
 export async function setModel(message: Message, model: LiteLLMModel, mode: LiteLLMMode) {
-  const { id, isGuild } = getIdInfo(message);
+  const { id, isGuild } = getIdInfoMessage(message);
   let llm = llmList.llm.find((c) => c.id === id);
   if (!llm) {
     llm = await initalize(id, model, mode, isGuild);
@@ -46,7 +48,7 @@ export async function getModel(message: Message) {
 }
 
 export async function setMemory(message: Message) {
-  const { id } = getIdInfo(message);
+  const { id } = getIdInfoMessage(message);
   const gpt = llmList.llm.find((c) => c.id === id);
   if (!gpt) {
     await message.reply(`履歴が存在しません。`);
@@ -60,13 +62,13 @@ export async function setMemory(message: Message) {
  * ChatGPTで会話する
  */
 export async function talk(message: Message, content: string, model: LiteLLMModel, mode: LiteLLMMode) {
-  const { id, isGuild } = getIdInfo(message);
-  let gpt = llmList.llm.find((c) => c.id === id);
-  if (!gpt) {
-    gpt = await initalize(id, model, mode, isGuild);
-    llmList.llm.push(gpt);
+  const { id, name, isGuild } = getIdInfoMessage(message);
+  let llm = llmList.llm.find((c) => c.id === id);
+  if (!llm) {
+    llm = await initalize(id, model, mode, isGuild);
+    llmList.llm.push(llm);
   }
-  const openai = gpt.litellm;
+  const openai = llm.litellm;
   let weather = undefined;
 
   if (content.includes(`天気`)) {
@@ -192,12 +194,12 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
       })
     );
 
-    gpt.chat.push({
+    llm.chat.push({
       role: Role.USER,
       content: [{ type: 'text', text: sendContent }, ...urls] as Array<ChatCompletionContentPart>,
     });
   } else {
-    gpt.chat.push({
+    llm.chat.push({
       role: Role.USER,
       content: sendContent,
     });
@@ -205,8 +207,8 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
 
   try {
     const response = await openai.chat.completions.create({
-      model: gpt.model,
-      messages: gpt.chat,
+      model: llm.model,
+      messages: llm.chat,
     });
     const completion = response.choices[0].message;
 
@@ -216,8 +218,8 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
       return;
     }
 
-    gpt.chat.push({ role: Role.ASSISTANT, content: completion.content });
-    gpt.timestamp = dayjs();
+    llm.chat.push({ role: Role.ASSISTANT, content: completion.content });
+    llm.timestamp = dayjs();
 
     if (completion.content.length > 2000) {
       const texts = completion.content.split('\n');
@@ -236,6 +238,17 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
     } else {
       await message.reply(completion.content);
     }
+
+    const chatHistoryRepository = new ChatHistoryRepository();
+    await chatHistoryRepository.save({
+      uuid: llm.uuid,
+      channel_id: id,
+      name: name,
+      content: llm.chat,
+      model: llm.model,
+      mode: LiteLLMMode.DEFAULT,
+      channel_type: isGuild ? ChatHistoryChannelType.GUILD : ChatHistoryChannelType.DM,
+    });
 
     await Logger.put({
       guild_id: message.guild?.id,
@@ -311,7 +324,7 @@ export async function generatePicture(message: Message<boolean>, chat: string) {
 }
 
 export async function deleteChatData(message: Message, idx?: string) {
-  const { id } = getIdInfo(message);
+  const { id } = getIdInfoMessage(message);
 
   const llm = llmList.llm.find((c) => c.id === id);
   if (!llm) {
@@ -339,12 +352,4 @@ export async function deleteChatData(message: Message, idx?: string) {
     message: [`Delete: ${llm.id}`],
   });
   await message.reply('会話データを削除したよ～！');
-}
-
-function getIdInfo(message: Message) {
-  const guild = message.guild;
-  if (!guild) {
-    return { id: message.channel.id, isGuild: false };
-  }
-  return { id: guild.id, isGuild: true };
 }
