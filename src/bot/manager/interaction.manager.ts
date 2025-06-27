@@ -18,6 +18,7 @@ import { TopicHandler } from './handlers/interactions/topic.handler.js';
 import { AcceptHandler } from './handlers/interactions/accept.handler.js';
 import { UserTypeHandler } from './handlers/interactions/user-type.handler.js';
 import { RevertHandler } from './handlers/interactions/revert.handler.js';
+import { HistoryHandler } from './handlers/interactions/history.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 
@@ -60,6 +61,7 @@ export class InteractionManager {
     this.handlers.set('accept', new AcceptHandler(this.logger));
     this.handlers.set('user-type', new UserTypeHandler(this.logger));
     this.handlers.set('revert', new RevertHandler(this.logger));
+    this.handlers.set('history', new HistoryHandler(this.logger));
   }
 
   /**

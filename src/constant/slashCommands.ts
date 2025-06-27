@@ -142,4 +142,5 @@ export const DM_SLASH_COMMANDS = [
     .setName('revert')
     .setDescription('最新のチャット履歴を復元します')
     .addStringOption((option) => option.setName('uuid').setDescription('会話ID').setRequired(false)),
+  new SlashCommandBuilder().setName('history').setDescription('このチャンネルのチャット履歴を表示します'),
 ];

@@ -547,6 +547,11 @@ export async function remove(gid: string, cid: string, musicId?: number): Promis
 export async function removeId(channel: VoiceBasedChannel, gid: string, musicId: number): Promise<void> {
   const repository = new MusicRepository();
   const musics = await repository.getQueue(gid, channel.id);
+
+  if (musics.length <= 0) {
+    return;
+  }
+
   await repository.remove(gid, channel.id, musicId);
 
   const description = musics

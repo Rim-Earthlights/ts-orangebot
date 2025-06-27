@@ -13,7 +13,7 @@ export class RevertHandler extends BaseInteractionHandler {
   }
 
   async execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
 
     try {
       const uuid = interaction.options.getString('uuid');

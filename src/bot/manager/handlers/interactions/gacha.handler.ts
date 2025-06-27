@@ -1,7 +1,6 @@
 import { CacheType, ChatInputCommandInteraction } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { LogLevel } from '../../../../type/types.js';
 import * as BotFunctions from '../../../function/index.js';
 
 export class GachaHandler extends BaseInteractionHandler {
@@ -29,15 +28,6 @@ export class GachaHandler extends BaseInteractionHandler {
   }
 
   private async handleGachaCommand(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
-    await Logger.put({
-      guild_id: interaction.guild?.id,
-      channel_id: interaction.channel?.id,
-      user_id: interaction.user.id,
-      level: LogLevel.INFO,
-      event: 'received-command/gacha',
-      message: [`${interaction}`],
-    });
-
     const type = interaction.options.getSubcommand();
     switch (type) {
       case 'pick': {
