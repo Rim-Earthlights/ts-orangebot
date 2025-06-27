@@ -39,22 +39,26 @@ export class InteractionManager {
     this.handlers.set('chat', new ChatHandler(this.logger));
     this.handlers.set('speak', new SpeakHandler(this.logger));
     this.handlers.set('help', new HelpHandler(this.logger));
-    
+
     // Gacha commands
     const gachaHandler = new GachaHandler(this.logger);
     this.handlers.set('gacha', gachaHandler);
     this.handlers.set('gc', gachaHandler);
     this.handlers.set('gl', gachaHandler);
-    
+
+    // Room commands
+    const roomHandler = new RoomHandler(this.logger);
+    this.handlers.set('room', roomHandler);
+    this.handlers.set('rn', roomHandler);
+
     this.handlers.set('dice', new DiceHandler(this.logger));
-    
+
     // ITO game commands
     const itoHandler = new ItoHandler(this.logger);
     this.handlers.set('genito', itoHandler);
     this.handlers.set('ito', itoHandler);
-    
+
     this.handlers.set('timeout', new TimeoutHandler(this.logger));
-    this.handlers.set('room', new RoomHandler(this.logger));
     this.handlers.set('nickname', new NicknameHandler(this.logger));
     this.handlers.set('memory', new MemoryHandler(this.logger));
     this.handlers.set('topic', new TopicHandler(this.logger));
