@@ -145,7 +145,7 @@ export const SERVER_SLASH_COMMANDS = [
 
 export const DM_SLASH_COMMANDS = [
   new SlashCommandBuilder()
-    .setName('erase')
+    .setName('delete')
     .setDescription('みかんちゃんとのチャット履歴を削除します')
     .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
   new SlashCommandBuilder()

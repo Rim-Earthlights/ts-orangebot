@@ -9,3 +9,4 @@ export * as Photo from './photo.js';
 export * as Room from './room.js';
 export * as Chat from './chat.js';
 export * as Debug from './debug.js';
+export * as Speak from './speak.js';

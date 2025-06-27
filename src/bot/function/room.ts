@@ -246,3 +246,63 @@ export async function changeRoomName(interaction: ChatInputCommandInteraction<Ca
 
   await interaction.editReply({ embeds: [embed] });
 }
+
+/**
+ * 人数制限を変更する
+ * @param interaction 発行されたコマンド情報
+ * @param limit 人数制限
+ */
+export async function setLimit(interaction: ChatInputCommandInteraction<CacheType>, limit: number = 99) {
+  const guild = interaction.guild;
+  if (!guild) {
+    await interaction.editReply({ content: 'ボイスチャンネルのみ変更できます' });
+  }
+
+  const type = interaction.channel?.type;
+  if (type !== ChannelType.GuildVoice) {
+    await interaction.editReply({ content: 'ボイスチャンネルのみ人数制限を変更できます' });
+    return;
+  }
+
+  if (limit < 1 || 99 < limit) {
+    limit = 99;
+  }
+
+  await (interaction.channel as VoiceChannel).setUserLimit(limit);
+  await interaction.editReply({ content: `人数制限を${limit}人に変更したよ！` });
+}
+
+/**
+ * 配信中に変更する
+ * @param interaction 発行されたコマンド情報
+ */
+export async function toggleLive(interaction: ChatInputCommandInteraction<CacheType>) {
+  const guild = interaction.guild;
+  if (!guild) {
+    await interaction.editReply({ content: 'ボイスチャンネルのみ変更できます' });
+  }
+
+  const type = interaction.channel?.type;
+  if (type !== ChannelType.GuildVoice) {
+    await interaction.editReply({ content: 'ボイスチャンネルのみ配信中に変更できます' });
+    return;
+  }
+
+  const roomRepository = new RoomRepository();
+  const room = await roomRepository.getRoom(interaction.channelId);
+  if (!room) {
+    return;
+  }
+
+  room.is_live = !room.is_live;
+
+  // 名前に[●配信]とつける
+  const name = room.name;
+  await (interaction.channel as VoiceChannel).setName(name + (room.is_live ? ' [●配信]' : ''));
+
+  await roomRepository.updateRoom(interaction.channelId, room);
+
+  await interaction.editReply({
+    content: '配信中に変更したよ！',
+  });
+}
