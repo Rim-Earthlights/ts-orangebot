@@ -48,6 +48,12 @@ export const SERVER_SLASH_COMMANDS = [
     .setDescription('お部屋の設定をします')
     .addSubcommand((sc) =>
       sc
+        .setName('name')
+        .setDescription('お部屋名を変更します')
+        .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true))
+    )
+    .addSubcommand((sc) =>
+      sc
         .setName('create')
         .setDescription('お部屋を作ります')
         .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true))
@@ -69,6 +75,10 @@ export const SERVER_SLASH_COMMANDS = [
         .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))
     )
     .addSubcommand((sc) => sc.setName('lock').setDescription('お部屋の自動削除を切り替えます')),
+  new SlashCommandBuilder()
+    .setName('rn')
+    .setDescription('お部屋名を変更します (/room nameの短縮形)')
+    .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true)),
   new SlashCommandBuilder()
     .setName('dc')
     .setDescription('特定のユーザーをボイスチャンネルから切断します')

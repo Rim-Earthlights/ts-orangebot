@@ -9,11 +9,28 @@ export class RoomHandler extends BaseInteractionHandler {
   }
 
   async execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
+    const { commandName } = interaction;
+    switch (commandName) {
+      case 'room': {
+        await this.handleRoomInteraction(interaction);
+        break;
+      }
+      case 'rn': {
+        await this.handleRoomNameInteraction(interaction);
+        break;
+      }
+    }
+  }
+
+  /**
+   * roomコマンドのハンドル
+   */
+  private async handleRoomInteraction(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
     const type = interaction.options.getSubcommand();
-    await interaction.deferReply({ ephemeral: true });
-    
+
     switch (type) {
       case 'create': {
+        await interaction.deferReply({ ephemeral: true });
         const name = interaction.options.getString('name');
         const isLive = interaction.options.getBoolean('live') ?? false;
         const isPrivate = interaction.options.getBoolean('private') ?? true;
@@ -25,7 +42,18 @@ export class RoomHandler extends BaseInteractionHandler {
         await BotFunctions.Room.createRoom(interaction, name, isLive, isPrivate);
         break;
       }
+      case 'name': {
+        await interaction.deferReply({ ephemeral: false });
+        const name = interaction.options.getString('name');
+        if (!name) {
+          await interaction.editReply({ content: 'チャンネル名を指定してください' });
+          return;
+        }
+        await BotFunctions.Room.changeRoomName(interaction, name);
+        break;
+      }
       case 'add': {
+        await interaction.deferReply({ ephemeral: true });
         const user = interaction.options.getUser('user');
         const member = interaction.guild?.members.cache.get(user?.id ?? '');
         if (!member) {
@@ -36,6 +64,7 @@ export class RoomHandler extends BaseInteractionHandler {
         break;
       }
       case 'remove': {
+        await interaction.deferReply({ ephemeral: true });
         const user = interaction.options.getUser('user');
         const member = interaction.guild?.members.cache.get(user?.id ?? '');
         if (!member) {
@@ -46,9 +75,23 @@ export class RoomHandler extends BaseInteractionHandler {
         break;
       }
       case 'lock': {
+        await interaction.deferReply({ ephemeral: false });
         await BotFunctions.Room.toggleAutoDelete(interaction);
         break;
       }
     }
+  }
+
+  /**
+   * rnコマンドのハンドル
+   */
+  private async handleRoomNameInteraction(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
+    await interaction.deferReply({ ephemeral: false });
+    const name = interaction.options.getString('name');
+    if (!name) {
+      await interaction.editReply({ content: 'チャンネル名を指定してください' });
+      return;
+    }
+    await BotFunctions.Room.changeRoomName(interaction, name);
   }
 }
