@@ -43,6 +43,9 @@ app.use(cors());
 // ejs
 app.set('view engine', 'ejs');
 
+// static files
+app.use(Express.static('public'));
+
 //body-parser
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());

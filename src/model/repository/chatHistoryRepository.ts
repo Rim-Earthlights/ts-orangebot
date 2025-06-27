@@ -33,6 +33,51 @@ export class ChatHistoryRepository {
   }
 
   /**
+   * ユーザーIDに関連するチャット履歴を取得する
+   * @param userId ユーザーID
+   * @param limit 取得件数（デフォルト: 50）
+   * @param offset オフセット（デフォルト: 0）
+   * @returns Promise<ChatHistory[]>
+   */
+  public async getByUserId(userId: string, limit: number = 50, offset: number = 0): Promise<Models.ChatHistory[]> {
+    // DMチャンネルの履歴を取得
+    // 注意: 実際のDiscord DMチャンネルIDの形式に応じて、より具体的なフィルタリングロジックが必要になる場合があります
+    const chatHistories = await this.repository
+      .createQueryBuilder('chat_history')
+      .where('chat_history.channel_type = :channelType', { channelType: 'DM' })
+      .andWhere('JSON_EXTRACT(chat_history.content, "$[*].role") LIKE :userId', { userId: `%${userId}%` })
+      .orderBy('chat_history.updated_at', 'DESC')
+      .take(limit)
+      .skip(offset)
+      .getMany();
+
+    return chatHistories;
+  }
+
+  /**
+   * すべてのチャット履歴を取得する（ページネーション対応）
+   * @param limit 取得件数（デフォルト: 50）
+   * @param offset オフセット（デフォルト: 0）
+   * @param channelId チャンネルID（オプション）
+   * @returns Promise<ChatHistory[]>
+   */
+  public async getAll(limit: number = 50, offset: number = 0, channelId?: string): Promise<Models.ChatHistory[]> {
+    const whereCondition: any = {};
+
+    if (channelId && channelId.trim() !== '' && channelId !== 'all') {
+      whereCondition.channel_id = channelId;
+    }
+
+    const chatHistories = await this.repository.find({
+      where: whereCondition,
+      order: { updated_at: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+    return chatHistories;
+  }
+
+  /**
    * チャット履歴を保存・更新する（upsert）
    * @param chatHistory チャット履歴データ
    * @returns Promise<void>
