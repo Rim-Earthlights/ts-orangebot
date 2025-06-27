@@ -3,7 +3,7 @@ import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 import * as BotFunctions from '../../../function/index.js';
 
-export class EraseHandler extends BaseInteractionHandler {
+export class DeleteHandler extends BaseInteractionHandler {
   constructor(logger?: Logger) {
     super(logger);
   }

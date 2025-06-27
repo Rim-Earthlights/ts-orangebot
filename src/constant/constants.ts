@@ -277,6 +277,146 @@ export const HELP_COMMANDS = [
   ),
 ];
 
+/**
+ * スラッシュコマンドのヘルプ
+ */
+export const HELP_COMMANDS_INTERACTIONS = [
+  new EmbedBuilder()
+    .setColor('Aqua')
+    .setTitle('便利コマンド系')
+    .addFields(
+      {
+        name: '/help',
+        value: 'このヘルプを表示します(他の人に見えない形で表示されます)',
+      },
+      {
+        name: '/dice [面数] [個数]',
+        value: 'ダイスを振ります',
+      },
+      {
+        name: '/dall',
+        value: 'ボイスチャンネルにいる全員で1d100を振ります',
+      },
+      {
+        name: '/chat [メッセージ]',
+        value: 'みかんちゃんとおしゃべりします',
+      },
+      {
+        name: '/speak',
+        value: '読み上げを開始します',
+      },
+      {
+        name: '/nickname [ニックネーム]',
+        value: '読み上げちゃんから呼ばれる名前を変更します',
+      },
+      {
+        name: '/topic',
+        value: '話題をなにか考えてくれます。',
+      },
+      {
+        name: '/gacha pick [num:回数] [limit:全引きフラグ] | /gc [num:回数] | /gl',
+        value: [
+          'ガチャを引きます',
+          'pick: 回数を指定 or 上限までガチャを引きます',
+          'gc: 回数を指定してガチャを引きます (短縮形)',
+          'gl: 上限までガチャを引きます (短縮形)',
+        ].join('\n'),
+      }
+    ),
+  new EmbedBuilder()
+    .setColor('Aqua')
+    .setTitle('お部屋管理系')
+    .addFields(
+      {
+        name: '/room name [部屋名] | /rn [部屋名]',
+        value: 'お部屋の名前を変更します',
+      },
+      {
+        name: '/room live',
+        value: 'お部屋を配信中にします (YoutubeやTwitchなどの配信中はつけてください)',
+      },
+      {
+        name: '/room lock',
+        value: 'お部屋の自動削除設定を変更します。自動削除がOFFになった通話部屋は0人になっても削除されません。',
+      },
+      {
+        name: '/room limit [人数]',
+        value: 'お部屋に人数制限をつけます',
+      },
+      {
+        name: '/room create [?部屋名] [?プライベート] [?配信]',
+        value: [
+          'お部屋を作成します。部屋名を指定しない場合は`お部屋: #(連番)`になります',
+          '設定値はtrueが有効, falseが無効です',
+        ].join('\n'),
+      },
+      {
+        name: '/room add [ユーザー]',
+        value: [
+          'お部屋にユーザーを追加します(非公開の部屋のみ)',
+          'お部屋内で@メンションしても同様に追加できるので使用しなくても良いです',
+        ].join('\n'),
+      },
+      {
+        name: '/room remove [ユーザー]',
+        value: 'お部屋からユーザーを削除します(非公開の部屋のみ)',
+      }
+    ),
+  new EmbedBuilder().setColor('Aqua').setTitle('ゲーム系').addFields(
+    {
+      name: '/genito',
+      value: 'ITOのお題を作成して出します',
+    },
+    {
+      name: '/ito [round:ラウンド数]',
+      value: 'ITOの数字を配ります',
+    }
+  ),
+  new EmbedBuilder().setColor('Aqua').setTitle('管理系 (要:管理者権限)').addFields(
+    {
+      name: '/dc',
+      value: 'ボイスチャットから切断します',
+    },
+    {
+      name: '/mute [ユーザー] [時間] [理由]',
+      value: 'ユーザーをサーバーミュートします',
+    },
+    {
+      name: '/timeout [ユーザー] [時間] [理由]',
+      value: 'ユーザーをサーバーからタイムアウトします',
+    },
+    {
+      name: '/user-type [ユーザー] [タイプ]',
+      value: 'ユーザー権限を設定します (要:オーナー権限)',
+    }
+  ),
+  new EmbedBuilder()
+    .setColor('Aqua')
+    .setTitle('チャット系')
+    .addFields(
+      {
+        name: '/chat [メッセージ]',
+        value: 'みかんちゃんとおしゃべりします',
+      },
+      {
+        name: '/delete',
+        value: [
+          '今みかんちゃんと話した内容を忘れます',
+          '最後に会話してから1時間で自動実行されます',
+          'チャット履歴を復元する場合は`/revert`を使用',
+        ].join('\n'),
+      },
+      {
+        name: '/history',
+        value: 'チャット履歴を表示します',
+      },
+      {
+        name: '/revert [履歴ID]',
+        value: 'チャット履歴を復元します, 履歴IDは`/history`で確認できます',
+      }
+    ),
+];
+
 export const CHATBOT_TEMPLATE = [
   'You are a Chatbot running on Discord.',
   'In all conversations, you speak under the following conditions.',

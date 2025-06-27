@@ -18,6 +18,7 @@ import { RegisterHandler } from './handlers/commands/register.handler.js';
 import { RoomHandler } from './handlers/commands/room.handler.js';
 import { PopupRuleHandler } from './handlers/commands/popup-rule.handler.js';
 import { ReliefHandler } from './handlers/commands/relief.handler.js';
+import { SpeakHandler } from './handlers/commands/speak.handler.js';
 
 export class MessageManager {
   logger = new Logger();
@@ -33,7 +34,6 @@ export class MessageManager {
     this.command = content[0];
     this.args = content.slice(1);
 
-    // Register handlers
     this.handlers.set('help', new HelpHandler(this.logger));
     this.handlers.set('memory', new MemoryHandler(this.logger));
     this.handlers.set('topic', new TopicHandler(this.logger));
@@ -41,7 +41,7 @@ export class MessageManager {
     this.handlers.set('pic', new PicHandler(this.logger));
     this.handlers.set('tenki', new WeatherHandler(this.logger));
     this.handlers.set('luck', new LuckHandler(this.logger));
-    
+
     // Gacha commands
     const gachaHandler = new GachaHandler(this.logger);
     this.handlers.set('gacha', gachaHandler);
@@ -113,6 +113,10 @@ export class MessageManager {
     // Relief command
     const reliefHandler = new ReliefHandler(this.logger);
     this.handlers.set('relief', reliefHandler);
+
+    // Speak command
+    const speakHandler = new SpeakHandler(this.logger);
+    this.handlers.set('speak', speakHandler);
   }
 
   async handle() {

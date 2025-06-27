@@ -3,7 +3,7 @@ import { InteractionHandler } from './interaction.handler.js';
 import { PingHandler } from './handlers/interactions/ping.handler.js';
 import { DcHandler } from './handlers/interactions/dc.handler.js';
 import { MuteHandler } from './handlers/interactions/mute.handler.js';
-import { EraseHandler } from './handlers/interactions/erase.handler.js';
+import { DeleteHandler } from './handlers/interactions/delete.handler.js';
 import { ChatHandler } from './handlers/interactions/chat.handler.js';
 import { SpeakHandler } from './handlers/interactions/speak.handler.js';
 import { HelpHandler } from './handlers/interactions/help.handler.js';
@@ -35,10 +35,15 @@ export class InteractionManager {
     this.handlers.set('ping', new PingHandler(this.logger));
     this.handlers.set('dc', new DcHandler(this.logger));
     this.handlers.set('mute', new MuteHandler(this.logger));
-    this.handlers.set('erase', new EraseHandler(this.logger));
+    this.handlers.set('delete', new DeleteHandler(this.logger));
     this.handlers.set('chat', new ChatHandler(this.logger));
     this.handlers.set('speak', new SpeakHandler(this.logger));
     this.handlers.set('help', new HelpHandler(this.logger));
+
+    // Dice commands
+    const diceHandler = new DiceHandler(this.logger);
+    this.handlers.set('dice', diceHandler);
+    this.handlers.set('dall', diceHandler);
 
     // Gacha commands
     const gachaHandler = new GachaHandler(this.logger);
@@ -50,8 +55,7 @@ export class InteractionManager {
     const roomHandler = new RoomHandler(this.logger);
     this.handlers.set('room', roomHandler);
     this.handlers.set('rn', roomHandler);
-
-    this.handlers.set('dice', new DiceHandler(this.logger));
+    this.handlers.set('custom', roomHandler);
 
     // ITO game commands
     const itoHandler = new ItoHandler(this.logger);

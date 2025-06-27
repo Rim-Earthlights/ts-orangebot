@@ -52,6 +52,11 @@ export class RoomHandler extends BaseInteractionHandler {
         await BotFunctions.Room.changeRoomName(interaction, name);
         break;
       }
+      case 'live': {
+        await interaction.deferReply({ ephemeral: false });
+        await BotFunctions.Room.toggleLive(interaction);
+        break;
+      }
       case 'add': {
         await interaction.deferReply({ ephemeral: true });
         const user = interaction.options.getUser('user');
@@ -73,6 +78,11 @@ export class RoomHandler extends BaseInteractionHandler {
         }
         await BotFunctions.Room.removePermission(interaction, member);
         break;
+      }
+      case 'limit': {
+        await interaction.deferReply({ ephemeral: false });
+        const limit = interaction.options.getNumber('limit') ?? 99;
+        await BotFunctions.Room.setLimit(interaction, limit);
       }
       case 'lock': {
         await interaction.deferReply({ ephemeral: false });
