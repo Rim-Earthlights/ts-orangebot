@@ -84,6 +84,10 @@ export const SERVER_SLASH_COMMANDS = [
     .setDescription('特定のユーザーをボイスチャンネルから切断します')
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
   new SlashCommandBuilder()
+    .setName('rip')
+    .setDescription('特定のユーザーを墓へ移動します')
+    .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
+  new SlashCommandBuilder()
     .setName('timeout')
     .setDescription('特定のユーザーをタイムアウトします')
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true))

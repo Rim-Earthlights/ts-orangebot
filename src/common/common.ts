@@ -67,6 +67,13 @@ export function arrayEquals(t: number[], v: number[]): boolean {
   return true;
 }
 
+/**
+ * ユーザーの権限をチェックする
+ * @param gid サーバーID
+ * @param uid ユーザーID
+ * @param type 権限
+ * @returns 権限があるかどうか
+ */
 export const checkUserType = async (gid: string, uid: string, type: UsersType): Promise<boolean> => {
   const usersRepository = new UsersRepository();
   const userType = await usersRepository.getUsersType(gid, uid);
