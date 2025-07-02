@@ -21,6 +21,7 @@ import { RevertHandler } from './handlers/interactions/revert.handler.js';
 import { HistoryHandler } from './handlers/interactions/history.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
+import { RipHandler } from './handlers/interactions/rip.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -34,6 +35,7 @@ export class InteractionManager {
     this.interaction = interaction;
     this.handlers.set('ping', new PingHandler(this.logger));
     this.handlers.set('dc', new DcHandler(this.logger));
+    this.handlers.set('rip', new RipHandler(this.logger));
     this.handlers.set('mute', new MuteHandler(this.logger));
     this.handlers.set('delete', new DeleteHandler(this.logger));
     this.handlers.set('chat', new ChatHandler(this.logger));
