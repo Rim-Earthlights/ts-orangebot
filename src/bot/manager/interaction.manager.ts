@@ -22,6 +22,7 @@ import { HistoryHandler } from './handlers/interactions/history.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 import { RipHandler } from './handlers/interactions/rip.handler.js';
+import { LyricsHandler } from './handlers/interactions/lyrics.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -72,6 +73,8 @@ export class InteractionManager {
     this.handlers.set('user-type', new UserTypeHandler(this.logger));
     this.handlers.set('revert', new RevertHandler(this.logger));
     this.handlers.set('history', new HistoryHandler(this.logger));
+
+    this.handlers.set('lyrics', new LyricsHandler(this.logger));
   }
 
   /**

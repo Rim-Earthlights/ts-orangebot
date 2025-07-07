@@ -157,4 +157,8 @@ export const DM_SLASH_COMMANDS = [
     .setDescription('最新のチャット履歴を復元します')
     .addStringOption((option) => option.setName('uuid').setDescription('会話ID').setRequired(false)),
   new SlashCommandBuilder().setName('history').setDescription('このチャンネルのチャット履歴を表示します'),
+  new SlashCommandBuilder()
+    .setName('lyrics')
+    .setDescription('曲名を指定して歌詞を表示します(指定しない場合はSpotifyで聴いている曲の歌詞を表示します)')
+    .addStringOption((option) => option.setName('query').setDescription('曲名').setRequired(false)),
 ];
