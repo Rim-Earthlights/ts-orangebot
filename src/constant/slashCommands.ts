@@ -161,4 +161,18 @@ export const DM_SLASH_COMMANDS = [
     .setName('lyrics')
     .setDescription('曲名を指定して歌詞を表示します(指定しない場合はSpotifyで聴いている曲の歌詞を表示します)')
     .addStringOption((option) => option.setName('query').setDescription('曲名').setRequired(false)),
+  new SlashCommandBuilder()
+    .setName('model')
+    .setDescription('モデルを変更します')
+    .addStringOption((option) =>
+      option
+        .setName('model')
+        .setDescription('モデル')
+        .setRequired(true)
+        .addChoices(
+          { name: 'default', value: 'default' },
+          { name: 'low', value: 'low' },
+          { name: 'high', value: 'high' }
+        )
+    ),
 ];

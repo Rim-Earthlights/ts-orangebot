@@ -22,9 +22,9 @@ export class ChatHandler extends BaseInteractionHandler {
       interaction.reply({ content: `機能が有効化されてないよ！(GPT)`, embeds: [send] });
       return;
     }
-    
+
     await interaction.deferReply();
     const text = interaction.options.getString('text')!;
-    await BotFunctions.Chat.talk(interaction, text, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
+    await BotFunctions.Chat.talk(interaction, text, LiteLLMMode.DEFAULT);
   }
 }
