@@ -7,9 +7,15 @@ import {
   OneToMany,
   PrimaryColumn,
   Relation,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from 'typeorm';
 import { Users } from './users.js';
+
+export const ModelType = {
+  DEFAULT: 'default',
+  LOW: 'low',
+  HIGH: 'high',
+} as const;
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class UserSetting extends BaseEntity {
@@ -24,6 +30,9 @@ export class UserSetting extends BaseEntity {
 
   @Column({ type: 'datetime', nullable: true })
   birth_date: Date | null = null;
+
+  @Column({ type: 'varchar', nullable: false, default: ModelType.DEFAULT })
+  model_type!: (typeof ModelType)[keyof typeof ModelType];
 
   @Column({ type: 'int', nullable: false, default: 3 })
   voice_id!: number;

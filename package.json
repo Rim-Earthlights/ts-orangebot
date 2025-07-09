@@ -32,6 +32,7 @@
         "fs": "^0.0.1-security",
         "helmet": "^8.0.0",
         "iconv-lite": "^0.6.3",
+        "jsdom": "^26.1.0",
         "kysely": "^0.27.5",
         "mariadb": "^3.0.1",
         "mysql2": "^3.11.5",
@@ -72,6 +73,7 @@
         "nodemon": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' src/app.ts"
     },
     "devDependencies": {
+        "@types/jsdom": "^21.1.7",
         "@typescript-eslint/eslint-plugin": "^8.18.0",
         "@typescript-eslint/parser": "^8.18.0",
         "eslint-config-google": "^0.14.0",

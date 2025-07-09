@@ -1,5 +1,6 @@
 import { Logger } from '../common/logger.js';
 import { DISCORD_CLIENT } from '../constant/constants.js';
+import { ModelType } from '../model/models/userSetting.js';
 import { UsersRepository } from '../model/repository/usersRepository.js';
 import { LogLevel } from '../type/types.js';
 
@@ -26,14 +27,17 @@ export class UserJob {
       const members = await guild.members.fetch();
       members.forEach(async (member) => {
         const user = await repository.get(guild.id, member.id);
-        if (!user) {
+        const userSetting = await repository.getUserSetting(member.id);
+        if (!user || !userSetting) {
           return;
         }
         user.user_name = member.displayName;
+        userSetting.model_type = ModelType.DEFAULT;
         if (user.pick_left < 30) {
           user.pick_left += 10;
         }
         await repository.save(user);
+        await repository.saveUserSetting(userSetting);
       });
     });
   }

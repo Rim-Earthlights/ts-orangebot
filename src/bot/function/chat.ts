@@ -1,11 +1,13 @@
 import dayjs from 'dayjs';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { Logger } from '../../common/logger.js';
-import { LiteLLMModel } from '../../config/config.js';
+import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { LiteLLMMode, Role, llmList, initalize, getIdInfoInteraction } from '../../constant/chat/chat.js';
 import { LogLevel } from '../../type/types.js';
 import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
 import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
+import { UsersRepository } from '../../model/repository/usersRepository.js';
+import { ModelType } from '../../model/models/userSetting.js';
 
 /**
  * メモリ機能を切り替える
@@ -25,18 +27,36 @@ export async function setMemory(interaction: ChatInputCommandInteraction<CacheTy
 }
 
 /**
+ * ユーザーのモデルタイプを取得する
+ * @param userId
+ * @returns
+ */
+export async function getUserModelType(userId: string): Promise<LiteLLMModel> {
+  const userRepository = new UsersRepository();
+  const userSetting = await userRepository.getUserSetting(userId);
+  const modelType = userSetting?.model_type ?? ModelType.DEFAULT;
+
+  switch (modelType) {
+    case ModelType.DEFAULT:
+      return CONFIG.OPENAI.DEFAULT_MODEL;
+    case ModelType.LOW:
+      return CONFIG.OPENAI.G3_MODEL;
+    case ModelType.HIGH:
+      return CONFIG.OPENAI.G4_MODEL;
+    default:
+      return CONFIG.OPENAI.DEFAULT_MODEL;
+  }
+}
+
+/**
  * ChatGPTで会話する
  */
-export async function talk(
-  interaction: ChatInputCommandInteraction<CacheType>,
-  content: string,
-  model: LiteLLMModel,
-  mode: LiteLLMMode
-) {
+export async function talk(interaction: ChatInputCommandInteraction<CacheType>, content: string, mode: LiteLLMMode) {
   const { id, name, isGuild } = getIdInfoInteraction(interaction);
   if (!id) {
     return;
   }
+  const model = await getUserModelType(id);
   let liteLLM = llmList.llm.find((c) => c.id === id);
   if (!liteLLM) {
     liteLLM = await initalize(id, model, mode, isGuild);

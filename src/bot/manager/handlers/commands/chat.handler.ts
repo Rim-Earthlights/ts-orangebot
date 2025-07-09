@@ -27,20 +27,20 @@ export class ChatHandler extends BaseMessageHandler {
 
     switch (command) {
       case 'raw': {
-        await DotBotFunctions.Chat.talk(message, chat, LITELLM_MODEL.GPT_4O, LiteLLMMode.NOPROMPT);
+        await DotBotFunctions.Chat.talk(message, chat, LiteLLMMode.NOPROMPT);
         break;
       }
       case 'gpt':
       case 'mikan': {
-        await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
+        await DotBotFunctions.Chat.talk(message, chat, LiteLLMMode.DEFAULT);
         break;
       }
       case 'g3': {
-        await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G3_MODEL, LiteLLMMode.DEFAULT);
+        await DotBotFunctions.Chat.talk(message, chat, LiteLLMMode.DEFAULT);
         break;
       }
       case 'g4': {
-        await DotBotFunctions.Chat.talk(message, chat, CONFIG.OPENAI.G4_MODEL, LiteLLMMode.DEFAULT);
+        await DotBotFunctions.Chat.talk(message, chat, LiteLLMMode.DEFAULT);
         break;
       }
     }

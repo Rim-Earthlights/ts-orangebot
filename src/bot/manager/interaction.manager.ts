@@ -22,6 +22,8 @@ import { HistoryHandler } from './handlers/interactions/history.handler.js';
 import { Logger } from '../../common/logger.js';
 import { LogLevel } from '../../type/types.js';
 import { RipHandler } from './handlers/interactions/rip.handler.js';
+import { LyricsHandler } from './handlers/interactions/lyrics.handler.js';
+import { ModelHandler } from './handlers/interactions/model.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -37,8 +39,8 @@ export class InteractionManager {
     this.handlers.set('dc', new DcHandler(this.logger));
     this.handlers.set('rip', new RipHandler(this.logger));
     this.handlers.set('mute', new MuteHandler(this.logger));
-    this.handlers.set('delete', new DeleteHandler(this.logger));
-    this.handlers.set('chat', new ChatHandler(this.logger));
+    this.handlers.set('timeout', new TimeoutHandler(this.logger));
+
     this.handlers.set('speak', new SpeakHandler(this.logger));
     this.handlers.set('help', new HelpHandler(this.logger));
 
@@ -64,14 +66,21 @@ export class InteractionManager {
     this.handlers.set('genito', itoHandler);
     this.handlers.set('ito', itoHandler);
 
-    this.handlers.set('timeout', new TimeoutHandler(this.logger));
-    this.handlers.set('nickname', new NicknameHandler(this.logger));
+    // Chat commands
+    this.handlers.set('chat', new ChatHandler(this.logger));
+    this.handlers.set('revert', new RevertHandler(this.logger));
+    this.handlers.set('history', new HistoryHandler(this.logger));
     this.handlers.set('memory', new MemoryHandler(this.logger));
+    this.handlers.set('delete', new DeleteHandler(this.logger));
+    this.handlers.set('model', new ModelHandler(this.logger));
+
+    this.handlers.set('nickname', new NicknameHandler(this.logger));
+
     this.handlers.set('topic', new TopicHandler(this.logger));
     this.handlers.set('accept', new AcceptHandler(this.logger));
     this.handlers.set('user-type', new UserTypeHandler(this.logger));
-    this.handlers.set('revert', new RevertHandler(this.logger));
-    this.handlers.set('history', new HistoryHandler(this.logger));
+
+    this.handlers.set('lyrics', new LyricsHandler(this.logger));
   }
 
   /**
