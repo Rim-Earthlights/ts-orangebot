@@ -3,7 +3,7 @@ import { ChatInputCommandInteraction, CacheType } from 'discord.js';
 import { initalize, LiteLLMMode, llmList, Role } from '../constant/chat/chat.js';
 import { MUTE_MESSAGE, TIMEOUT_MESSAGE } from '../constant/constants.js';
 
-export class ChatService {
+export class InteractionChatService {
   private interaction: ChatInputCommandInteraction<CacheType>;
   constructor(interaction: ChatInputCommandInteraction<CacheType>) {
     this.interaction = interaction;
@@ -23,10 +23,10 @@ export class ChatService {
       return;
     }
 
-    let llm = llmList.gpt.find((c) => c.id === id);
+    let llm = llmList.llm.find((c) => c.id === id);
     if (!llm) {
       llm = await initalize(id, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT, isGuild);
-      llmList.gpt.push(llm);
+      llmList.llm.push(llm);
     }
 
     llm.chat.push({ role: role, content: content });

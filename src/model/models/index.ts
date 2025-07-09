@@ -13,3 +13,4 @@ export { Speaker } from './speaker.js';
 export { Timer } from './timer.js';
 export { Users } from './users.js';
 export { UserSetting } from './userSetting.js';
+export { ChatHistory } from './chatHistory.js';

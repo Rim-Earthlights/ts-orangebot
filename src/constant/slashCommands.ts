@@ -40,12 +40,18 @@ export const SERVER_SLASH_COMMANDS = [
     ),
   new SlashCommandBuilder().setName('gl').setDescription('/gacha limitの短縮形コマンドです.'),
   new SlashCommandBuilder()
-    .setName('gpt')
-    .setDescription('GPT-4oでおしゃべりします')
+    .setName('chat')
+    .setDescription('みかんちゃんとおしゃべりします')
     .addStringOption((option) => option.setName('text').setDescription('text').setRequired(true)),
   new SlashCommandBuilder()
     .setName('room')
     .setDescription('お部屋の設定をします')
+    .addSubcommand((sc) =>
+      sc
+        .setName('name')
+        .setDescription('お部屋名を変更します')
+        .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true))
+    )
     .addSubcommand((sc) =>
       sc
         .setName('create')
@@ -70,8 +76,16 @@ export const SERVER_SLASH_COMMANDS = [
     )
     .addSubcommand((sc) => sc.setName('lock').setDescription('お部屋の自動削除を切り替えます')),
   new SlashCommandBuilder()
+    .setName('rn')
+    .setDescription('お部屋名を変更します (/room nameの短縮形)')
+    .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true)),
+  new SlashCommandBuilder()
     .setName('dc')
     .setDescription('特定のユーザーをボイスチャンネルから切断します')
+    .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('rip')
+    .setDescription('特定のユーザーを墓へ移動します')
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
   new SlashCommandBuilder()
     .setName('timeout')
@@ -106,12 +120,24 @@ export const SERVER_SLASH_COMMANDS = [
     .setDescription('AIと会話します')
     .addSubcommand((sc) => sc.setName('start').setDescription('会話を開始します'))
     .addSubcommand((sc) => sc.setName('stop').setDescription('会話を停止します')),
+  new SlashCommandBuilder().setName('memory').setDescription('メモリ機能を切り替えます'),
+  new SlashCommandBuilder().setName('speak').setDescription('読み上げボットを呼び出します'),
   new SlashCommandBuilder()
-    .setName('memory')
-    .setDescription('メモリ機能を切り替えます'),
-  new SlashCommandBuilder()
-    .setName('speak')
-    .setDescription('読み上げボットを呼び出します')
+    .setName('user-type')
+    .setDescription('ユーザーの権限を変更します')
+    .addStringOption((option) => option.setName('user_id').setDescription('ユーザーID').setRequired(true))
+    .addStringOption((option) =>
+      option
+        .setName('type')
+        .setDescription('権限タイプ')
+        .setRequired(true)
+        .addChoices(
+          { name: 'OWNER', value: 'OWNER' },
+          { name: 'ADMIN', value: 'ADMIN' },
+          { name: 'MEMBER', value: 'MEMBER' },
+          { name: 'GUEST', value: 'GUEST' }
+        )
+    ),
   // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
   // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
   // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
@@ -123,7 +149,30 @@ export const SERVER_SLASH_COMMANDS = [
 
 export const DM_SLASH_COMMANDS = [
   new SlashCommandBuilder()
-    .setName('erase')
-    .setDescription('ChatGPTとのチャット履歴を削除します')
+    .setName('delete')
+    .setDescription('みかんちゃんとのチャット履歴を削除します')
     .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
+  new SlashCommandBuilder()
+    .setName('revert')
+    .setDescription('最新のチャット履歴を復元します')
+    .addStringOption((option) => option.setName('uuid').setDescription('会話ID').setRequired(false)),
+  new SlashCommandBuilder().setName('history').setDescription('このチャンネルのチャット履歴を表示します'),
+  new SlashCommandBuilder()
+    .setName('lyrics')
+    .setDescription('曲名を指定して歌詞を表示します(指定しない場合はSpotifyで聴いている曲の歌詞を表示します)')
+    .addStringOption((option) => option.setName('query').setDescription('曲名').setRequired(false)),
+  new SlashCommandBuilder()
+    .setName('model')
+    .setDescription('モデルを変更します')
+    .addStringOption((option) =>
+      option
+        .setName('model')
+        .setDescription('モデル')
+        .setRequired(true)
+        .addChoices(
+          { name: 'default', value: 'default' },
+          { name: 'low', value: 'low' },
+          { name: 'high', value: 'high' }
+        )
+    ),
 ];
