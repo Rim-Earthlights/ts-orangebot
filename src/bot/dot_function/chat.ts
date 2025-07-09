@@ -15,6 +15,7 @@ import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
 import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
 import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
+import { ModelType } from '../../model/models/userSetting.js';
 
 /**
  * モデルを設定する
@@ -59,10 +60,33 @@ export async function setMemory(message: Message) {
 }
 
 /**
+ * ユーザーのモデルタイプを取得する
+ * @param userId
+ * @returns
+ */
+export async function getUserModelType(userId: string): Promise<LiteLLMModel> {
+  const userRepository = new UsersRepository();
+  const userSetting = await userRepository.getUserSetting(userId);
+  const modelType = userSetting?.model_type ?? ModelType.DEFAULT;
+
+  switch (modelType) {
+    case ModelType.DEFAULT:
+      return CONFIG.OPENAI.DEFAULT_MODEL;
+    case ModelType.LOW:
+      return CONFIG.OPENAI.G3_MODEL;
+    case ModelType.HIGH:
+      return CONFIG.OPENAI.G4_MODEL;
+    default:
+      return CONFIG.OPENAI.DEFAULT_MODEL;
+  }
+}
+
+/**
  * ChatGPTで会話する
  */
-export async function talk(message: Message, content: string, model: LiteLLMModel, mode: LiteLLMMode) {
+export async function talk(message: Message, content: string, mode: LiteLLMMode) {
   const { id, name, isGuild } = getIdInfoMessage(message);
+  const model = await getUserModelType(id);
   let llm = llmList.llm.find((c) => c.id === id);
   if (!llm) {
     llm = await initalize(id, model, mode, isGuild);

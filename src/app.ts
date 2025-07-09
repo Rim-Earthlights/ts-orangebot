@@ -215,7 +215,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         ],
       });
 
-      await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
+      await Chat.talk(message, message.content, LiteLLMMode.DEFAULT);
     }
     // await wordSelector(message);
     return;
@@ -251,7 +251,23 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
         ...message.attachments.map((a) => `file   : ${a.url}`),
       ],
     });
-    await Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
+    await Chat.talk(message, message.content, LiteLLMMode.DEFAULT);
+    return;
+  } else {
+    await Logger.put({
+      guild_id: message.guild ? message.guild.id : undefined,
+      channel_id: message.channel.id ? message.channel.id : undefined,
+      user_id: message.author.id,
+      level: LogLevel.INFO,
+      event: 'message-received | Guild',
+      message: [
+        `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
+        `cid: ${message.channel.id}, cname: ${message.channel.name}`,
+        `author : ${message.author.displayName}`,
+        `content: ${message.content}`,
+        ...message.attachments.map((a) => `file   : ${a.url}`),
+      ],
+    });
     return;
   }
 });
