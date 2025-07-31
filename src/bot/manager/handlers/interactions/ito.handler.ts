@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 import { LogLevel } from '../../../../type/types.js';
@@ -44,7 +44,7 @@ export class ItoHandler extends BaseInteractionHandler {
   }
 
   private async handleItoCommand(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const round = interaction.options.getNumber('round') ?? 1;
     // roundの数だけ取り出す
     const sendNums = ItoHandler.ITO_NUMS.slice(0, round);

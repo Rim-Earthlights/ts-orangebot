@@ -19,6 +19,7 @@ import { RoomHandler } from './handlers/commands/room.handler.js';
 import { PopupRuleHandler } from './handlers/commands/popup-rule.handler.js';
 import { ReliefHandler } from './handlers/commands/relief.handler.js';
 import { SpeakHandler } from './handlers/commands/speak.handler.js';
+import { PhotoHandler } from './handlers/commands/photo.handler.js';
 
 export class MessageManager {
   logger = new Logger();
@@ -66,8 +67,6 @@ export class MessageManager {
     const chatHandler = new ChatHandler(this.logger);
     this.handlers.set('gpt', chatHandler);
     this.handlers.set('mikan', chatHandler);
-    this.handlers.set('g3', chatHandler);
-    this.handlers.set('g4', chatHandler);
     this.handlers.set('raw', chatHandler);
 
     // Music commands
@@ -117,6 +116,10 @@ export class MessageManager {
     // Speak command
     const speakHandler = new SpeakHandler(this.logger);
     this.handlers.set('speak', speakHandler);
+
+    // Photo command
+    const photoHandler = new PhotoHandler(this.logger);
+    this.handlers.set('cat', photoHandler);
   }
 
   async handle() {
@@ -133,7 +136,7 @@ export class MessageManager {
     }
     await this.logger.info(
       'message-received | Command',
-      [`Command: ${this.command}`],
+      [`User: ${this.message.author.displayName}`, `Command: ${this.command}`, `Args: ${this.args.join(' ')}`],
       this.message.guild?.id,
       this.message.channel?.id,
       this.message.author.id

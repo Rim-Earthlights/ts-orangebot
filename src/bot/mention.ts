@@ -5,6 +5,7 @@ import * as reactions from '../constant/words/reactions.js';
 import { getRndNumber, isEnableFunction } from '../common/common.js';
 import { functionNames } from '../constant/constants.js';
 import { TOPIC } from '../constant/words/topic.js';
+import * as PhotoService from './services/photo.service.js';
 
 /**
  * 反応ワードから処理を実行する
@@ -21,7 +22,7 @@ export async function wordSelector(message: Message) {
     return;
   }
   if (message.content.match('写真')) {
-    const picture = await BotFunctions.Photo.get();
+    const picture = await PhotoService.cat();
 
     const send = new EmbedBuilder().setColor('#00cccc').setTitle(`めあの写真`).setImage(picture);
 

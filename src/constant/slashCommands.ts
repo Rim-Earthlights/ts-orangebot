@@ -63,6 +63,15 @@ export const SERVER_SLASH_COMMANDS = [
         )
     )
     .addSubcommand((sc) =>
+      sc.setName('live').setDescription('お部屋を配信中にします (YoutubeやTwitchなどの配信中はつけてください)')
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('limit')
+        .setDescription('お部屋の人数制限を変更します')
+        .addNumberOption((option) => option.setName('limit').setDescription('人数').setRequired(true))
+    )
+    .addSubcommand((sc) =>
       sc
         .setName('add')
         .setDescription('ユーザーを追加します')
@@ -175,4 +184,5 @@ export const DM_SLASH_COMMANDS = [
           { name: 'high', value: 'high' }
         )
     ),
+  new SlashCommandBuilder().setName('cat').setDescription('めあの写真を表示します'),
 ];
