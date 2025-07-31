@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js';
 import { checkUserType } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
 import { UsersType } from '../../../../model/models/users.js';
@@ -12,12 +12,12 @@ export class UserTypeHandler extends BaseInteractionHandler {
 
   async execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
     if (!interaction.guild) {
-      await interaction.reply({ content: 'このコマンドはサーバー内でのみ使用できます。', ephemeral: true });
+      await interaction.reply({ content: 'このコマンドはサーバー内でのみ使用できます。', flags: MessageFlags.Ephemeral });
       return;
     }
 
     if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER)) {
-      await interaction.reply({ content: 'このコマンドを実行する権限がありません。', ephemeral: true });
+      await interaction.reply({ content: 'このコマンドを実行する権限がありません。', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -25,7 +25,7 @@ export class UserTypeHandler extends BaseInteractionHandler {
     const type = interaction.options.getString('type') as UsersType | null;
 
     if (!uid || !type) {
-      await interaction.reply({ content: 'ユーザーIDと権限タイプを指定してください。', ephemeral: true });
+      await interaction.reply({ content: 'ユーザーIDと権限タイプを指定してください。', flags: MessageFlags.Ephemeral });
       return;
     }
 

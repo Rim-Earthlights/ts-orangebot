@@ -57,10 +57,6 @@ export const HELP_COMMANDS = [
     .setTitle('便利コマンド系')
     .addFields(
       {
-        name: '.help',
-        value: 'このヘルプを表示します',
-      },
-      {
         name: '.tenki [地域] [?日数]',
         value:
           '天気予報を取得する\n指定した地域の天気予報を取得します\n日数を指定するとその日数後の天気予報を取得します(6日後まで)',
@@ -73,14 +69,6 @@ export const HELP_COMMANDS = [
           'name: 名前を登録します (例: [.reg name ほげほげ])',
           'birth: 誕生日を登録します (例: [.reg birth 0101] (1月1日生まれ))',
         ].join('\n'),
-      },
-      {
-        name: '.dice [ダイスの振る数] [ダイスの面の数]',
-        value: 'サイコロを振ります (例: [.dice 5 6] (6面体ダイスを5個振る))',
-      },
-      {
-        name: '.dall',
-        value: 'ボイスチャットにいる人全員で100面サイコロを振ります.\nなにか決めたいときに使えるかも',
       },
       {
         name: '.team [チーム数] [?move]',
@@ -121,14 +109,6 @@ export const HELP_COMMANDS = [
           'お部屋の自動削除設定を変更します。自動削除がOFFになった通話部屋は0人になっても削除されません。',
           '削除したい時は非常にお手数ですが入り直してONに戻した後出てください……',
         ].join('\n'),
-      },
-      {
-        name: '/room create [?部屋名] [?プライベート] [?配信]',
-        value: [
-          'お部屋を作成します。部屋名を指定しない場合は`お部屋: #(連番)`になります',
-          'プライベートはtrue/falseで指定',
-          '配信はtrue/falseで指定',
-        ].join('\n'),
       }
     ),
   new EmbedBuilder()
@@ -156,7 +136,15 @@ export const HELP_COMMANDS = [
         value: '今日の運勢を占います. 結果に特に意味はないです',
       }
     ),
-  new EmbedBuilder().setColor('Aqua').setTitle('みかんと遊ぶ系').addFields(
+  new EmbedBuilder().setColor('Aqua').setTitle('サイコロ系').addFields(
+    {
+      name: '.dice [ダイスの振る数] [ダイスの面の数]',
+      value: 'サイコロを振ります (例: [.dice 5 6] (6面体ダイスを5個振る))',
+    },
+    {
+      name: '.dall',
+      value: 'ボイスチャットにいる人全員で100面サイコロを振ります.\nなにか決めたいときに使えるかも',
+    },
     {
       name: '.celo',
       value: 'チンチロリンを振ります. 3回まで振って役が出たら終わります',
@@ -167,32 +155,19 @@ export const HELP_COMMANDS = [
     }
   ),
   new EmbedBuilder().setColor('Aqua').setTitle('おしゃべり系').addFields({
-    name: '.gpt [text] | /gpt [text] | @みかんちゃん [text]',
+    name: '.gpt [text] | .mikan [text] | @みかんちゃん [text]',
     value: 'おしゃべり(GPT-4o)\nみかんちゃんとChatGPTを使ったおしゃべりができます',
   }),
-  new EmbedBuilder()
-    .setColor('Aqua')
-    .setTitle('読み上げ系(れもん/らいむ)')
-    .addFields(
-      {
-        name: '.speak | /speak',
-        value: '読み上げを開始します',
-      },
-      {
-        name: '/spcon [?ボイス番号] [?速度] [?ピッチ] [?抑揚]',
-        value: [
-          '読み上げのユーザー設定を表示、または変更します',
-          `読み上げ番号は\`http://${CONFIG.COMMON.HOST_URL}/speakers\`で確認できます`,
-          '速度は(0.1 - 5.0 | 整数可)で指定 1が標準',
-          'ピッチは(-20.0 - 20.0 | 整数可)で指定 0が標準',
-          '抑揚は(0.0 - 5.0 | 整数可)で指定 1が標準',
-        ].join('\n'),
-      },
-      {
-        name: '.discon',
-        value: '読み上げを終了します',
-      }
-    ),
+  new EmbedBuilder().setColor('Aqua').setTitle('読み上げ系(れもん/らいむ)').addFields(
+    {
+      name: '.speak',
+      value: '読み上げを開始します',
+    },
+    {
+      name: '.discon',
+      value: '読み上げを終了します',
+    }
+  ),
   new EmbedBuilder()
     .setColor('Aqua')
     .setTitle('音楽再生系')
@@ -306,6 +281,16 @@ export const HELP_COMMANDS_INTERACTIONS = [
         value: '読み上げを開始します',
       },
       {
+        name: '/spcon [?ボイス番号] [?速度] [?ピッチ] [?抑揚]',
+        value: [
+          '読み上げのユーザー設定を表示、または変更します',
+          `読み上げ番号は\`http://${CONFIG.COMMON.HOST_URL}/speakers\`で確認できます`,
+          '速度は(0.1 - 5.0 | 整数可)で指定 1が標準',
+          'ピッチは(-20.0 - 20.0 | 整数可)で指定 0が標準',
+          '抑揚は(0.0 - 5.0 | 整数可)で指定 1が標準',
+        ].join('\n'),
+      },
+      {
         name: '/nickname [ニックネーム]',
         value: '読み上げちゃんから呼ばれる名前を変更します',
       },
@@ -374,6 +359,10 @@ export const HELP_COMMANDS_INTERACTIONS = [
   ),
   new EmbedBuilder().setColor('Aqua').setTitle('管理系 (要:管理者権限)').addFields(
     {
+      name: '/rip [ユーザー]',
+      value: 'ユーザーを墓へ移動します',
+    },
+    {
       name: '/dc',
       value: 'ボイスチャットから切断します',
     },
@@ -413,6 +402,10 @@ export const HELP_COMMANDS_INTERACTIONS = [
       {
         name: '/revert [履歴ID]',
         value: 'チャット履歴を復元します, 履歴IDは`/history`で確認できます',
+      },
+      {
+        name: '/model [model]',
+        value: 'チャットのモデルを変更します',
       }
     ),
 ];
