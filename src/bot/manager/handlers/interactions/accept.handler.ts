@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, ChannelType } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, ChannelType, MessageFlags } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 import { LogLevel } from '../../../../type/types.js';
@@ -51,7 +51,7 @@ export class AcceptHandler extends BaseInteractionHandler {
         message: [u?.roles.cache.map((role) => role.name).join(',')],
       });
       if (userRole) {
-        const message = await interaction.reply({ content: `もうロールが付いてるみたい！`, ephemeral: true });
+        const message = await interaction.reply({ content: `もうロールが付いてるみたい！`, flags: MessageFlags.Ephemeral });
         setTimeout(async () => {
           await message.delete();
         }, 3000);
@@ -90,7 +90,7 @@ export class AcceptHandler extends BaseInteractionHandler {
 
       const message = await interaction.reply({
         content: `読んでくれてありがと～！ロールを付与したよ！`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       setTimeout(async () => {
         await message.delete();

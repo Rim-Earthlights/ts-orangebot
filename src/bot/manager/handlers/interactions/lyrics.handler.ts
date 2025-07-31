@@ -28,30 +28,62 @@ export class LyricsHandler extends BaseInteractionHandler {
         ?.presences.cache.get(interaction.user.id);
 
       const activity = presence?.activities.find((a) => a.type === ActivityType.Listening);
-      if (!activity || !activity.details) {
+      if (!activity) {
         await interaction.editReply({ content: '曲名を指定してください' });
         return;
       }
 
-      query = activity.details;
-    }
-    const songUrl = await this.searchSong(query);
-    if (!songUrl) {
-      await interaction.editReply({ content: '曲が見つかりませんでした' });
-      return;
-    }
-    const lyrics = await this.getLyrics(songUrl);
-    if (!lyrics) {
-      await interaction.editReply({ content: '歌詞が見つかりませんでした' });
-      return;
-    }
+      const songName = activity.details?.split(/feat| - /i)[0];
+      const songArtist = activity.state?.split('; ')[0];
 
-    const embed = new EmbedBuilder()
-      .setTitle(`${lyrics.title} - ${lyrics.artist}`)
-      .setDescription(lyrics.lyrics)
-      .setFooter({ text: 'https://www.uta-net.com/' });
+      if (!songName || !songArtist) {
+        await interaction.editReply({ content: '曲情報が取得できませんでした' });
+        return;
+      }
 
-    await interaction.editReply({ embeds: [embed] });
+      console.log(songName, songArtist);
+
+      const artistUrl = await this.getArtist(songArtist);
+      if (!artistUrl) {
+        await interaction.editReply({ content: 'アーティストが見つかりませんでした' });
+        return;
+      }
+      const songUrl = await this.getSongUrlByArtist(artistUrl, songName);
+      if (!songUrl) {
+        await interaction.editReply({ content: '曲が見つかりませんでした' });
+        return;
+      }
+      const lyrics = await this.getLyrics(songUrl);
+      if (!lyrics) {
+        await interaction.editReply({ content: '歌詞が見つかりませんでした' });
+        return;
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle(`${lyrics.title} - ${lyrics.artist}`)
+        .setDescription(lyrics.lyrics)
+        .setFooter({ text: 'https://www.uta-net.com/' });
+
+      await interaction.editReply({ embeds: [embed] });
+    } else {
+      const songUrl = await this.searchSong(query);
+      if (!songUrl) {
+        await interaction.editReply({ content: '曲が見つかりませんでした' });
+        return;
+      }
+      const lyrics = await this.getLyrics(songUrl);
+      if (!lyrics) {
+        await interaction.editReply({ content: '歌詞が見つかりませんでした' });
+        return;
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle(`${lyrics.title} - ${lyrics.artist}`)
+        .setDescription(lyrics.lyrics)
+        .setFooter({ text: 'https://www.uta-net.com/' });
+
+      await interaction.editReply({ embeds: [embed] });
+    }
   }
 
   /**
@@ -107,5 +139,75 @@ export class LyricsHandler extends BaseInteractionHandler {
       return null;
     }
     return `${this.LYRICS_BASE_URL}${songUrl}`;
+  }
+
+  /**
+   * アーティスト名で検索して、アーティストのURLを取得する
+   * @param name 検索するアーティスト名
+   * @returns アーティストのURL
+   */
+  private async getArtist(name: string): Promise<string | null> {
+    // https://www.uta-net.com/search/?target=art&type=in&keyword=%E8%97%A4%E4%BA%95%E9%A2%A8
+    const url = `${this.LYRICS_BASE_URL}/search/?target=art&type=in&keyword=${name}`;
+    const response = await fetch(url);
+    const html = await response.text();
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+
+    const artistList = document.getElementsByClassName('songlist-table-body')[0];
+
+    if (!artistList) {
+      return null;
+    }
+
+    const artist = artistList.querySelector('tbody > tr > td > a');
+
+    const artistUrl = artist?.getAttribute('href');
+
+    if (!artistUrl) {
+      return null;
+    }
+
+    return `${this.LYRICS_BASE_URL}${artistUrl}`;
+  }
+
+  /**
+   * アーティストのURLから、曲のURLを取得する
+   * @param url アーティストのURL
+   * @param name 曲名
+   * @returns 曲のURL
+   */
+  private async getSongUrlByArtist(url: string, name: string): Promise<string | null> {
+    const response = await fetch(url);
+    const html = await response.text();
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+
+    const songList = document.querySelectorAll('.songlist-table-body > tr');
+
+    for (const song of songList) {
+      // 0: song name
+      // 1: song artist
+      // 2: lyricist
+      // 3: arranger
+      // 4: first line
+
+      const songName = song.querySelector('td:nth-child(1) > a > span')?.textContent;
+      const songArtist = song.querySelector('td:nth-child(2) > a')?.textContent;
+      const lyricist = song.querySelector('td:nth-child(3) > a')?.textContent;
+      const arranger = song.querySelector('td:nth-child(4) > a')?.textContent;
+      const firstLine = song.querySelector('td:nth-child(5) > span')?.textContent;
+
+      if (songName?.includes(name)) {
+        const songUrl = song.querySelector('td:nth-child(1) > a')?.getAttribute('href');
+
+        if (!songUrl) {
+          return null;
+        }
+
+        return `${this.LYRICS_BASE_URL}${songUrl}`;
+      }
+    }
+    return null;
   }
 }

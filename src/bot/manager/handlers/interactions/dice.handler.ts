@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, EmbedBuilder, VoiceChannel } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, EmbedBuilder, MessageFlags, VoiceChannel } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 import * as BotFunctions from '../../../function/index.js';
@@ -23,19 +23,19 @@ export class DiceHandler extends BaseInteractionHandler {
   }
 
   private async handleDice(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const num = interaction.options.getNumber('num') ?? 1;
     const max = interaction.options.getNumber('max') ?? 100;
     await BotFunctions.Dice.rollHideDice(interaction, num, max);
   }
 
   private async handleDiceAll(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
-    await interaction.deferReply({ ephemeral: false });
+    await interaction.deferReply();
     const voiceChannel = interaction.channel as VoiceChannel;
     if (!voiceChannel) {
       return;
     }
-    const members = await voiceChannel.members;
+    const members = voiceChannel.members;
     const diceMessages = members.map((member) => {
       return {
         member: member,

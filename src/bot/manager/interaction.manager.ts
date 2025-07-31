@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { InteractionHandler } from './interaction.handler.js';
 import { PingHandler } from './handlers/interactions/ping.handler.js';
 import { DcHandler } from './handlers/interactions/dc.handler.js';
@@ -24,6 +24,7 @@ import { LogLevel } from '../../type/types.js';
 import { RipHandler } from './handlers/interactions/rip.handler.js';
 import { LyricsHandler } from './handlers/interactions/lyrics.handler.js';
 import { ModelHandler } from './handlers/interactions/model.handler.js';
+import { PhotoHandler } from './handlers/interactions/photo.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -35,14 +36,18 @@ export class InteractionManager {
 
   constructor(interaction: ChatInputCommandInteraction<CacheType>) {
     this.interaction = interaction;
+
+    // admin commands
     this.handlers.set('ping', new PingHandler(this.logger));
-    this.handlers.set('dc', new DcHandler(this.logger));
     this.handlers.set('rip', new RipHandler(this.logger));
+    this.handlers.set('dc', new DcHandler(this.logger));
     this.handlers.set('mute', new MuteHandler(this.logger));
     this.handlers.set('timeout', new TimeoutHandler(this.logger));
+    this.handlers.set('user-type', new UserTypeHandler(this.logger));
 
-    this.handlers.set('speak', new SpeakHandler(this.logger));
     this.handlers.set('help', new HelpHandler(this.logger));
+    this.handlers.set('nickname', new NicknameHandler(this.logger));
+    this.handlers.set('speak', new SpeakHandler(this.logger));
 
     // Dice commands
     const diceHandler = new DiceHandler(this.logger);
@@ -74,13 +79,12 @@ export class InteractionManager {
     this.handlers.set('delete', new DeleteHandler(this.logger));
     this.handlers.set('model', new ModelHandler(this.logger));
 
-    this.handlers.set('nickname', new NicknameHandler(this.logger));
-
     this.handlers.set('topic', new TopicHandler(this.logger));
     this.handlers.set('accept', new AcceptHandler(this.logger));
-    this.handlers.set('user-type', new UserTypeHandler(this.logger));
 
     this.handlers.set('lyrics', new LyricsHandler(this.logger));
+
+    this.handlers.set('cat', new PhotoHandler(this.logger));
   }
 
   /**
@@ -105,12 +109,12 @@ export class InteractionManager {
     if (!handler) {
       await this.logger.error(
         'interaction-handler-not-found',
-        [`Command: ${this.interaction.commandName}`],
+        [`User: ${this.interaction.user.displayName}`, `Command: ${this.interaction.commandName}`],
         this.interaction.guild?.id,
         this.interaction.channel?.id,
         this.interaction.user.id
       );
-      await this.interaction.reply({ content: 'コマンドが見つかりませんでした。', ephemeral: true });
+      await this.interaction.reply({ content: 'コマンドが見つかりませんでした。', flags: MessageFlags.Ephemeral });
       return;
     }
     await handler.execute(this.interaction);

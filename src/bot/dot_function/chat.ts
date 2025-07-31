@@ -325,18 +325,25 @@ export async function speech(message: Message, chat: string) {
  * @returns
  */
 export async function generatePicture(message: Message<boolean>, chat: string) {
-  const openai = new OpenAI({
+  const litellm = new OpenAI({
     organization: CONFIG.OPENAI.ORG,
     project: CONFIG.OPENAI.PROJECT,
     apiKey: CONFIG.OPENAI.KEY,
     maxRetries: 3,
+    baseURL: CONFIG.OPENAI.BASE_URL,
   });
-  const response = await openai.images.generate({
-    model: 'dall-e-3',
+
+  const response = await litellm.images.generate({
+    model: 'openai-dall-e-3',
     prompt: chat,
     n: 1,
     size: '1024x1024',
   });
+
+  if (!response.data) {
+    return;
+  }
+
   const image_url = response.data[0].url;
 
   if (!image_url) {
