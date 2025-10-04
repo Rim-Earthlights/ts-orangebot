@@ -25,6 +25,7 @@ import { RipHandler } from './handlers/interactions/rip.handler.js';
 import { LyricsHandler } from './handlers/interactions/lyrics.handler.js';
 import { ModelHandler } from './handlers/interactions/model.handler.js';
 import { PhotoHandler } from './handlers/interactions/photo.handler.js';
+import { PauseHandler } from './handlers/interactions/pause.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -78,6 +79,8 @@ export class InteractionManager {
     this.handlers.set('memory', new MemoryHandler(this.logger));
     this.handlers.set('delete', new DeleteHandler(this.logger));
     this.handlers.set('model', new ModelHandler(this.logger));
+    this.handlers.set('pause', new PauseHandler(this.logger));
+    this.handlers.set('resume', new PauseHandler(this.logger));
 
     this.handlers.set('topic', new TopicHandler(this.logger));
     this.handlers.set('accept', new AcceptHandler(this.logger));
@@ -92,18 +95,17 @@ export class InteractionManager {
    * @returns
    */
   async handle() {
-    await Logger.put({
-      guild_id: this.interaction.guild?.id,
-      channel_id: this.interaction.channel?.id,
-      user_id: this.interaction.user.id,
-      level: LogLevel.INFO,
-      event: `interaction-received | ${this.interaction.commandName}`,
-      message: [
+    await this.logger.info(
+      `interaction-received | ${this.interaction.commandName}`,
+      [
         `cid: ${this.interaction.channel?.id}`,
         `author: ${this.interaction.user.displayName}`,
         `content: ${this.interaction}`,
       ],
-    });
+      this.interaction.guild?.id,
+      this.interaction.channel?.id,
+      this.interaction.user.id
+    );
 
     const handler = this.handlers.get(this.interaction.commandName);
     if (!handler) {

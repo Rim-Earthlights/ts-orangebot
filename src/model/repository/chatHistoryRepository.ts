@@ -1,6 +1,7 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
 import { TypeOrm } from '../typeorm/typeorm.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
 
 export class ChatHistoryRepository {
   private repository: Repository<Models.ChatHistory>;
@@ -15,7 +16,7 @@ export class ChatHistoryRepository {
    * @returns Promise<ChatHistory | null>
    */
   public async get(uuid: string): Promise<Models.ChatHistory | null> {
-    const chatHistory = await this.repository.findOne({ where: { uuid } });
+    const chatHistory = await this.repository.findOne({ where: { uuid }, relations: { bot_info: true } });
     return chatHistory;
   }
 
@@ -25,8 +26,13 @@ export class ChatHistoryRepository {
    * @returns Promise<ChatHistory[]>
    */
   public async getLatestByChannelId(channelId: string): Promise<Models.ChatHistory | null> {
+    const botId = DISCORD_CLIENT.user?.id;
+    if (!botId) {
+      return null;
+    }
+
     const chatHistory = await this.repository.findOne({
-      where: { channel_id: channelId },
+      where: { channel_id: channelId, bot_id: botId },
       order: { created_at: 'DESC' },
     });
     return chatHistory;
@@ -70,7 +76,10 @@ export class ChatHistoryRepository {
 
     const chatHistories = await this.repository.find({
       where: whereCondition,
-      order: { updated_at: 'DESC' },
+      relations: {
+        bot_info: true,
+      },
+      order: { created_at: 'DESC' },
       take: limit,
       skip: offset,
     });

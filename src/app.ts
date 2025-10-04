@@ -1,7 +1,7 @@
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import 'dayjs/locale/ja.js';
-import { ChannelType, Message, REST, Routes, TextChannel } from 'discord.js';
+import { ChannelType, Message, MessageType, REST, Routes, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
 import Express from 'express';
 import helmet from 'helmet';
@@ -26,6 +26,7 @@ import { routers } from './routers.js';
 import { LogLevel } from './type/types.js';
 import { InteractionManager } from './bot/manager/interaction.manager.js';
 import { MessageManager } from './bot/manager/message.manager.js';
+import { CHAT_PAUSE_FLAGS } from './bot/manager/handlers/interactions/pause.handler.js';
 
 dotenv.config();
 
@@ -236,7 +237,10 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     return;
   }
 
-  if (message.channel.type === ChannelType.DM || message.channel.id === '1020972071460814868') {
+  if (message.channel.type === ChannelType.DM) {
+    if (CHAT_PAUSE_FLAGS.includes(message.channel.id)) {
+      return;
+    }
     await Logger.put({
       guild_id: message.guild ? message.guild.id : undefined,
       channel_id: message.channel.id ? message.channel.id : undefined,
@@ -245,7 +249,32 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
       event: 'message-received | DM',
       message: [
         `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
-        `cid: ${message.channel.id}, cname: ${message.channel.type !== ChannelType.DM ? message.channel.name : 'DM'}`,
+        `cid: ${message.channel.id}, cname: DM`,
+        `author : ${message.author.displayName}`,
+        `content: ${message.content}`,
+        ...message.attachments.map((a) => `file   : ${a.url}`),
+      ],
+    });
+    await Chat.talk(message, message.content, LiteLLMMode.DEFAULT);
+    return;
+  } else if (message.channel.id === '1020972071460814868') {
+    if (CHAT_PAUSE_FLAGS.includes(message.channel.id)) {
+      return;
+    }
+    // 返信メッセージには反応しない
+    if (message.type === MessageType.Reply) {
+      return;
+    }
+
+    await Logger.put({
+      guild_id: message.guild ? message.guild.id : undefined,
+      channel_id: message.channel.id ? message.channel.id : undefined,
+      user_id: message.author.id,
+      level: LogLevel.INFO,
+      event: 'message-received | DM',
+      message: [
+        `gid: ${message.guild?.id}, gname: ${message.guild?.name}`,
+        `cid: ${message.channel.id}, cname: ${message.channel.name}`,
         `author : ${message.author.displayName}`,
         `content: ${message.content}`,
         ...message.attachments.map((a) => `file   : ${a.url}`),

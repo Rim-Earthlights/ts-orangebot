@@ -30,6 +30,7 @@ export class TypeOrm {
       Models.Speaker,
       Models.UserSetting,
       Models.ChatHistory,
+      Models.BotInfo,
     ], // 利用するエンティティ。パスでの指定も可能
   });
 }

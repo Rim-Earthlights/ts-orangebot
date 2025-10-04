@@ -91,7 +91,7 @@
             <% chatHistory.content.forEach((message, index) => { %>
                 <div class="message <%= message.role %>">
                     <div class="role-badge text-<%= message.role === 'system' ? 'secondary' : message.role === 'user' ? 'primary' : message.role === 'assistant' ? 'success' : 'warning' %>">
-                        <%= message.role === 'assistant' ? 'みかんちゃん' : message.role %>
+                        <%= message.role === 'assistant' ? chatHistory.bot_info.name : message.role %>
                         <% if (message.name) { %> - <%= message.name %><% } %>
                     </div>
 

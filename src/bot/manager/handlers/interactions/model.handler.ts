@@ -30,10 +30,10 @@ export class ModelHandler extends BaseInteractionHandler {
         modelType = CONFIG.OPENAI.DEFAULT_MODEL;
         break;
       case ModelType.LOW:
-        modelType = CONFIG.OPENAI.G3_MODEL;
+        modelType = CONFIG.OPENAI.LOW_MODEL;
         break;
       case ModelType.HIGH:
-        modelType = CONFIG.OPENAI.G4_MODEL;
+        modelType = CONFIG.OPENAI.HIGH_MODEL;
         break;
       default:
         const send = new EmbedBuilder()
