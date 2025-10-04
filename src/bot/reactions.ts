@@ -1,4 +1,12 @@
-import { ChannelType, MessageReaction, PartialMessageReaction, PartialUser, TextChannel, User } from 'discord.js';
+import {
+  ChannelType,
+  GuildMember,
+  MessageReaction,
+  PartialMessageReaction,
+  PartialUser,
+  TextChannel,
+  User,
+} from 'discord.js';
 import { Logger } from '../common/logger.js';
 import { Users, UserSetting } from '../model/models';
 import { RoleRepository } from '../model/repository/roleRepository.js';
@@ -93,51 +101,13 @@ export const reactionSelector = async (
           setTimeout(async () => {
             await message.delete();
           }, 3000);
+          await registUser(reaction, user, u);
           return;
         }
 
         // add user role
         await u?.roles.add(r.role_id);
-
-        // register user
-        const userRepository = new UsersRepository();
-        const userSetting = await userRepository.getUserSetting(user.id);
-        if (!userSetting) {
-          const saveUserSetting: Partial<UserSetting> = {
-            user_id: user.id,
-            nickname: user.displayName
-          };
-          await userRepository.saveUserSetting(saveUserSetting);
-        }
-
-        const userEntity = await userRepository.get(reaction.message.guild.id, user.id);
-        if (!userEntity) {
-          if (!reaction.message.guild) {
-            return;
-          }
-          const saveUser: Partial<Users> = {
-            id: user.id,
-            guild_id: reaction.message.guild.id,
-            user_name: user.displayName,
-            pick_left: 10,
-            voice_channel_data: [
-              {
-                gid: reaction.message.guild.id,
-                date: new Date(),
-              },
-            ],
-          };
-          await userRepository.save(saveUser);
-        }
-        const name = u?.roles.cache.find((role) => role.name === 'member')?.name;
-        await Logger.put({
-          guild_id: reaction.message.guild?.id,
-          channel_id: reaction.message.channel.id,
-          user_id: user.id,
-          level: LogLevel.INFO,
-          event: 'add-role',
-          message: name ? [name] : undefined,
-        });
+        await registUser(reaction, user, u);
 
         const message = await reaction.message.reply(`読んでくれてありがと～！ロールを付与したよ！`);
         setTimeout(async () => {
@@ -162,4 +132,67 @@ export const reactionSelector = async (
       break;
     }
   }
+};
+
+const registUser = async (
+  reaction: MessageReaction | PartialMessageReaction,
+  user: User | PartialUser,
+  userCache: GuildMember
+) => {
+  // register user
+  const userRepository = new UsersRepository();
+  const userSetting = await userRepository.getUserSetting(user.id);
+  if (!userSetting) {
+    const saveUserSetting: Partial<UserSetting> = {
+      user_id: user.id,
+      nickname: user.displayName,
+    };
+    await userRepository.saveUserSetting(saveUserSetting);
+  }
+
+  const userEntity = await userRepository.get(reaction.message.guild!.id, user.id);
+  if (!userEntity) {
+    if (!reaction.message.guild) {
+      return;
+    }
+
+    // ソフトデリートされたユーザーを検索
+    const deletedUser = await userRepository.getWithDeleted(reaction.message.guild.id, user.id);
+    if (deletedUser && deletedUser.deleted_at) {
+      // ソフトデリートされたユーザーを復元
+      await userRepository.restore(reaction.message.guild.id, user.id);
+      await Logger.put({
+        guild_id: reaction.message.guild.id,
+        channel_id: reaction.message.channel.id,
+        user_id: user.id,
+        level: LogLevel.INFO,
+        event: 'user-restored',
+        message: [`user restored: ${user.displayName}`],
+      });
+    } else {
+      // 新規ユーザーを作成
+      const saveUser: Partial<Users> = {
+        id: user.id,
+        guild_id: reaction.message.guild.id,
+        user_name: user.displayName,
+        pick_left: 10,
+        voice_channel_data: [
+          {
+            gid: reaction.message.guild.id,
+            date: new Date(),
+          },
+        ],
+      };
+      await userRepository.save(saveUser);
+    }
+  }
+  const name = userCache?.roles.cache.find((role) => role.name === 'member')?.name;
+  await Logger.put({
+    guild_id: reaction.message.guild?.id,
+    channel_id: reaction.message.channel.id,
+    user_id: user.id,
+    level: LogLevel.INFO,
+    event: 'add-role',
+    message: name ? [name] : undefined,
+  });
 };

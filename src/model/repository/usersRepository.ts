@@ -24,6 +24,21 @@ export class UsersRepository {
   }
 
   /**
+   * ソフトデリートされたユーザーも含めて取得する.
+   * @param gid guild.id
+   * @param uid user.id
+   * @returns Promise<Users | null>
+   */
+  public async getWithDeleted(gid: string, uid: string): Promise<Models.Users | null> {
+    const user = await this.repository.findOne({
+      relations: { guild: true, userSetting: true },
+      where: { id: uid, guild_id: gid },
+      withDeleted: true
+    });
+    return user;
+  }
+
+  /**
    * UIDからユーザを取得する.
    * @param uid user.id
    * @returns Promise<Users | null>
@@ -77,6 +92,15 @@ export class UsersRepository {
    */
   public async delete(gid: string, uid: string): Promise<void> {
     await this.repository.softDelete({ id: uid, guild_id: gid });
+  }
+
+  /**
+   * ソフトデリートされたユーザーを復元する
+   * @param gid guild.id
+   * @param uid user.id
+   */
+  public async restore(gid: string, uid: string): Promise<void> {
+    await this.repository.restore({ id: uid, guild_id: gid });
   }
 
   /**
