@@ -69,9 +69,19 @@
                                                 <h5 class="card-title mb-0">
                                                     <%= history.name || '無名の会話' %>
                                                 </h5>
-                                                <span class="badge bg-<%= history.channel_type === 'dm' ? 'primary' : 'success' %> channel-badge">
-                                                    <%= history.channel_type === 'dm' ? 'DM' : 'Guild' %>
-                                                </span>
+                                                <div class="d-flex gap-1">
+                                                    <% if (history.bot_info && history.bot_info.name) {
+                                                        const bgColor = history.bot_info.background_color;
+                                                        const fontColor = history.bot_info.font_color;
+                                                    %>
+                                                        <span class="badge channel-badge" title="Bot名" style="background-color: <%= bgColor %>; color: <%= fontColor %>;">
+                                                            <%= history.bot_info.name %>
+                                                        </span>
+                                                    <% } %>
+                                                    <span class="badge bg-<%= history.channel_type === 'dm' ? 'primary' : 'success' %> channel-badge">
+                                                        <%= history.channel_type === 'dm' ? 'DM' : 'Guild' %>
+                                                    </span>
+                                                </div>
                                             </div>
 
                                             <div class="mb-2">
@@ -108,7 +118,7 @@
 
                                             <div class="mt-3">
                                                 <small class="text-muted">
-                                                    <i class="bi bi-calendar"></i>
+                                                    <i class="bi bi-clock"></i>
                                                     <strong>作成:</strong> <%= new Date(history.created_at).toLocaleDateString('ja-JP') %>
                                                 </small>
                                                 <br>

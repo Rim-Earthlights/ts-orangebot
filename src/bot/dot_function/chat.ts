@@ -73,9 +73,9 @@ export async function getUserModelType(userId: string): Promise<LiteLLMModel> {
     case ModelType.DEFAULT:
       return CONFIG.OPENAI.DEFAULT_MODEL;
     case ModelType.LOW:
-      return CONFIG.OPENAI.G3_MODEL;
+      return CONFIG.OPENAI.LOW_MODEL;
     case ModelType.HIGH:
-      return CONFIG.OPENAI.G4_MODEL;
+      return CONFIG.OPENAI.HIGH_MODEL;
     default:
       return CONFIG.OPENAI.DEFAULT_MODEL;
   }
@@ -266,6 +266,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     const chatHistoryRepository = new ChatHistoryRepository();
     await chatHistoryRepository.save({
       uuid: llm.uuid,
+      bot_id: DISCORD_CLIENT.user!.id,
       channel_id: id,
       name: name,
       content: llm.chat,

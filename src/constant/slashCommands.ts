@@ -109,7 +109,10 @@ export const SERVER_SLASH_COMMANDS = [
     .addNumberOption((option) => option.setName('time').setDescription('ミュート時間(m)').setRequired(true))
     .addStringOption((option) => option.setName('reason').setDescription('事由').setRequired(true)),
   new SlashCommandBuilder().setName('topic').setDescription('ランダムなお題を表示します'),
-  new SlashCommandBuilder().setName('accept').setDescription('ルールに同意します'),
+  new SlashCommandBuilder()
+    .setName('accept')
+    .setDescription('ルールに同意します')
+    .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
   new SlashCommandBuilder()
     .setName('nickname')
     .setDescription('あなたの呼び方を登録します')
@@ -147,6 +150,8 @@ export const SERVER_SLASH_COMMANDS = [
           { name: 'GUEST', value: 'GUEST' }
         )
     ),
+  new SlashCommandBuilder().setName('pause').setDescription('チャットを一時停止します (10分後に自動で再開します)'),
+  new SlashCommandBuilder().setName('resume').setDescription('チャットを再開します'),
   // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
   // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
   // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),

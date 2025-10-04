@@ -69,16 +69,9 @@ chatRouter.get('/chat/history/:uuid', async (req: Express.Request, res: Express.
 
     res.render('chatHistory', {
       chatHistory: {
-        uuid: chatHistory.uuid,
-        channel_id: chatHistory.channel_id,
-        channel_type: chatHistory.channel_type,
-        name: chatHistory.name,
+        ...chatHistory,
         content: chatHistory.content.slice(1),
-        model: chatHistory.model,
-        mode: chatHistory.mode,
-        created_at: chatHistory.created_at,
-        updated_at: chatHistory.updated_at,
-      },
+      }
     });
   } catch (error) {
     await logger.error('GET /chat/history/:uuid', [`error: ${error}`]);

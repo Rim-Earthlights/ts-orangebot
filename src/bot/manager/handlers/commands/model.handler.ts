@@ -15,14 +15,14 @@ export class ModelHandler extends BaseMessageHandler {
     const model = args[1];
 
     const defaultModel = CONFIG.OPENAI.DEFAULT_MODEL;
-    const g3Model = CONFIG.OPENAI.G3_MODEL;
-    const g4Model = CONFIG.OPENAI.G4_MODEL;
+    const lowModel = CONFIG.OPENAI.LOW_MODEL;
+    const highModel = CONFIG.OPENAI.HIGH_MODEL;
 
     if (dest == null || model == null) {
       const send = new EmbedBuilder()
         .setColor('#00ff00')
         .setTitle(`現在のモデル`)
-        .setDescription(`default: ${defaultModel}\ng3: ${g3Model}\ng4: ${g4Model}`);
+        .setDescription(`default: ${defaultModel}\ng3: ${lowModel}\ng4: ${highModel}`);
 
       message.reply({ embeds: [send] });
       return;

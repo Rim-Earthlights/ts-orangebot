@@ -3,6 +3,7 @@ import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 import { ChatHistoryRepository } from '../../../../model/repository/chatHistoryRepository.js';
 import { getIdInfoInteraction, initalize, LiteLLM, llmList } from '../../../../constant/chat/chat.js';
+import { ChatHistory } from '../../../../model/models/chatHistory.js';
 
 export class RevertHandler extends BaseInteractionHandler {
   private chatHistoryRepository: ChatHistoryRepository;
@@ -28,15 +29,20 @@ export class RevertHandler extends BaseInteractionHandler {
         return;
       }
 
-      // データベースから最新のチャット履歴を取得
-      const latestChatHistory = await this.chatHistoryRepository.getLatestByChannelId(id);
+      let chatHistory: ChatHistory | null = null;
 
-      if (!latestChatHistory) {
+      if (uuid) {
+        chatHistory = await this.chatHistoryRepository.get(uuid);
+      } else {
+        // データベースから最新のチャット履歴を取得
+        chatHistory = await this.chatHistoryRepository.getLatestByChannelId(id);
+      }
+
+      if (!chatHistory) {
         const errorEmbed = new EmbedBuilder()
           .setColor('#ff0000')
           .setTitle('エラー')
-          .setDescription('このチャンネルのチャット履歴が見つかりませんでした。');
-
+          .setDescription('チャット履歴が見つかりませんでした。');
         await interaction.editReply({ embeds: [errorEmbed] });
         return;
       }
@@ -60,15 +66,15 @@ export class RevertHandler extends BaseInteractionHandler {
         return;
       } else {
         // 現在のチャット履歴がない場合は、DBから取得した履歴で上書きする
-        const llm = await initalize(id, latestChatHistory.model, latestChatHistory.mode, isGuild);
-        llmList.llm.push({ ...llm, chat: latestChatHistory.content, uuid: latestChatHistory.uuid });
+        const llm = await initalize(id, chatHistory.model, chatHistory.mode, isGuild);
+        llmList.llm.push({ ...llm, chat: chatHistory.content, uuid: chatHistory.uuid });
       }
 
       const successEmbed = new EmbedBuilder()
         .setColor('#00ff00')
         .setTitle('復元完了')
         .setDescription(
-          `チャット履歴を復元しました。\n履歴UUID: ${latestChatHistory.uuid}\nメッセージ数: ${latestChatHistory.content.length - 1}`
+          `チャット履歴を復元しました。\n履歴UUID: ${chatHistory.uuid}\nメッセージ数: ${chatHistory.content.length - 1}`
         );
 
       await interaction.editReply({ embeds: [successEmbed] });

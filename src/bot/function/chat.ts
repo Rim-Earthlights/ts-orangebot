@@ -40,9 +40,9 @@ export async function getUserModelType(userId: string): Promise<LiteLLMModel> {
     case ModelType.DEFAULT:
       return CONFIG.OPENAI.DEFAULT_MODEL;
     case ModelType.LOW:
-      return CONFIG.OPENAI.G3_MODEL;
+      return CONFIG.OPENAI.LOW_MODEL;
     case ModelType.HIGH:
-      return CONFIG.OPENAI.G4_MODEL;
+      return CONFIG.OPENAI.HIGH_MODEL;
     default:
       return CONFIG.OPENAI.DEFAULT_MODEL;
   }
@@ -152,6 +152,8 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
   }
   const gpt = llmList.llm.find((c) => c.id === id);
   if (!gpt) {
+    const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`会話データが削除済みだよ！`);
+    await interaction.reply({ embeds: [send] });
     return;
   }
 

@@ -37,7 +37,7 @@ export async function initalize(id: string, model: LiteLLMModel, mode: LiteLLMMo
 export function getIdInfoMessage(message: Message) {
   const guild = message.guild;
   if (!guild) {
-    return { id: message.channel.id, name: message.author.displayName, isGuild: false };
+    return { id: message.author.id, name: message.author.displayName, isGuild: false };
   }
   return { id: guild.id, name: message.guild?.name, isGuild: true };
 }
@@ -46,7 +46,7 @@ export function getIdInfoInteraction(interaction: ChatInputCommandInteraction<Ca
   const guild = interaction.guild;
   if (!guild) {
     return {
-      id: interaction.channel?.id ?? interaction.user.dmChannel?.id,
+      id: interaction.user.id,
       name: interaction.user.displayName,
       isGuild: false,
     };
