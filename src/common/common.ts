@@ -68,6 +68,32 @@ export function arrayEquals(t: number[], v: number[]): boolean {
 }
 
 /**
+ * バッファからMIMEタイプを検出する
+ * @param buffer バッファ
+ * @returns MIMEタイプ
+ */
+export function detectMimeType(buffer: Buffer): string {
+  // PNG: 89 50 4E 47
+  if (buffer[0] === 0x89 && buffer[1] === 0x50) {
+    return 'image/png';
+  }
+  // JPEG: FF D8
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
+    return 'image/jpeg';
+  }
+  // WebP: 52 49 46 46 ... 57 45 42 50
+  if (buffer[0] === 0x52 && buffer[1] === 0x49) {
+    return 'image/webp';
+  }
+  // GIF: 47 49 46
+  if (buffer[0] === 0x47 && buffer[1] === 0x49) {
+    return 'image/gif';
+  }
+  return 'image/png'; // fallback
+}
+
+
+/**
  * ユーザーの権限をチェックする
  * @param gid サーバーID
  * @param uid ユーザーID

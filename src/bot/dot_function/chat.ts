@@ -16,6 +16,7 @@ import { UsersRepository } from '../../model/repository/usersRepository.js';
 import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
 import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
 import { ModelType } from '../../model/models/userSetting.js';
+import { detectMimeType } from '../../common/common.js';
 
 /**
  * モデルを設定する
@@ -186,7 +187,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
             const compressedImage = await pictureService.compressImage(data, contentType, 1);
             return { type: 'image_url', image_url: { url: compressedImage } };
           } else {
-            const base64Image = `data:${contentType};base64,${data.toString('base64')}`;
+            const base64Image = `data:${detectMimeType(data)};base64,${data.toString('base64')}`;
             return { type: 'image_url', image_url: { url: base64Image } };
           }
         }
