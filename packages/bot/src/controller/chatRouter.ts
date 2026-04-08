@@ -55,7 +55,7 @@ chatRouter.get('/chat/history/:uuid', async (req: Express.Request, res: Express.
   await logger.info('GET /chat/history/:uuid', [`uuid: ${req.params.uuid}`]);
 
   try {
-    const uuid = req.params.uuid;
+    const uuid = req.params.uuid as string;
     if (!uuid) {
       res.status(400).send({ result: false, message: 'UUID is required.' });
       return;
@@ -90,7 +90,7 @@ chatRouter.delete('/chat/history/:uuid', async (req: Express.Request, res: Expre
   await logger.info('DELETE /chat/history/:uuid', [`uuid: ${req.params.uuid}`]);
 
   try {
-    const uuid = req.params.uuid;
+    const uuid = req.params.uuid as string;
     if (!uuid) {
       res.status(400).send({ result: false, message: 'UUID is required.' });
       return;

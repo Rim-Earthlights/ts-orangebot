@@ -62,10 +62,10 @@ export const CONFIG = {
     KEY: '',
     // default model
     DEFAULT_MODEL: LiteLLMModel.GPT_4_1,
-    // G3 command model
-    G3_MODEL: LiteLLMModel.GPT_4_1,
-    // G4 command model
-    G4_MODEL: LiteLLMModel.GPT_4_1,
+    // LOW command model
+    LOW_MODEL: LiteLLMModel.GPT_4_1,
+    // HIGH command model
+    HIGH_MODEL: LiteLLMModel.GPT_4_1,
     // if disabled, still empty.
     ACCESSTOKEN: '',
   },
