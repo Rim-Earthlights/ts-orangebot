@@ -1,0 +1,16 @@
+{
+    "name": "@orangebot/shared",
+    "version": "1.0.0",
+    "description": "Shared models, repositories, and services for OrangeBot",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "typescript": "^5.8.3"
+    }
+}

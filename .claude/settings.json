@@ -1,0 +1,5 @@
+{
+  "permissions": {
+    "deny": ["Read(./.env)", "Read(./src/config/config.ts)", "Read(./packages/bot/src/config/config.ts)"]
+  }
+}

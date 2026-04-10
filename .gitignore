@@ -1,12 +1,12 @@
-dist/*
-node_modules/*
+dist/
+node_modules/
 .env
 *.log
 .node-version
-src/config/config.ts
-src/test.ts
+packages/bot/src/config/config.ts
+packages/bot/src/test.ts
 .data/*.data
 .vscode
-output/*
+output/
 youtubeCookie.json
 *-player-script.js

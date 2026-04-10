@@ -1,7 +1,7 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import { isEnableFunction } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
-import { CONFIG, LITELLM_MODEL } from '../../../../config/config.js';
+import { CONFIG, LiteLLMModel } from '../../../../config/config.js';
 import { LiteLLMMode } from '../../../../constant/chat/chat.js';
 import { functionNames } from '../../../../constant/constants.js';
 import * as DotBotFunctions from '../../../dot_function/index.js';
