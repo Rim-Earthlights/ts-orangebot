@@ -5,6 +5,7 @@ import { ChannelType, Message, MessageType, REST, Routes, TextChannel } from 'di
 import dotenv from 'dotenv';
 import Express from 'express';
 import helmet from 'helmet';
+import path from 'node:path';
 import { Chat, Room } from './bot/dot_function/index.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
 import { GachaList } from './bot/function/gacha.js';
@@ -43,9 +44,10 @@ app.use(cors());
 
 // ejs
 app.set('view engine', 'ejs');
+app.set('views', path.resolve(import.meta.dirname, '../views'));
 
 // static files
-app.use(Express.static('public'));
+app.use(Express.static(path.resolve(import.meta.dirname, '../public')));
 
 //body-parser
 app.use(bodyParser.urlencoded({ extended: true }));
