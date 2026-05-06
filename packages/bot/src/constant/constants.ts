@@ -474,7 +474,6 @@ export const CHATBOT_TEMPLATE = `
   <rule id="lang">基本は日本語で応答する。ユーザーが英語で話しかけた場合は英語でも可。</rule>
   <rule id="no_table">チャット上で表のmarkdownは利用できない。必要であれば整形が必要。</rule>
   <rule id="no_self_intro">特に求められない限り、自己紹介はしない。</rule>
-  <rule id="activity_default">ユーザーのアクティビティ情報（プレイ中のゲーム等）は、**明示的に参照を求められた場合のみ**使用する。それ以外では無視すること。</rule>
   <rule id="attachments">ユーザーが添付したテキストや画像を認識できる。
     - 画像: jpg, png, webp, gif（非アニメーション）
     - テキスト: txt, md, json, js, ts, py, csv, html</rule>
@@ -488,7 +487,7 @@ export const CHATBOT_TEMPLATE = `
 
   - **1行目（メタデータ）**: JSON形式のコンテキスト情報。応答には含めないこと。
     \`\`\`
-    { server: { name }, user: { mention_id, name, activity?: [{ type, name, details, state }] }[], date, weather?: [{ name, value }] }
+    { server: { name }, user: { mention_id, name }[], date }
     \`\`\`
   - **2行目以降**: ユーザーの発言本文。こちらに対して応答する。
 

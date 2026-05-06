@@ -1,22 +1,19 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { ActivityType, AttachmentBuilder, EmbedBuilder, Message } from 'discord.js';
-import iconv from 'iconv-lite';
+import { AttachmentBuilder, EmbedBuilder, Message } from 'discord.js';
 import OpenAI from 'openai';
-import { ChatCompletionContentPart } from 'openai/resources/index.js';
 import { Logger } from '../../common/logger.js';
 import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { llmList, initalize, LiteLLMMode, Role, getIdInfoMessage } from '../../constant/chat/chat.js';
-import { PictureService } from '../../service/picture.service.js';
 import { ModelResponse } from '../../type/openai.js';
 import { LogLevel } from '../../type/types.js';
-import { Forecast } from './index.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
+import { findTool, toolRegistry, ToolContext } from './chat_tools/index.js';
+import { processAttachments } from './chat_attachments.js';
 import { UsersRepository } from '../../model/repository/usersRepository.js';
 import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
 import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
 import { ModelType } from '../../model/models/userSetting.js';
-import { detectMimeType } from '../../common/common.js';
 
 /**
  * モデルを設定する
@@ -82,6 +79,26 @@ export async function getUserModelType(userId: string): Promise<LiteLLMModel> {
   }
 }
 
+async function replyChunked(message: Message, content: string) {
+  if (content.length <= 2000) {
+    await message.reply(content);
+    return;
+  }
+  const texts = content.split('\n');
+  let chunk = '';
+  for (const text of texts) {
+    if (chunk.length + text.length > 2000) {
+      await message.reply(chunk + '\n');
+      chunk = '';
+    } else {
+      chunk += text + '\n';
+    }
+  }
+  if (chunk.length > 0) {
+    await message.reply(chunk);
+  }
+}
+
 /**
  * ChatGPTで会話する
  */
@@ -94,67 +111,16 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     llmList.llm.push(llm);
   }
   const openai = llm.litellm;
-  let weather = undefined;
 
-  if (content.includes(`天気`)) {
-    const cityName = await Forecast.getPref(message.author.id);
-    if (!cityName) {
-      weather = { error: 'weather not register, please enter `.reg pref [pref_name]`' };
-    } else {
-      const when = message.content.match(/今日|明日|明後日|\d日後/);
-      let day = 0;
-      if (when != null) {
-        if (when[0] === '明日') {
-          day++;
-        } else if (when[0] === '明後日') {
-          day += 2;
-        } else if (when[0].includes('日後')) {
-          const d = when[0].replace('日後', '');
-          day = Number(d);
-        }
-      }
-      weather = await Forecast.weatherJson(message, [cityName, day.toString()]);
-    }
-  }
-
-  const userRepository = new UsersRepository();
-
-  const user = message.mentions.users.map((u) => {
-    const presence = message.guild?.presences.cache.get(u.id);
-    return {
-      mention_id: `<@${u.id}>`,
-      name: u.displayName,
-      activity: presence?.activities.map((a) => {
-        return {
-          type: ActivityType[a.type],
-          name: a.name,
-          details: a.details,
-          state: a.state,
-        };
-      }),
-    };
-  });
+  const user = message.mentions.users.map((u) => ({
+    mention_id: `<@${u.id}>`,
+    name: u.displayName,
+  }));
 
   if (!user.find((u) => u.mention_id === `<@${message.author.id}>`)) {
-    const userInfo = await userRepository.getByUid(message.author.id);
-
-    const presence = DISCORD_CLIENT.guilds.cache
-      .get(userInfo?.guild_id ?? '1017341244508225596')
-      ?.presences.cache.get(message.author.id);
-
-    // const presence = message.guild?.presences.cache.get(message.author.id);
-
     user.push({
       mention_id: `<@${message.author.id}>`,
       name: message.author.displayName,
-      activity: presence?.activities.map((a) => {
-        return {
-          type: ActivityType[a.type],
-          name: a.name,
-          details: a.details,
-          state: a.state,
-        };
-      }),
     });
   }
 
@@ -162,66 +128,15 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     server: { name: message.guild?.name },
     user,
     date: dayjs().format('YYYY/MM/DD HH:mm:ss'),
-    weather,
   };
 
   const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
 
-  if (message.attachments) {
-    const urls = await Promise.all(
-      message.attachments.map(async (a) => {
-        const fileName = a.name;
-
-        const contentTypes = a.contentType?.split('; ');
-        const contentType = contentTypes?.[0];
-        const charset = contentTypes?.[1]?.replace('charset=', '');
-        if (!contentType) {
-          return { type: 'text', text: `error: contentType is null or undefined` };
-        }
-
-        if (contentType?.includes('image/')) {
-          const { data } = (await axios.get(a.url, { responseType: 'arraybuffer' })) as { data: Buffer };
-
-          if (data.length > 1 * 1024 * 1024) {
-            const pictureService = new PictureService();
-            const compressedImage = await pictureService.compressImage(data, contentType, 1);
-            return { type: 'image_url', image_url: { url: compressedImage } };
-          } else {
-            const base64Image = `data:${detectMimeType(data)};base64,${data.toString('base64')}`;
-            return { type: 'image_url', image_url: { url: base64Image } };
-          }
-        }
-
-        if (a.size > 100_000) {
-          return { type: 'text', text: `error: file size is too large, max size is 100KB. file: ${fileName}` };
-        }
-
-        const { data: fileData } = (await axios.get(a.url, { responseType: 'arraybuffer' })) as { data: Buffer };
-        const text = iconv.decode(fileData, charset === 'SHIFT_JIS' ? 'SHIFT_JIS' : 'utf-8');
-
-        if (contentType?.includes('application/json')) {
-          return {
-            type: 'text',
-            text: [`file: ${fileName}`, '```json', JSON.stringify(text, null, 2), '```'].join('\n'),
-          };
-        } else if (contentType?.includes('application/javascript')) {
-          return { type: 'text', text: [`file: ${fileName}`, '```javascript', text, '```'].join('\n') };
-        } else if (contentType?.includes('video/MP2T')) {
-          return { type: 'text', text: [`file: ${fileName}`, '```typescript', text, '```'].join('\n') };
-        } else if (contentType?.includes('text/')) {
-          return {
-            type: 'text',
-            text: [`file: ${fileName}`, '```' + contentType?.split('/')[1], text, '```'].join('\n'),
-          };
-        } else {
-          return { type: 'text', text: `not support file type: [${a.contentType}]` };
-        }
-      })
-    );
-
+  if (message.attachments.size > 0) {
+    const urls = await processAttachments(message);
     llm.chat.push({
       role: Role.USER,
-      content: [{ type: 'text', text: sendContent }, ...urls] as Array<ChatCompletionContentPart>,
+      content: [{ type: 'text', text: sendContent }, ...urls],
     });
   } else {
     llm.chat.push({
@@ -231,10 +146,63 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
   }
 
   try {
-    const response = await openai.chat.completions.create({
+    const tools = toolRegistry.map((t) => t.definition);
+    const toolCtx: ToolContext = {
+      message,
+      authorId: message.author.id,
+      guildId: message.guild?.id,
+    };
+
+    let response = await openai.chat.completions.create({
       model: llm.model,
       messages: llm.chat,
+      tools: tools.length > 0 ? tools : undefined,
     });
+
+    const MAX_TOOL_ITERATIONS = 5;
+    for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+      const toolCalls = response.choices[0].message.tool_calls;
+      if (!toolCalls || toolCalls.length === 0) break;
+
+      const assistantMsg = response.choices[0].message;
+      llm.chat.push({
+        role: Role.ASSISTANT,
+        content: assistantMsg.content ?? '',
+        tool_calls: toolCalls,
+      });
+
+      if (assistantMsg.content && assistantMsg.content.trim().length > 0) {
+        await replyChunked(message, assistantMsg.content);
+      }
+
+      for (const call of toolCalls) {
+        if (call.type !== 'function') continue;
+        const tool = findTool(call.function.name);
+        let result: string;
+        if (!tool) {
+          result = JSON.stringify({ error: `unknown tool: ${call.function.name}` });
+        } else {
+          try {
+            const parsedArgs = call.function.arguments ? JSON.parse(call.function.arguments) : {};
+            result = await tool.handler(parsedArgs, toolCtx);
+          } catch (e) {
+            result = JSON.stringify({ error: (e as Error).message });
+          }
+        }
+        llm.chat.push({
+          role: 'tool',
+          tool_call_id: call.id,
+          content: result,
+        });
+      }
+
+      response = await openai.chat.completions.create({
+        model: llm.model,
+        messages: llm.chat,
+        tools: tools.length > 0 ? tools : undefined,
+      });
+    }
+
     const completion = response.choices[0].message;
 
     if (!completion.content) {
@@ -246,23 +214,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     llm.chat.push({ role: Role.ASSISTANT, content: completion.content });
     llm.timestamp = dayjs();
 
-    if (completion.content.length > 2000) {
-      const texts = completion.content.split('\n');
-      let chunk = '';
-      for (const text of texts) {
-        if (chunk.length + text.length > 2000) {
-          await message.reply(chunk + '\n');
-          chunk = '';
-        } else {
-          chunk += text + '\n';
-        }
-      }
-      if (chunk.length > 0) {
-        await message.reply(chunk);
-      }
-    } else {
-      await message.reply(completion.content);
-    }
+    await replyChunked(message, completion.content);
 
     const chatHistoryRepository = new ChatHistoryRepository();
     await chatHistoryRepository.save({
