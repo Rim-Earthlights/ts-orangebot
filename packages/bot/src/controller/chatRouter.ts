@@ -28,7 +28,7 @@ chatRouter.get('/chat/history', async (req: Express.Request, res: Express.Respon
     const chatHistories = await chatHistoryRepository.getAll(limit, offset, channelId);
 
     // 特定のIDの場合は「全てのチャットを表示」ボタンを表示
-    const showAllChatsButton = channelId === '986081825233469470';
+    const showAllChatsButton = channelId === '246007305156558848';
 
     res.render('chatHistoryList', {
       chatHistories,
