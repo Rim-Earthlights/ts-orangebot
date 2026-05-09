@@ -18,13 +18,15 @@ import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { DM_SLASH_COMMANDS, SERVER_SLASH_COMMANDS } from './constant/slashCommands.js';
 import { initJob } from './job/job.js';
-import { GuildRepository } from './model/repository/guildRepository.js';
-import { ItemRepository } from './model/repository/itemRepository.js';
-import { RoomRepository } from './model/repository/roomRepository.js';
-import { UsersRepository } from './model/repository/usersRepository.js';
-import { TypeOrm } from './model/typeorm/typeorm.js';
+import {
+  GuildRepository,
+  ItemRepository,
+  LogLevel,
+  RoomRepository,
+  UsersRepository,
+  createDataSource,
+} from '@orangebot/shared';
 import { routers } from './routers.js';
-import { LogLevel } from './type/types.js';
 import { InteractionManager } from './bot/manager/interaction.manager.js';
 import { MessageManager } from './bot/manager/message.manager.js';
 import { CHAT_PAUSE_FLAGS } from './bot/manager/handlers/interactions/pause.handler.js';
@@ -69,7 +71,14 @@ app.use((req, res) => {
 console.log('==================================================');
 
 // DBの初期化
-await TypeOrm.dataSource
+const dataSource = createDataSource({
+  host: CONFIG.DB.HOSTNAME,
+  username: CONFIG.DB.USERNAME,
+  password: CONFIG.DB.PASSWORD,
+  port: CONFIG.DB.PORT,
+  database: CONFIG.DB.DATABASE,
+});
+await dataSource
   .initialize()
   .then(async () => {
     // DBの初期化と再構築
@@ -143,7 +152,19 @@ DISCORD_CLIENT.once('ready', async () => {
   // コマンド登録
   const guilds = await repository.getAll();
   guilds.map(async (guild) => {
-    await new RoomRepository().init(guild.id);
+    // 自動削除対象ルームのうち、Discord 上から消えているものを掃除
+    const roomRepository = new RoomRepository();
+    const autodeleteRooms = await roomRepository.getAutodeleteRooms(guild.id);
+    await Promise.all(
+      autodeleteRooms.map(async (room) => {
+        try {
+          await DISCORD_CLIENT.channels.fetch(room.room_id);
+        } catch {
+          await roomRepository.deleteRoom(room.room_id);
+        }
+      })
+    );
+
     rest
       .put(Routes.applicationGuildCommands(CONFIG.DISCORD.APP_ID, guild.id), { body: commands })
       .then(

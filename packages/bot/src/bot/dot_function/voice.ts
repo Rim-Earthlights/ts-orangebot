@@ -1,9 +1,9 @@
 import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'discord.js';
 import { Logger } from '../../common/logger.js';
 import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants.js';
-import { RoomRepository } from '../../model/repository/roomRepository.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
-import { LogLevel } from '../../type/types.js';
+import { RoomRepository } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 import { extermAudioPlayer } from './music.js';
 
 /**

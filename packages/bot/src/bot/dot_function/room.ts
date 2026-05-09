@@ -9,7 +9,7 @@ import {
   VoiceChannel
 } from 'discord.js';
 import { getRndArray } from '../../common/common.js';
-import { RoomRepository } from '../../model/repository/roomRepository.js';
+import { RoomRepository } from "@orangebot/shared";
 
 const teamName = ['赤', '青', '黄', '緑', '紫', '桃', '茶', '白', 'アタッカー', 'ディフェンダー'];
 

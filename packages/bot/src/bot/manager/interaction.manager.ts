@@ -20,7 +20,7 @@ import { UserTypeHandler } from './handlers/interactions/user-type.handler.js';
 import { RevertHandler } from './handlers/interactions/revert.handler.js';
 import { HistoryHandler } from './handlers/interactions/history.handler.js';
 import { Logger } from '../../common/logger.js';
-import { LogLevel } from '../../type/types.js';
+import { LogLevel } from "@orangebot/shared";
 import { RipHandler } from './handlers/interactions/rip.handler.js';
 import { LyricsHandler } from './handlers/interactions/lyrics.handler.js';
 import { ModelHandler } from './handlers/interactions/model.handler.js';

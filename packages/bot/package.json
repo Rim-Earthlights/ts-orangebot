@@ -7,9 +7,11 @@
     "scripts": {
         "build": "tsc",
         "clean": "rm -rf dist",
-        "dev": "nodemon -x \"pnpm run start:dev\" -w src/app.ts -e ts,json",
+        "predev": "pnpm --filter @orangebot/shared build",
+        "dev": "nodemon -x \"pnpm run start:dev\" -w src -w ../shared/dist -e ts,js,json",
         "start:dev": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' src/app.ts",
         "start": "FFMPEG_PATH=/usr/bin/ffmpeg node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' dist/app.js",
+        "presmoke-test": "pnpm --filter @orangebot/shared build",
         "smoke-test": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' scripts/smoke-test.ts"
     },
     "dependencies": {

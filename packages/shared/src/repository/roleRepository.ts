@@ -1,13 +1,13 @@
 import { Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 import { RoleType } from '../models/role.js';
 
 export class RoleRepository {
   private repository: Repository<Models.Role>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Role);
+    this.repository = getDataSource().getRepository(Models.Role);
   }
 
   public async getRoles(gid: string): Promise<Models.Role[]> {

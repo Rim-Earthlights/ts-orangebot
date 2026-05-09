@@ -8,11 +8,11 @@ import { CacheType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, Mess
 import { checkUserType, getRndNumber } from '../../common/common.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
-import * as Models from '../../model/models/index.js';
-import { UsersType } from '../../model/models/users.js';
-import { GachaRepository } from '../../model/repository/gachaRepository.js';
-import { ItemRepository } from '../../model/repository/itemRepository.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
+import { Models } from "@orangebot/shared";
+import { UsersType } from "@orangebot/shared";
+import { GachaRepository } from "@orangebot/shared";
+import { ItemRepository } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
 
 export class GachaList {
   static allItemList: Models.Item[] = [];

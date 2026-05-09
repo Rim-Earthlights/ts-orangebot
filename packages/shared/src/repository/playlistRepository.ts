@@ -1,12 +1,12 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 
 export class PlaylistRepository {
   private repository: Repository<Models.Playlist>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Playlist);
+    this.repository = getDataSource().getRepository(Models.Playlist);
   }
 
   /**

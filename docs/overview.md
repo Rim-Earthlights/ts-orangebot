@@ -22,7 +22,7 @@ OrangeBot-TS は、Orange Server 向けの多機能 Discord Bot です。TypeScr
 - **ボイスチャンネル管理** - ロビーに参加すると自動でルームを作成、退出時に自動削除
 - **ガチャシステム** - 毎日リセットされるチケットでアイテムを引く
 - **音楽再生** - YouTube の検索・再生、プレイリスト管理、ループ・シャッフル
-- **AI チャット** - LiteLLM プロキシ経由で複数の LLM モデル (GPT-4, Claude 等) を利用
+- **AI チャット** - LiteLLM プロキシ経由で複数の LLM モデル (GPT-4, Claude 等) を利用。Tool Calling により天気・ユーザーアクティビティ等のコンテキストを自動取得
 - **天気予報** - OpenWeatherMap API による地域別天気予報
 - **ゲーム** - ダイス、チンチロリン、チーム分け、ITO 等
 - **読み上げ (TTS)** - VOICEVOX 連携によるテキスト読み上げ
@@ -30,7 +30,7 @@ OrangeBot-TS は、Orange Server 向けの多機能 Discord Bot です。TypeScr
 
 ## エントリーポイント
 
-`src/app.ts` がメインのエントリーポイントです。起動時に以下を行います:
+`packages/bot/src/app.ts` がメインのエントリーポイントです。起動時に以下を行います:
 
 1. Express サーバーのセットアップ (Helmet, CORS, EJS テンプレート)
 2. TypeORM による MariaDB 接続・スキーマ同期
@@ -39,12 +39,37 @@ OrangeBot-TS は、Orange Server 向けの多機能 Discord Bot です。TypeScr
 5. スラッシュコマンドの登録
 6. Cron ジョブの初期化
 
-## npm スクリプト
+## モノレポ構成
+
+pnpm workspace を採用しており、以下のパッケージで構成されています:
+
+- `packages/bot` — Discord Bot 本体 (Express + Discord.js)
+- `packages/shared` — 共有層 (TypeORM エンティティ / リポジトリ / DataSource ファクトリ / 共通型)
+
+## pnpm スクリプト
+
+ルートから実行するスクリプト:
 
 ```bash
-npm run build     # TypeScript コンパイル
-npm run start     # ビルド後に実行
-npm run dev       # nodemon による開発モード
-npm run lint      # ESLint
-npm run format    # Prettier
+pnpm build        # 全パッケージをビルド (pnpm -r build, shared → bot の順)
+pnpm clean        # 全パッケージの dist を削除
+pnpm dev          # shared をビルド後、Bot を nodemon で開発モード起動
+pnpm lint         # Bot に対して ESLint
+pnpm smoke-test   # shared をビルド後、Bot の起動疎通確認
+```
+
+Bot パッケージ単体での操作:
+
+```bash
+pnpm --filter @orangebot/bot start         # ビルド成果物を実行
+pnpm --filter @orangebot/bot smoke-test    # 起動 〜 シャットダウンの疎通確認
+```
+
+shared パッケージのマイグレーション CLI (Phase 2-1 以降に本格運用):
+
+```bash
+pnpm --filter @orangebot/shared migration:show      # 適用済み/未適用の一覧
+pnpm --filter @orangebot/shared migration:generate src/migrations/<Name>
+pnpm --filter @orangebot/shared migration:run
+pnpm --filter @orangebot/shared migration:revert
 ```

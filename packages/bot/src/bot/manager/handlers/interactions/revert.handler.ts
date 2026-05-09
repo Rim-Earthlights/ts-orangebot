@@ -1,9 +1,10 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { ChatHistoryRepository } from '../../../../model/repository/chatHistoryRepository.js';
-import { getIdInfoInteraction, initalize, LiteLLM, llmList } from '../../../../constant/chat/chat.js';
-import { ChatHistory } from '../../../../model/models/chatHistory.js';
+import { ChatHistory, ChatHistoryRepository } from '@orangebot/shared';
+import { LiteLLMModel } from '../../../../config/config.js';
+import { DISCORD_CLIENT } from '../../../../constant/constants.js';
+import { getIdInfoInteraction, initalize, LiteLLM, LiteLLMMode, llmList } from '../../../../constant/chat/chat.js';
 
 export class RevertHandler extends BaseInteractionHandler {
   private chatHistoryRepository: ChatHistoryRepository;
@@ -35,7 +36,10 @@ export class RevertHandler extends BaseInteractionHandler {
         chatHistory = await this.chatHistoryRepository.get(uuid);
       } else {
         // データベースから最新のチャット履歴を取得
-        chatHistory = await this.chatHistoryRepository.getLatestByChannelId(id);
+        const botId = DISCORD_CLIENT.user?.id;
+        if (botId) {
+          chatHistory = await this.chatHistoryRepository.getLatestByChannelId(id, botId);
+        }
       }
 
       if (!chatHistory) {
@@ -66,7 +70,12 @@ export class RevertHandler extends BaseInteractionHandler {
         return;
       } else {
         // 現在のチャット履歴がない場合は、DBから取得した履歴で上書きする
-        const llm = await initalize(id, chatHistory.model, chatHistory.mode, isGuild);
+        const llm = await initalize(
+          id,
+          chatHistory.model as LiteLLMModel,
+          chatHistory.mode as LiteLLMMode,
+          isGuild
+        );
         llmList.llm.push({ ...llm, chat: chatHistory.content, uuid: chatHistory.uuid });
       }
 

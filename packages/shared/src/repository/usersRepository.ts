@@ -1,15 +1,15 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
 import { UsersType } from '../models/users.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 
 export class UsersRepository {
   private repository: Repository<Models.Users>;
   private userSettingRepository: Repository<Models.UserSetting>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Users);
-    this.userSettingRepository = TypeOrm.dataSource.getRepository(Models.UserSetting);
+    this.repository = getDataSource().getRepository(Models.Users);
+    this.userSettingRepository = getDataSource().getRepository(Models.UserSetting);
   }
 
   /**

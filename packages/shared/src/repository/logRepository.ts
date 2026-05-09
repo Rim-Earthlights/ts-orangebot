@@ -1,12 +1,12 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 import * as Models from '../models/index.js';
 
 export class LogRepository {
   private repository: Repository<Models.Log>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Log);
+    this.repository = getDataSource().getRepository(Models.Log);
   }
 
   /**

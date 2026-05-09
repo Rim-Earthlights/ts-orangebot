@@ -2,7 +2,7 @@ import ytdl from '@distube/ytdl-core';
 import { EmbedBuilder, Message } from 'discord.js';
 import ytpl from 'ytpl';
 import { Logger } from '../../../../common/logger.js';
-import { PlaylistRepository } from '../../../../model/repository/playlistRepository.js';
+import { PlaylistRepository } from "@orangebot/shared";
 import * as DotBotFunctions from '../../../dot_function/index.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 

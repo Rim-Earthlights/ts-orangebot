@@ -1,7 +1,7 @@
 import Express from 'express';
 import { CallbackRequest, CallbackResponse } from './types/spotify';
 import { Logger } from '../common/logger';
-import { LogLevel } from '../type/types';
+import { LogLevel } from "@orangebot/shared";
 
 export const spotifyAuthRouter = Express.Router();
 

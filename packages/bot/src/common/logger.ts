@@ -1,7 +1,5 @@
 import dayjs from 'dayjs';
-import { LogRepository } from '../model/repository/logRepository.js';
-import { LogData, LogLevel } from '../type/types.js';
-import { GuildRepository } from '../model/repository/guildRepository.js';
+import { GuildRepository, LogData, LogLevel, LogRepository, setLogger } from '@orangebot/shared';
 import { CONFIG } from '../config/config.js';
 
 export class Logger {
@@ -101,3 +99,10 @@ export class Logger {
     await this.log(LogLevel.DEBUG, event, message, guild_id, channel_id, user_id);
   }
 }
+
+// shared パッケージのリポジトリから getLogger() で参照される Logger 実装を登録する。
+// DataSource の初期化後に呼び出す必要があるが、設定自体はここでは Repository インスタンス化を行わない遅延形式のため、
+// モジュールロード時に登録して問題ない。
+setLogger({
+  put: (data: LogData) => Logger.put(data),
+});

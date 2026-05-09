@@ -4,7 +4,12 @@
 
 - **DBMS:** MariaDB
 - **ORM:** TypeORM v0.3
-- **スキーマ同期:** `synchronize: true` (自動マイグレーション)
+- **スキーマ同期:** `synchronize: true` (自動マイグレーション、Phase 2-1 で `false` に切り替え予定)
+- **エンティティ数:** 17 (`packages/shared/src/models/`)
+- **DataSource ファクトリ:** `packages/shared/src/config/datasource.ts` の `createDataSource(config)` を bot から呼び出して初期化
+- **マイグレーション CLI:** `pnpm --filter @orangebot/shared migration:{generate,run,revert,show}` (DB_HOST/DB_PORT/DB_USERNAME/DB_PASSWORD/DB_DATABASE を `.env` で指定)
+
+> Discord ID 系の主キー (`id`, `guild_id`, `channel_id` 等) は DB 上は `bigint(20)` として定義されているが、TypeORM の慣習によりアプリケーション層では `string` として扱われる。
 
 ## エンティティ一覧
 

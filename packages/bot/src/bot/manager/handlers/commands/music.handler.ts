@@ -3,7 +3,7 @@ import { EmbedBuilder, Message, VoiceBasedChannel } from 'discord.js';
 import { isEnableFunction } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
 import { functionNames } from '../../../../constant/constants.js';
-import { LogLevel } from '../../../../type/types.js';
+import { LogLevel } from "@orangebot/shared";
 import * as DotBotFunctions from '../../../dot_function/index.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 

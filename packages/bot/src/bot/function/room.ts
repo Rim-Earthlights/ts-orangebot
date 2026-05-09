@@ -8,10 +8,10 @@ import {
   PermissionsBitField,
   VoiceChannel,
 } from 'discord.js';
-import { GuildRepository } from '../../model/repository/guildRepository.js';
-import { RoleRepository } from '../../model/repository/roleRepository.js';
-import { RoomRepository } from '../../model/repository/roomRepository.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
+import { GuildRepository } from "@orangebot/shared";
+import { RoleRepository } from "@orangebot/shared";
+import { RoomRepository } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
 
 /**
  * チャンネルを作成する

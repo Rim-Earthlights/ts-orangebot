@@ -3,14 +3,36 @@
     "version": "1.0.0",
     "description": "Shared models, repositories, and services for OrangeBot",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
     "scripts": {
         "build": "tsc",
-        "clean": "rm -rf dist"
+        "watch": "tsc --watch",
+        "clean": "rm -rf dist",
+        "typeorm": "typeorm-ts-node-esm -d scripts/data-source-cli.ts",
+        "migration:generate": "typeorm-ts-node-esm migration:generate -d scripts/data-source-cli.ts",
+        "migration:run": "typeorm-ts-node-esm migration:run -d scripts/data-source-cli.ts",
+        "migration:revert": "typeorm-ts-node-esm migration:revert -d scripts/data-source-cli.ts",
+        "migration:show": "typeorm-ts-node-esm migration:show -d scripts/data-source-cli.ts"
     },
-    "dependencies": {},
+    "dependencies": {
+        "openai": "^5.10.1",
+        "reflect-metadata": "^0.2.2",
+        "typeorm": "^0.3.25"
+    },
     "devDependencies": {
+        "@types/node": "^24.0.14",
+        "dotenv": "^17.2.0",
+        "ts-node": "^10.9.2",
         "typescript": "^5.8.3"
     }
 }

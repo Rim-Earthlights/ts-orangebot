@@ -1,7 +1,7 @@
 import { CacheType, ChatInputCommandInteraction } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { UsersRepository } from '../../../../model/repository/usersRepository.js';
+import { UsersRepository } from "@orangebot/shared";
 
 export class NicknameHandler extends BaseInteractionHandler {
   constructor(logger?: Logger) {

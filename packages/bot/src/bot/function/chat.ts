@@ -3,11 +3,11 @@ import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js
 import { Logger } from '../../common/logger.js';
 import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { LiteLLMMode, Role, llmList, initalize, getIdInfoInteraction } from '../../constant/chat/chat.js';
-import { LogLevel } from '../../type/types.js';
-import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
-import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
-import { ModelType } from '../../model/models/userSetting.js';
+import { LogLevel } from "@orangebot/shared";
+import { ChatHistoryRepository } from "@orangebot/shared";
+import { ChatHistoryChannelType } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
+import { ModelType } from "@orangebot/shared";
 
 /**
  * メモリ機能を切り替える

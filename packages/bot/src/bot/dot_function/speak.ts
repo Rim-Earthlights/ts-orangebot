@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { CacheType, ChannelType, ChatInputCommandInteraction, EmbedBuilder, Message, VoiceChannel } from 'discord.js';
-import { SpeakerRepository } from '../../model/repository/speakerRepository.js';
+import { SpeakerRepository } from "@orangebot/shared";
 
 const SPEAKER_LEMON_URI = 'http://127.0.0.1:4100/speaker/call';
 const SPEAKER_LIME_URI = 'http://127.0.0.1:4101/speaker/call';

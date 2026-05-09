@@ -2,7 +2,7 @@ import Express from 'express';
 import { TextChannel } from 'discord.js';
 import { DISCORD_CLIENT } from '../constant/constants.js';
 import { Logger } from '../common/logger.js';
-import { LogLevel } from '../type/types.js';
+import { LogLevel } from "@orangebot/shared";
 
 export const messagingRouter = Express.Router();
 

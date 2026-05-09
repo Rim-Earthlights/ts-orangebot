@@ -2,8 +2,8 @@ import dayjs from 'dayjs';
 import * as cron from 'node-cron';
 import { Logger } from '../common/logger.js';
 import { llmList } from '../constant/chat/chat.js';
-import { UsersRepository } from '../model/repository/usersRepository.js';
-import { LogLevel } from '../type/types.js';
+import { UsersRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 import { UserJob } from './user.job.js';
 
 export async function initJob() {

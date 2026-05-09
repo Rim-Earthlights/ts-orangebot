@@ -1,8 +1,8 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js';
 import { checkUserType } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
-import { UsersType } from '../../../../model/models/users.js';
-import { UsersRepository } from '../../../../model/repository/usersRepository.js';
+import { UsersType } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 
 export class UserTypeHandler extends BaseInteractionHandler {

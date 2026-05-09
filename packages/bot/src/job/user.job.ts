@@ -1,8 +1,8 @@
 import { Logger } from '../common/logger.js';
 import { DISCORD_CLIENT } from '../constant/constants.js';
-import { ModelType } from '../model/models/userSetting.js';
-import { UsersRepository } from '../model/repository/usersRepository.js';
-import { LogLevel } from '../type/types.js';
+import { ModelType } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 
 export class UserJob {
   private readonly logger = new Logger();

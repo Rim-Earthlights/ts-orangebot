@@ -5,11 +5,11 @@ import { Logger } from '../../common/logger.js';
 import { CONFIG } from '../../config/config.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
-import { UsersType } from '../../model/models/users.js';
-import { GachaRepository } from '../../model/repository/gachaRepository.js';
-import { ItemRepository } from '../../model/repository/itemRepository.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
-import { LogLevel } from '../../type/types.js';
+import { UsersType } from "@orangebot/shared";
+import { GachaRepository } from "@orangebot/shared";
+import { ItemRepository } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 import { getGachaOnce } from '../function/gacha.js';
 
 /**

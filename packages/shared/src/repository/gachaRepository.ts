@@ -1,12 +1,12 @@
 import { DeepPartial, MoreThanOrEqual, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 
 export class GachaRepository {
   private repository: Repository<Models.Gacha>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Gacha);
+    this.repository = getDataSource().getRepository(Models.Gacha);
   }
 
   /**

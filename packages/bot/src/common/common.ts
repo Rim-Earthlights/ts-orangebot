@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { CONFIG } from '../config/config.js';
 import { ENABLE_FUNCTION, functionNames } from '../constant/constants.js';
-import { UsersType } from '../model/models/users.js';
-import { UsersRepository } from '../model/repository/usersRepository.js';
+import { UsersType } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
 
 /**
  * 乱数生成機
