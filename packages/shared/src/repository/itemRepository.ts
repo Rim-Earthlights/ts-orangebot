@@ -1,14 +1,14 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 
 export class ItemRepository {
   private itemRepository: Repository<Models.Item>;
   private rankRepository: Repository<Models.ItemRank>;
 
   constructor() {
-    this.itemRepository = TypeOrm.dataSource.getRepository(Models.Item);
-    this.rankRepository = TypeOrm.dataSource.getRepository(Models.ItemRank);
+    this.itemRepository = getDataSource().getRepository(Models.Item);
+    this.rankRepository = getDataSource().getRepository(Models.ItemRank);
   }
 
   /**

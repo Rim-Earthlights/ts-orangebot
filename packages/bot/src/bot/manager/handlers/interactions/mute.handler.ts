@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { checkUserType } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
 import { Role } from '../../../../constant/chat/chat.js';
-import { UsersType } from '../../../../model/models/users.js';
+import { UsersType } from "@orangebot/shared";
 import * as ChatService from '../../../../service/chat.service.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 

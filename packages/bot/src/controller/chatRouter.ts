@@ -1,6 +1,6 @@
 import Express from 'express';
 import { Logger } from '../common/logger.js';
-import { ChatHistoryRepository } from '../model/repository/chatHistoryRepository.js';
+import { ChatHistoryRepository } from "@orangebot/shared";
 
 export const chatRouter = Express.Router();
 

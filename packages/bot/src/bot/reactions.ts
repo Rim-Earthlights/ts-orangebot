@@ -8,10 +8,10 @@ import {
   User,
 } from 'discord.js';
 import { Logger } from '../common/logger.js';
-import { Users, UserSetting } from '../model/models';
-import { RoleRepository } from '../model/repository/roleRepository.js';
-import { UsersRepository } from '../model/repository/usersRepository.js';
-import { LogLevel } from '../type/types.js';
+import { Users, UserSetting } from "@orangebot/shared";
+import { RoleRepository } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 
 /**
  * リアクション時の処理を行う

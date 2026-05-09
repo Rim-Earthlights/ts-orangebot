@@ -1,11 +1,11 @@
 import { CacheType, ChatInputCommandInteraction, ChannelType, MessageFlags } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { LogLevel } from '../../../../type/types.js';
-import { RoleRepository } from '../../../../model/repository/roleRepository.js';
-import { UsersRepository } from '../../../../model/repository/usersRepository.js';
-import { Users, UsersType } from '../../../../model/models/users.js';
-import { UserSetting } from '../../../../model/models/userSetting.js';
+import { LogLevel } from "@orangebot/shared";
+import { RoleRepository } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
+import { Users, UsersType } from "@orangebot/shared";
+import { UserSetting } from "@orangebot/shared";
 
 export class AcceptHandler extends BaseInteractionHandler {
   constructor(logger?: Logger) {

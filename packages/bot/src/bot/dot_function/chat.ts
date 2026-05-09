@@ -6,14 +6,14 @@ import { Logger } from '../../common/logger.js';
 import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { llmList, initalize, LiteLLMMode, Role, getIdInfoMessage } from '../../constant/chat/chat.js';
 import { ModelResponse } from '../../type/openai.js';
-import { LogLevel } from '../../type/types.js';
+import { LogLevel } from "@orangebot/shared";
 import { DISCORD_CLIENT } from '../../constant/constants.js';
 import { findTool, toolRegistry, ToolContext } from './chat_tools/index.js';
 import { processAttachments } from './chat_attachments.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
-import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository.js';
-import { ChatHistoryChannelType } from '../../model/models/chatHistory.js';
-import { ModelType } from '../../model/models/userSetting.js';
+import { UsersRepository } from "@orangebot/shared";
+import { ChatHistoryRepository } from "@orangebot/shared";
+import { ChatHistoryChannelType } from "@orangebot/shared";
+import { ModelType } from "@orangebot/shared";
 
 /**
  * モデルを設定する

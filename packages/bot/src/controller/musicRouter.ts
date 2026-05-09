@@ -1,8 +1,8 @@
 import Express from 'express';
 import { Logger } from '../common/logger.js';
-import { MusicInfoRepository } from '../model/repository/musicInfoRepository.js';
-import { MusicRepository } from '../model/repository/musicRepository.js';
-import { LogLevel } from '../type/types.js';
+import { MusicInfoRepository } from "@orangebot/shared";
+import { MusicRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 
 export const musicRouter = Express.Router();
 

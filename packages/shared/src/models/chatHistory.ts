@@ -11,8 +11,6 @@ import {
   Relation,
   UpdateDateColumn,
 } from 'typeorm';
-import { LiteLLMModel } from '../../config/config.js';
-import { LiteLLMMode } from '../../constant/chat/chat.js';
 import { BotInfo } from './botInfo.js';
 
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
@@ -36,10 +34,10 @@ export class ChatHistory extends BaseEntity {
   content!: ChatCompletionMessageParam[];
 
   @Column({ type: 'varchar', width: 255 })
-  model!: LiteLLMModel;
+  model!: string;
 
   @Column({ type: 'varchar', width: 255 })
-  mode!: LiteLLMMode;
+  mode!: string;
 
   @CreateDateColumn({ type: 'datetime', nullable: false })
   created_at!: Date;

@@ -53,17 +53,10 @@ try {
 }
 
 try {
-  await import('../src/model/typeorm/typeorm.js');
-  ok('typeorm');
+  await import('@orangebot/shared');
+  ok('@orangebot/shared');
 } catch (e) {
-  fail('typeorm', e);
-}
-
-try {
-  await import('../src/model/models/index.js');
-  ok('models');
-} catch (e) {
-  fail('models', e);
+  fail('@orangebot/shared', e);
 }
 
 try {
@@ -108,13 +101,23 @@ if (exitCode !== 0) {
 
 console.log('\n2. Checking DB connection...');
 try {
-  const { TypeOrm } = await import('../src/model/typeorm/typeorm.js');
+  // bot 側の Logger 登録 (setLogger 副作用) を発火させるため import しておく
+  await import('../src/common/logger.js');
+  const { createDataSource } = await import('@orangebot/shared');
+  const { CONFIG } = await import('../src/config/config.js');
+  const dataSource = createDataSource({
+    host: CONFIG.DB.HOSTNAME,
+    username: CONFIG.DB.USERNAME,
+    password: CONFIG.DB.PASSWORD,
+    port: CONFIG.DB.PORT,
+    database: CONFIG.DB.DATABASE,
+  });
   await Promise.race([
-    TypeOrm.dataSource.initialize(),
+    dataSource.initialize(),
     new Promise((_, reject) => setTimeout(() => reject(new Error('DB connection timeout')), TIMEOUT_MS)),
   ]);
   ok('DB connected');
-  await TypeOrm.dataSource.destroy();
+  await dataSource.destroy();
   ok('DB disconnected');
 } catch (e) {
   fail('DB connection', e);

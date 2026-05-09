@@ -1,13 +1,12 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
-import { DISCORD_CLIENT } from '../../constant/constants.js';
+import { getDataSource } from '../config/datasource.js';
 
 export class ChatHistoryRepository {
   private repository: Repository<Models.ChatHistory>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.ChatHistory);
+    this.repository = getDataSource().getRepository(Models.ChatHistory);
   }
 
   /**
@@ -21,16 +20,12 @@ export class ChatHistoryRepository {
   }
 
   /**
-   * チャンネルIDからチャット履歴を取得する
+   * チャンネルIDと bot_id から最新のチャット履歴を取得する
    * @param channelId チャンネルID
-   * @returns Promise<ChatHistory[]>
+   * @param botId Bot のユーザー ID (呼び出し側 (bot 等) で取得して渡す)
+   * @returns Promise<ChatHistory | null>
    */
-  public async getLatestByChannelId(channelId: string): Promise<Models.ChatHistory | null> {
-    const botId = DISCORD_CLIENT.user?.id;
-    if (!botId) {
-      return null;
-    }
-
+  public async getLatestByChannelId(channelId: string, botId: string): Promise<Models.ChatHistory | null> {
     const chatHistory = await this.repository.findOne({
       where: { channel_id: channelId, bot_id: botId },
       order: { created_at: 'DESC' },

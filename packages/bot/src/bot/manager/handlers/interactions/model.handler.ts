@@ -2,8 +2,8 @@ import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 import { getIdInfoInteraction, llmList } from '../../../../constant/chat/chat.js';
-import { ModelType } from '../../../../model/models/userSetting.js';
-import { UsersRepository } from '../../../../model/repository/usersRepository.js';
+import { ModelType } from "@orangebot/shared";
+import { UsersRepository } from "@orangebot/shared";
 import { CONFIG, LiteLLMModel } from '../../../../config/config.js';
 
 export class ModelHandler extends BaseInteractionHandler {

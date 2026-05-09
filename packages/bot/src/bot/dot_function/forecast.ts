@@ -13,8 +13,8 @@ import {
   WW_GEOCODING_URI,
 } from '../../interface/geocoding.js';
 import { Onecall, ONECALL_URI } from '../../interface/onecall.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
-import { LogLevel } from '../../type/types.js';
+import { UsersRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 
 /**
  * 現在の天気を返す.

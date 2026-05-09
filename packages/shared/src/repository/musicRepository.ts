@@ -1,15 +1,14 @@
 import { DeepPartial, Repository } from 'typeorm';
-import { YoutubePlaylists } from '../../bot/request/youtube.js';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
-import { Logger } from '../../common/logger.js';
-import { LogLevel } from '../../type/types.js';
+import { getDataSource } from '../config/datasource.js';
+import { getLogger, LogLevel } from '../types/log.js';
+import { MusicAddItem } from '../types/music.js';
 
 export class MusicRepository {
   private repository: Repository<Models.Music>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Music);
+    this.repository = getDataSource().getRepository(Models.Music);
   }
 
   /**
@@ -17,7 +16,7 @@ export class MusicRepository {
    * @param gid
    */
   public async getAll(gid: string, cid: string): Promise<Models.Music[]> {
-    await Logger.put({
+    await getLogger().put({
       guild_id: gid,
       channel_id: cid,
       user_id: undefined,
@@ -35,7 +34,7 @@ export class MusicRepository {
    * @param gid
    */
   public async getQueue(gid: string, cid: string): Promise<Models.Music[]> {
-    await Logger.put({
+    await getLogger().put({
       guild_id: gid,
       channel_id: cid,
       user_id: undefined,
@@ -52,7 +51,7 @@ export class MusicRepository {
    * 音楽を保存する
    */
   public async saveAll(gid: string, cid: string, musics: Models.Music[]): Promise<Models.Music[]> {
-    await Logger.put({
+    await getLogger().put({
       guild_id: gid,
       channel_id: cid,
       user_id: undefined,
@@ -65,7 +64,7 @@ export class MusicRepository {
   }
 
   public async save(music: DeepPartial<Models.Music>): Promise<boolean> {
-    await Logger.put({
+    await getLogger().put({
       guild_id: music.guild_id,
       channel_id: undefined,
       user_id: undefined,
@@ -79,7 +78,7 @@ export class MusicRepository {
   public async addRange(
     gid: string,
     cid: string,
-    musics: YoutubePlaylists[],
+    musics: MusicAddItem[],
     type: 'youtube' | 'spotify'
   ): Promise<boolean> {
     console.log(`repository/music: addAll`);
@@ -111,7 +110,7 @@ export class MusicRepository {
    * @returns Promise<boolean>
    */
   public async add(gid: string, cid: string, music: DeepPartial<Models.Music>, interrupt: boolean): Promise<boolean> {
-    await Logger.put({
+    await getLogger().put({
       guild_id: gid,
       channel_id: cid,
       user_id: undefined,
@@ -147,7 +146,7 @@ export class MusicRepository {
    * 指定したIDの音楽をキューから削除する
    */
   public async remove(gid: string, cid: string, musicId?: number): Promise<boolean> {
-    await Logger.put({
+    await getLogger().put({
       guild_id: gid,
       channel_id: cid,
       user_id: undefined,
@@ -168,7 +167,7 @@ export class MusicRepository {
   }
 
   public async resetPlayState(gid: string, cid: string): Promise<boolean> {
-    await Logger.put({
+    await getLogger().put({
       guild_id: gid,
       channel_id: cid,
       user_id: undefined,
@@ -190,7 +189,7 @@ export class MusicRepository {
     }
 
     await this.save({ ...music, is_play: state ? 1 : 0 });
-    await Logger.put({
+    await getLogger().put({
       guild_id: gid,
       channel_id: cid,
       user_id: undefined,

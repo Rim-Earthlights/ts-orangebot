@@ -1,5 +1,5 @@
 import { EmbedBuilder, Message } from 'discord.js';
-import { UsersRepository } from '../../model/repository/usersRepository.js';
+import { UsersRepository } from "@orangebot/shared";
 
 /**
  * ユーザー情報を更新する

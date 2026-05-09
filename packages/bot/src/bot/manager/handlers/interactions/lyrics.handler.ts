@@ -2,7 +2,7 @@ import { ActivityType, CacheType, ChatInputCommandInteraction, EmbedBuilder } fr
 import { Logger } from '../../../../common/logger.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { JSDOM } from 'jsdom';
-import { UsersRepository } from '../../../../model/repository/usersRepository.js';
+import { UsersRepository } from "@orangebot/shared";
 import { DISCORD_CLIENT } from '../../../../constant/constants.js';
 
 export class LyricsHandler extends BaseInteractionHandler {

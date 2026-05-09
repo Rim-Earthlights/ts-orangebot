@@ -14,11 +14,11 @@ import { getRndArray } from '../../common/common.js';
 import { Logger } from '../../common/logger.js';
 import { CONFIG, YT_AGENT } from '../../config/config.js';
 import { Music, PlayerData } from '../../constant/music/music.js';
-import { Playlist } from '../../model/models/index.js';
-import { MusicInfoRepository } from '../../model/repository/musicInfoRepository.js';
-import { MusicRepository } from '../../model/repository/musicRepository.js';
-import { PlaylistRepository } from '../../model/repository/playlistRepository.js';
-import { LogLevel } from '../../type/types.js';
+import { Playlist } from "@orangebot/shared";
+import { MusicInfoRepository } from "@orangebot/shared";
+import { MusicRepository } from "@orangebot/shared";
+import { PlaylistRepository } from "@orangebot/shared";
+import { LogLevel } from "@orangebot/shared";
 import { getPlaylistItems } from '../request/youtube.js';
 
 /**

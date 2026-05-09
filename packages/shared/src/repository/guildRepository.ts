@@ -1,12 +1,12 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 
 export class GuildRepository {
   private repository: Repository<Models.Guild>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Guild);
+    this.repository = getDataSource().getRepository(Models.Guild);
   }
 
   /**

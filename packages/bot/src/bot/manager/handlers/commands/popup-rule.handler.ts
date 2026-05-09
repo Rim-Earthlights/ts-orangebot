@@ -1,7 +1,7 @@
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { checkUserType } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
-import { UsersType } from '../../../../model/models/users.js';
+import { UsersType } from "@orangebot/shared";
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class PopupRuleHandler extends BaseMessageHandler {

@@ -1,6 +1,6 @@
 import { ActivityType } from 'discord.js';
 import { DISCORD_CLIENT } from '../../../constant/constants.js';
-import { UsersRepository } from '../../../model/repository/usersRepository.js';
+import { UsersRepository } from "@orangebot/shared";
 import { Tool } from './types.js';
 
 const FALLBACK_GUILD_ID = '1017341244508225596';

@@ -1,7 +1,7 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { LogLevel } from '../../../../type/types.js';
+import { LogLevel } from "@orangebot/shared";
 import { getIntArray, getRndNumber } from '../../../../common/common.js';
 import { ITO_TOPICS } from '../../../../constant/words/ito.js';
 

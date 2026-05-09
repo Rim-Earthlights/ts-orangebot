@@ -1,8 +1,8 @@
 import Express from 'express';
 import dayjs from 'dayjs';
-import { GachaRepository } from '../model/repository/gachaRepository.js';
+import { GachaRepository } from "@orangebot/shared";
 import { Logger } from '../common/logger.js';
-import { LogLevel } from '../type/types.js';
+import { LogLevel } from "@orangebot/shared";
 
 export const gachaRouter = Express.Router();
 

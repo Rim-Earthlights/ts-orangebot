@@ -1,12 +1,12 @@
 import { Repository } from 'typeorm';
 import * as Models from '../models/index.js';
-import { TypeOrm } from '../typeorm/typeorm.js';
+import { getDataSource } from '../config/datasource.js';
 
 export class SpeakerRepository {
   private repository: Repository<Models.Speaker>;
 
   constructor() {
-    this.repository = TypeOrm.dataSource.getRepository(Models.Speaker);
+    this.repository = getDataSource().getRepository(Models.Speaker);
   }
 
   /**
