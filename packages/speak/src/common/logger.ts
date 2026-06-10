@@ -1,8 +1,6 @@
+import { GuildRepository, LogData, LogRepository, setLogger } from '@orangebot/shared';
 import dayjs from 'dayjs';
-import { LogRepository } from '../model/repository/logRepository';
-import { LogData } from '../type/types';
-import { GuildRepository } from '../model/repository/guildRepository';
-import { CONFIG } from '../config/config';
+import { CONFIG } from '../config/config.js';
 
 export class Logger {
   static async put(logData: LogData) {
@@ -33,3 +31,8 @@ export class Logger {
     }
   }
 }
+
+// shared パッケージのリポジトリから getLogger() で参照される Logger 実装を登録する
+setLogger({
+  put: (data: LogData) => Logger.put(data),
+});

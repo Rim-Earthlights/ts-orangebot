@@ -1,11 +1,9 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import { VoiceChannel, VoiceState } from 'discord.js';
-import { Logger } from '../../common/logger';
-import { DISCORD_CLIENT } from '../../constant/constants';
-import { SpeakerRepository } from '../../model/repository/speakerRepository';
-import { UsersRepository } from '../../model/repository/usersRepository';
-import { LogLevel } from '../../type/types';
-import * as SpeakService from '../service/speakService';
+import { LogLevel, SpeakerRepository, UsersRepository } from '@orangebot/shared';
+import { Logger } from '../../common/logger.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
+import * as SpeakService from '../service/speakService.js';
 
 /**
  * ボイスチャンネルから切断した時の処理

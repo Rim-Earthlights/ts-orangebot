@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 import * as cron from 'node-cron';
+import { LogLevel } from '@orangebot/shared';
 import { llmList } from '../bot/service/chatService.js';
 import { Logger } from '../common/logger.js';
-import { LogLevel } from '../type/types.js';
 
 export async function initJob() {
   /**

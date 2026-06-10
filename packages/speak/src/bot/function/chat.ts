@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
-import { Logger } from '../../common/logger';
-import { CONFIG, LiteLLMModel } from '../../config/config';
-import { ChatHistory } from '../../model/models';
-import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository';
-import { LogLevel, ModelResponse } from '../../type/types';
-import * as ChatService from '../service/chatService';
-import { llmList } from '../service/chatService';
+import { ChatHistoryRepository, LogLevel, Models } from '@orangebot/shared';
+import { Logger } from '../../common/logger.js';
+import { CONFIG, LiteLLMModel } from '../../config/config.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
+import { ModelResponse } from '../../type/types.js';
+import * as ChatService from '../service/chatService.js';
+import { llmList } from '../service/chatService.js';
 
 /**
  * ChatGPTの会話データの削除
@@ -98,14 +98,14 @@ export async function revert(interaction: ChatInputCommandInteraction<CacheType>
       return;
     }
 
-    let chatHistory: ChatHistory | null = null;
+    let chatHistory: Models.ChatHistory | null = null;
     const chatHistoryRepository = new ChatHistoryRepository();
 
     if (uuid) {
       chatHistory = await chatHistoryRepository.get(uuid);
     } else {
       // データベースから最新のチャット履歴を取得
-      chatHistory = await chatHistoryRepository.getLatestByChannelId(id);
+      chatHistory = await chatHistoryRepository.getLatestByChannelId(id, DISCORD_CLIENT.user!.id);
     }
 
     if (!chatHistory) {
@@ -136,7 +136,12 @@ export async function revert(interaction: ChatInputCommandInteraction<CacheType>
       return;
     } else {
       // 現在のチャット履歴がない場合は、DBから取得した履歴で上書きする
-      const llm = await ChatService.initalize(id, chatHistory.model, chatHistory.mode, isGuild);
+      const llm = await ChatService.initalize(
+        id,
+        chatHistory.model as LiteLLMModel,
+        chatHistory.mode as ChatService.LiteLLMMode,
+        isGuild
+      );
       ChatService.llmList.llm.push({ ...llm, chat: chatHistory.content, uuid: chatHistory.uuid });
     }
 

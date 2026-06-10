@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CoeiroSpeakersResponse, SpeakersResponse } from '../interface/audioResponse';
+import { CoeiroSpeakersResponse, SpeakersResponse } from '../interface/audioResponse.js';
 
 export let SPEAKER_IDS: { uuid: string; styleId: number }[] = [];
 

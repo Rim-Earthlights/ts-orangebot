@@ -2,11 +2,10 @@ import {
   getVoiceConnection
 } from '@discordjs/voice';
 import { EmbedBuilder, Message, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import { CONFIG } from '../../config/config';
-import { DISCORD_CLIENT } from '../../constant/constants';
-import { SpeakerRepository } from '../../model/repository/speakerRepository';
-import { UsersRepository } from '../../model/repository/usersRepository';
-import * as SpeakService from '../service/speakService';
+import { SpeakerRepository, UsersRepository } from '@orangebot/shared';
+import { CONFIG } from '../../config/config.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
+import * as SpeakService from '../service/speakService.js';
 
 /**
  * 読み上げを呼び出す

@@ -10,8 +10,9 @@ import {
 } from 'discord.js';
 import express from 'express';
 import { fs } from 'mz';
+import { LogLevel, SpeakerRepository, createDataSource } from '@orangebot/shared';
 import { commandSelector, interactionSelector } from './bot/commands.js';
-import * as DotBotFunctions from './bot/dot_function';
+import * as DotBotFunctions from './bot/dot_function/index.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/room.js';
 import { LiteLLMMode } from './bot/service/chatService.js';
 import * as SpeakService from './bot/service/speakService.js';
@@ -20,10 +21,7 @@ import { Logger } from './common/logger.js';
 import { CONFIG, CommandConfig } from './config/config.js';
 import { DISCORD_CLIENT } from './constant/constants.js';
 import { initJob } from './job/job.js';
-import { SpeakerRepository } from './model/repository/speakerRepository.js';
-import { TypeOrm } from './model/typeorm/typeorm.js';
 import { routers } from './routers.js';
-import { LogLevel } from './type/types.js';
 
 // read config file
 const json = process.argv[2];
@@ -56,7 +54,16 @@ app.listen(CONFIG.PORT, () => {
 
 console.log('==================================================');
 
-TypeOrm.dataSource
+// 読み上げbotは複数プロセスが同一DBを共有するためスキーマ同期は行わない
+const dataSource = createDataSource({
+  host: CONFIG.DB.HOSTNAME,
+  username: CONFIG.DB.USERNAME,
+  password: CONFIG.DB.PASSWORD,
+  port: CONFIG.DB.PORT,
+  database: CONFIG.DB.DATABASE,
+  synchronize: false,
+});
+dataSource
   .initialize()
   .then(async () => {
     await Logger.put({

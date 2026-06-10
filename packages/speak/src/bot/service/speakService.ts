@@ -13,12 +13,10 @@ import {
 import axios from 'axios';
 import { EmbedBuilder, VoiceBasedChannel } from 'discord.js';
 import { Readable } from 'stream';
-import { convertMessageWithoutEmoji, SPEAKER_IDS } from '../../common/common';
-import { Logger } from '../../common/logger';
-import { AudioResponse } from '../../interface/audioResponse';
-import * as Models from '../../model/models';
-import { UsersRepository } from '../../model/repository/usersRepository';
-import { LogLevel } from '../../type/types';
+import { LogLevel, Models, UsersRepository } from '@orangebot/shared';
+import { convertMessageWithoutEmoji, SPEAKER_IDS } from '../../common/common.js';
+import { Logger } from '../../common/logger.js';
+import { AudioResponse } from '../../interface/audioResponse.js';
 
 export const Speaker = {
   player: [] as Player[],

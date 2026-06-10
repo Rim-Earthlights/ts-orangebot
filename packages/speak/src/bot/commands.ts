@@ -1,10 +1,10 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, Message } from 'discord.js';
-import { findVoiceFromId, initializeCoeiroSpeakerIds } from '../common/common';
-import { CONFIG } from '../config/config';
-import { UsersRepository } from '../model/repository/usersRepository';
-import * as DotBotFunctions from './dot_function';
-import * as BotFunctions from './function';
-import { LiteLLMMode } from './service/chatService';
+import { UsersRepository } from '@orangebot/shared';
+import { findVoiceFromId, initializeCoeiroSpeakerIds } from '../common/common.js';
+import { CONFIG } from '../config/config.js';
+import * as DotBotFunctions from './dot_function/index.js';
+import * as BotFunctions from './function/index.js';
+import { LiteLLMMode } from './service/chatService.js';
 
 /**
  * 渡されたコマンドから処理を実行する

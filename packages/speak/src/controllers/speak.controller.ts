@@ -1,7 +1,7 @@
+import { SpeakerRepository } from '@orangebot/shared';
 import express from 'express';
-import { initAudioPlayer } from '../bot/service/speakService';
-import { DISCORD_CLIENT } from '../constant/constants';
-import { SpeakerRepository } from '../model/repository/speakerRepository';
+import { initAudioPlayer } from '../bot/service/speakService.js';
+import { DISCORD_CLIENT } from '../constant/constants.js';
 
 export const speakerController = express.Router();
 
@@ -22,8 +22,13 @@ speakerController.get('/speaker/status/:guildId', async (req, res) => {
     res.status(400).send('Guild ID is required');
   }
 
+  if (!DISCORD_CLIENT.user) {
+    res.status(503).send('Bot is not logged in');
+    return;
+  }
+
   const repository = new SpeakerRepository();
-  const speaker = await repository.getStatus(guildId);
+  const speaker = await repository.getStatus(guildId, DISCORD_CLIENT.user.id);
   res.send({
     guildId,
     used: speaker ? 'true' : 'false',
@@ -42,8 +47,13 @@ speakerController.post('/speaker/call', async (req, res) => {
     return;
   }
 
+  if (!DISCORD_CLIENT.user) {
+    res.status(503).send('Bot is not logged in');
+    return;
+  }
+
   const repository = new SpeakerRepository();
-  const speaker = await repository.getStatus(guildId);
+  const speaker = await repository.getStatus(guildId, DISCORD_CLIENT.user.id);
   if (speaker) {
     res.status(409).send('Speaker is already used');
     return;

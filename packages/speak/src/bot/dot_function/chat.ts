@@ -1,13 +1,12 @@
 import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
 import { ChatCompletionContentPart } from 'openai/resources';
-import { Logger } from '../../common/logger';
-import { LiteLLMModel } from '../../config/config';
-import { DISCORD_CLIENT } from '../../constant/constants';
-import { ChatHistoryChannelType } from '../../model/models/chatHistory';
-import { ChatHistoryRepository } from '../../model/repository/chatHistoryRepository';
-import { LogLevel, Role } from '../../type/types';
-import * as ChatService from '../service/chatService';
+import { ChatHistoryChannelType, ChatHistoryRepository, LogLevel } from '@orangebot/shared';
+import { Logger } from '../../common/logger.js';
+import { LiteLLMModel } from '../../config/config.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
+import { Role } from '../../type/types.js';
+import * as ChatService from '../service/chatService.js';
 
 /**
  * ChatGPTで会話する

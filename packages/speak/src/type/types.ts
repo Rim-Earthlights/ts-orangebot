@@ -1,32 +1,3 @@
-import dayjs from 'dayjs';
-import OpenAI from 'openai';
-import { ChatCompletionMessageParam } from 'openai/resources';
-import { LiteLLMModel } from '../config/config';
-
-export type LogData = {
-  guild_id?: string;
-  channel_id?: string;
-  user_id?: string;
-  level: LogLevel;
-  event: string;
-  message?: string[];
-};
-
-export enum LogLevel {
-  INFO = 'info',
-  ERROR = 'error',
-  SYSTEM = 'system',
-}
-
-export type LiteLLM = {
-  id: string;
-  openai: OpenAI;
-  model: LiteLLMModel;
-  chat: ChatCompletionMessageParam[];
-  isGuild: boolean;
-  timestamp: dayjs.Dayjs;
-};
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type VisionMessage = {
   role: Role;

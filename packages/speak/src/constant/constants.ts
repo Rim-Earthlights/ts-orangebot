@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits, Partials } from 'discord.js';
-import { CONFIG } from '../config/config';
+import { CONFIG } from '../config/config.js';
 
 // Client
 export const DISCORD_CLIENT = new Client({

@@ -1,10 +1,9 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder, GuildMember, VoiceBasedChannel } from 'discord.js';
-import { CONFIG } from '../../config/config';
-import { DISCORD_CLIENT } from '../../constant/constants';
-import { SpeakerRepository } from '../../model/repository/speakerRepository';
-import { UsersRepository } from '../../model/repository/usersRepository';
-import * as SpeakService from '../service/speakService';
+import { SpeakerRepository, UsersRepository } from '@orangebot/shared';
+import { CONFIG } from '../../config/config.js';
+import { DISCORD_CLIENT } from '../../constant/constants.js';
+import * as SpeakService from '../service/speakService.js';
 
 export async function CallSpeaker(interaction: ChatInputCommandInteraction<CacheType>) {
   if (!interaction.guild || !DISCORD_CLIENT.user) {
