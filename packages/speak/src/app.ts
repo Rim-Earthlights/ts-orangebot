@@ -1,4 +1,4 @@
-import 'dayjs/locale/ja';
+import 'dayjs/locale/ja.js';
 import {
   ChannelType,
   Message,

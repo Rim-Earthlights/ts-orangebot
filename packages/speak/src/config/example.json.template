@@ -2,6 +2,7 @@
     "TOKEN": "",
     "APP_ID": "",
     "NAME": "",
+    "PORT": 4100,
     "COMMAND": {
         "SPEAK": {
             "COMMAND_NAME": "speak",

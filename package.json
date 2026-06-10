@@ -9,6 +9,7 @@
         "build": "pnpm -r build",
         "clean": "pnpm -r clean",
         "dev": "pnpm --filter @orangebot/bot dev",
+        "dev:speak": "pnpm --filter @orangebot/speak dev",
         "lint": "pnpm --filter @orangebot/bot lint",
         "smoke-test": "pnpm --filter @orangebot/bot smoke-test"
     },
