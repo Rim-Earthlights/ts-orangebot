@@ -23,6 +23,9 @@
 | `/help` | ヘルプを表示 |
 | `/nickname <name>` | ニックネームを設定 |
 | `/speak` | 読み上げ Bot を呼び出す |
+| `/dict add <surface> <pronunciation> <accent_type> [word_type] [priority]` | 読み上げ辞書に単語を登録 |
+| `/dict list` | 読み上げ辞書の単語一覧を表示 |
+| `/dict remove <uuid>` | 読み上げ辞書から単語を削除 |
 | `/topic` | ランダムな話題を表示 |
 
 #### ゲーム・ガチャ

@@ -136,6 +136,47 @@ export const SERVER_SLASH_COMMANDS = [
   new SlashCommandBuilder().setName('speak').setDescription('読み上げボットを呼び出します'),
   new SlashCommandBuilder().setName('discon').setDescription('読み上げボットを切断します'),
   new SlashCommandBuilder()
+    .setName('dict')
+    .setDescription('読み上げの辞書を設定します')
+    .addSubcommand((sc) =>
+      sc
+        .setName('add')
+        .setDescription('辞書に単語を登録します')
+        .addStringOption((option) => option.setName('surface').setDescription('単語').setRequired(true))
+        .addStringOption((option) => option.setName('pronunciation').setDescription('読み(カタカナ)').setRequired(true))
+        .addNumberOption((option) =>
+          option.setName('accent_type').setDescription('アクセント型(音が下がる場所. 0で平板)').setRequired(true)
+        )
+        .addStringOption((option) =>
+          option
+            .setName('word_type')
+            .setDescription('品詞')
+            .setRequired(false)
+            .addChoices(
+              { name: '固有名詞', value: 'PROPER_NOUN' },
+              { name: '普通名詞', value: 'COMMON_NOUN' },
+              { name: '動詞', value: 'VERB' },
+              { name: '形容詞', value: 'ADJECTIVE' },
+              { name: '語尾', value: 'SUFFIX' }
+            )
+        )
+        .addNumberOption((option) =>
+          option
+            .setName('priority')
+            .setDescription('優先度(0-10. 大きいほど優先. 推奨1-9)')
+            .setRequired(false)
+            .setMinValue(0)
+            .setMaxValue(10)
+        )
+    )
+    .addSubcommand((sc) => sc.setName('list').setDescription('辞書に登録されている単語の一覧を表示します'))
+    .addSubcommand((sc) =>
+      sc
+        .setName('remove')
+        .setDescription('辞書から単語を削除します')
+        .addStringOption((option) => option.setName('uuid').setDescription('単語のUUID').setRequired(true))
+    ),
+  new SlashCommandBuilder()
     .setName('user-type')
     .setDescription('ユーザーの権限を変更します')
     .addStringOption((option) => option.setName('user_id').setDescription('ユーザーID').setRequired(true))

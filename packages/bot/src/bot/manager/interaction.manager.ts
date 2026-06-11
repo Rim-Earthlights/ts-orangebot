@@ -26,6 +26,7 @@ import { LyricsHandler } from './handlers/interactions/lyrics.handler.js';
 import { ModelHandler } from './handlers/interactions/model.handler.js';
 import { PhotoHandler } from './handlers/interactions/photo.handler.js';
 import { PauseHandler } from './handlers/interactions/pause.handler.js';
+import { DictHandler } from './handlers/interactions/dict.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -53,6 +54,7 @@ export class InteractionManager {
     const speakHandler = new SpeakHandler(this.logger);
     this.handlers.set('speak', speakHandler);
     this.handlers.set('discon', speakHandler);
+    this.handlers.set('dict', new DictHandler(this.logger));
 
     // Dice commands
     const diceHandler = new DiceHandler(this.logger);
