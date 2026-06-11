@@ -1,10 +1,10 @@
-import ytdl from '@distube/ytdl-core';
 import { EmbedBuilder, Message, VoiceBasedChannel } from 'discord.js';
 import { isEnableFunction } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
 import { functionNames } from '../../../../constant/constants.js';
 import { LogLevel } from "@orangebot/shared";
 import * as DotBotFunctions from '../../../dot_function/index.js';
+import { extractVideoId } from '../../../request/innertube.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class MusicHandler extends BaseMessageHandler {
@@ -191,7 +191,7 @@ export class MusicHandler extends BaseMessageHandler {
       return;
     }
 
-    if (!ytdl.validateURL(args[0])) {
+    if (!extractVideoId(args[0])) {
       const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
       message.reply({ content: `YoutubeのURLを指定して～！`, embeds: [send] });

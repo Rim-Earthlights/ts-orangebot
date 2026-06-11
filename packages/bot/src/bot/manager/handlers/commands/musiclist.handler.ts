@@ -1,9 +1,8 @@
-import ytdl from '@distube/ytdl-core';
 import { EmbedBuilder, Message } from 'discord.js';
-import ytpl from 'ytpl';
 import { Logger } from '../../../../common/logger.js';
 import { PlaylistRepository } from "@orangebot/shared";
 import * as DotBotFunctions from '../../../dot_function/index.js';
+import { extractPlaylistId, extractVideoId, getInnertube } from '../../../request/innertube.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class MusicListHandler extends BaseMessageHandler {
@@ -127,43 +126,46 @@ export class MusicListHandler extends BaseMessageHandler {
         return;
       }
 
-      const playlistFlag = ytpl.validateID(url);
-      const movieFlag = ytdl.validateURL(url);
+      const playlistId = extractPlaylistId(url);
+      const videoId = extractVideoId(url);
 
-      if (playlistFlag) {
-        const pid = await ytpl.getPlaylistID(url);
-        const playlist = await ytpl(pid);
+      if (playlistId) {
+        const innertube = await getInnertube();
+        const playlist = await innertube.getPlaylist(playlistId);
+        const title = playlist.info.title ?? '';
 
         await repository.save({
           name: name,
           user_id: message.author.id,
-          title: playlist.title,
-          url: playlist.url,
+          title: title,
+          url: `https://www.youtube.com/playlist?list=${playlistId}`,
         });
 
         const send = new EmbedBuilder()
           .setColor('#ff9900')
           .setTitle(`登録`)
-          .setDescription(`登録名: ${name}\nプレイリスト名: ${playlist.title}\nURL: ${url}`);
+          .setDescription(`登録名: ${name}\nプレイリスト名: ${title}\nURL: ${url}`);
         message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
 
         return;
       }
 
-      if (movieFlag) {
-        const movie = await ytdl.getInfo(url);
+      if (videoId) {
+        const innertube = await getInnertube();
+        const movie = await innertube.getBasicInfo(videoId);
+        const title = movie.basic_info.title ?? '';
 
         await repository.save({
           name: name,
           user_id: message.author.id,
-          title: movie.videoDetails.title,
-          url: movie.videoDetails.video_url,
+          title: title,
+          url: `https://www.youtube.com/watch?v=${videoId}`,
         });
 
         const send = new EmbedBuilder()
           .setColor('#ff9900')
           .setTitle(`登録`)
-          .setDescription(`登録名: ${name}\n動画名: ${movie.videoDetails.title}\nURL: ${url}`);
+          .setDescription(`登録名: ${name}\n動画名: ${title}\nURL: ${url}`);
         message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
 
         return;
