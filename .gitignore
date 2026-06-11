@@ -5,6 +5,8 @@ node_modules/
 .node-version
 packages/bot/src/config/config.ts
 packages/bot/src/test.ts
+packages/speak/src/config/config.ts
+packages/speak/src/config/*.json
 .data/*.data
 .vscode
 output/

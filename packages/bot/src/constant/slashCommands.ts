@@ -134,6 +134,7 @@ export const SERVER_SLASH_COMMANDS = [
     .addSubcommand((sc) => sc.setName('stop').setDescription('会話を停止します')),
   new SlashCommandBuilder().setName('memory').setDescription('メモリ機能を切り替えます'),
   new SlashCommandBuilder().setName('speak').setDescription('読み上げボットを呼び出します'),
+  new SlashCommandBuilder().setName('discon').setDescription('読み上げボットを切断します'),
   new SlashCommandBuilder()
     .setName('user-type')
     .setDescription('ユーザーの権限を変更します')
