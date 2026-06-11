@@ -5,6 +5,7 @@ export * from './config/index.js';
 export * from './repository/index.js';
 export * from './common/random.js';
 export * from './constants/dice.js';
+export * from './constants/gacha.js';
 export * from './services/index.js';
 
 // Models entry namespace - export both as namespace and as individual names

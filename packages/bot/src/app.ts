@@ -8,7 +8,7 @@ import helmet from 'helmet';
 import path from 'node:path';
 import { Chat, Room } from './bot/dot_function/index.js';
 import { joinVoiceChannel, leftVoiceChannel } from './bot/dot_function/voice.js';
-import { GachaList } from './bot/function/gacha.js';
+import { GachaService } from '@orangebot/shared';
 import { reactionSelector } from './bot/reactions.js';
 import { switchFunctionByAPIKey } from './common/common.js';
 import { Logger } from './common/logger.js';
@@ -83,7 +83,7 @@ await dataSource
   .then(async () => {
     // DBの初期化と再構築
     await new ItemRepository().init(GACHA_LIST);
-    GachaList.allItemList = await new ItemRepository().getAll();
+    GachaService.allItemList = await new ItemRepository().getAll();
     await Logger.put({
       guild_id: undefined,
       channel_id: undefined,

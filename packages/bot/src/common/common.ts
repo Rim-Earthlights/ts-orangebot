@@ -2,7 +2,7 @@
 import { CONFIG } from '../config/config.js';
 import { ENABLE_FUNCTION, functionNames } from '../constant/constants.js';
 import { UsersType } from "@orangebot/shared";
-import { UsersRepository } from "@orangebot/shared";
+import { UserService } from "@orangebot/shared";
 
 // 純粋な乱数・配列ユーティリティは @orangebot/shared に移動した (Phase 2-1)
 export { arrayEquals, getIntArray, getRndArray, getRndNumber } from '@orangebot/shared';
@@ -41,16 +41,7 @@ export function detectMimeType(buffer: Buffer): string {
  * @returns 権限があるかどうか
  */
 export const checkUserType = async (gid: string, uid: string, type: UsersType): Promise<boolean> => {
-  const usersRepository = new UsersRepository();
-  const userType = await usersRepository.getUsersType(gid, uid);
-
-  if (!userType) {
-    return false;
-  }
-  if (type === userType || userType === UsersType.OWNER) {
-    return true;
-  }
-  return false;
+  return await new UserService().hasUserType(gid, uid, type);
 };
 
 /**

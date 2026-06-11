@@ -10,6 +10,7 @@ export type SharedDataSourceConfig = {
   logging?: boolean;
   synchronize?: boolean;
   dropSchema?: boolean;
+  migrations?: DataSourceOptions['migrations'];
 };
 
 let dataSource: DataSource | null = null;
@@ -28,6 +29,7 @@ export function createDataSource(config: SharedDataSourceConfig): DataSource {
     dropSchema: config.dropSchema ?? false,
     charset: 'utf8mb4',
     entities: SHARED_ENTITIES,
+    migrations: config.migrations,
   };
   dataSource = new DataSource(options);
   return dataSource;
