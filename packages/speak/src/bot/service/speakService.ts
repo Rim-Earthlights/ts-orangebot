@@ -59,22 +59,45 @@ export async function initAudioPlayer(gid: string, channel: VoiceBasedChannel): 
     return null;
   }
 
+  const connection = joinVoiceChannel({
+    adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
+    channelId: channel.id,
+    guildId: channel.guild.id,
+    selfDeaf: true,
+    selfMute: false,
+  });
+  const player = createAudioPlayer({
+    behaviors: {
+      noSubscriber: NoSubscriberBehavior.Stop,
+    },
+  });
+
+  connection.on('error', (error) => {
+    Logger.put({
+      guild_id: gid,
+      channel_id: channel.id,
+      user_id: 'system',
+      level: LogLevel.ERROR,
+      event: 'voice-connection',
+      message: [`${error.name}: ${error.message}`, error.stack ?? ''],
+    });
+  });
+  player.on('error', (error) => {
+    Logger.put({
+      guild_id: gid,
+      channel_id: channel.id,
+      user_id: 'system',
+      level: LogLevel.ERROR,
+      event: 'audio-player',
+      message: [`${error.name}: ${error.message}`, error.stack ?? ''],
+    });
+  });
   const p = {
     guild_id: gid,
     channel: {
       id: channel.id,
-      connection: joinVoiceChannel({
-        adapterCreator: channel.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
-        channelId: channel.id,
-        guildId: channel.guild.id,
-        selfDeaf: true,
-        selfMute: false,
-      }),
-      player: createAudioPlayer({
-        behaviors: {
-          noSubscriber: NoSubscriberBehavior.Stop,
-        },
-      }),
+      connection,
+      player,
       status: AudioPlayerStatus.Idle,
       chat: [],
     },
@@ -163,12 +186,24 @@ export async function addQueue(channel: VoiceBasedChannel, message: string, uid:
     return;
   }
 
-  const stream = await audioQuery(user, message);
+  try {
+    const stream = await audioQuery(user, message);
 
-  PlayerData.channel.chat.push({
-    user_id: uid,
-    message: stream,
-  });
+    PlayerData.channel.chat.push({
+      user_id: uid,
+      message: stream,
+    });
+  } catch (e) {
+    const error = e as Error;
+    Logger.put({
+      guild_id: channel.guild.id,
+      channel_id: channel.id,
+      user_id: uid,
+      level: LogLevel.ERROR,
+      event: 'audio-query',
+      message: [`${error.name}: ${error.message}`],
+    });
+  }
 }
 
 /**
@@ -187,12 +222,26 @@ export async function speak(): Promise<void> {
 
     speaker.channel.status = AudioPlayerStatus.Playing;
 
-    const resource = createAudioResource(Readable.from(chatData.message), { inputType: StreamType.Arbitrary });
-    speaker.channel.player.play(resource);
+    try {
+      const resource = createAudioResource(Readable.from(chatData.message), { inputType: StreamType.Arbitrary });
+      speaker.channel.player.play(resource);
 
-    await entersState(speaker.channel.player, AudioPlayerStatus.Playing, 1000);
-    await entersState(speaker.channel.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
-    speaker.channel.status = AudioPlayerStatus.Idle;
+      await entersState(speaker.channel.player, AudioPlayerStatus.Playing, 1000);
+      await entersState(speaker.channel.player, AudioPlayerStatus.Idle, 24 * 60 * 60 * 1000);
+    } catch (e) {
+      const error = e as Error;
+      Logger.put({
+        guild_id: speaker.guild_id,
+        channel_id: speaker.channel.id,
+        user_id: chatData.user_id,
+        level: LogLevel.ERROR,
+        event: 'speak',
+        message: [`${error.name}: ${error.message}`, error.stack ?? ''],
+      });
+      speaker.channel.player.stop(true);
+    } finally {
+      speaker.channel.status = AudioPlayerStatus.Idle;
+    }
   });
 }
 
