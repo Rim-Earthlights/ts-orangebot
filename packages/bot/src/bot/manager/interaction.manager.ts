@@ -48,7 +48,11 @@ export class InteractionManager {
 
     this.handlers.set('help', new HelpHandler(this.logger));
     this.handlers.set('nickname', new NicknameHandler(this.logger));
-    this.handlers.set('speak', new SpeakHandler(this.logger));
+
+    // Speak commands
+    const speakHandler = new SpeakHandler(this.logger);
+    this.handlers.set('speak', speakHandler);
+    this.handlers.set('discon', speakHandler);
 
     // Dice commands
     const diceHandler = new DiceHandler(this.logger);

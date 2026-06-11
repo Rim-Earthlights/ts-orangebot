@@ -9,6 +9,15 @@ export class SpeakHandler extends BaseInteractionHandler {
   }
 
   async execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
-    await BotFunctions.Speak.call(interaction);
+    switch (interaction.commandName) {
+      case 'speak': {
+        await BotFunctions.Speak.call(interaction);
+        break;
+      }
+      case 'discon': {
+        await BotFunctions.Speak.discon(interaction);
+        break;
+      }
+    }
   }
 }
