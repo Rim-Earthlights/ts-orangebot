@@ -64,8 +64,13 @@ packages/bot/src/
 ├── routers.ts                # Express ルーター集約
 │
 ├── bot/                      # Bot コアロジック
+│   ├── adapters/             # Discord ↔ shared サービスの橋渡し (Phase 2-3)
+│   │   ├── chat.adapter.ts        # AI チャット (ChatService + Embed 整形)
+│   │   ├── music.adapter.ts       # 音楽再生 (MusicService + 音声接続/再生)
+│   │   └── room.adapter.ts        # ルーム管理 (RoomService + チャンネル操作)
+│   │
 │   ├── dot_function/         # ドットコマンド (`.xxx`) のビジネスロジック
-│   │   ├── chat.ts                # AI チャット (本体)
+│   │   ├── chat.ts                # AI チャット (adapters/chat.adapter.ts への再エクスポート)
 │   │   ├── chat_attachments.ts    # 添付ファイル処理
 │   │   ├── chat_tools/            # Tool Calling 用ツール群
 │   │   │   ├── index.ts
@@ -74,9 +79,9 @@ packages/bot/src/
 │   │   │   └── weather.ts         # 天気取得
 │   │   ├── dice.ts                # ダイス / ゲーム
 │   │   ├── forecast.ts            # 天気予報
-│   │   ├── gacha.ts               # ガチャ
-│   │   ├── music.ts               # 音楽再生
-│   │   ├── room.ts                # ルーム管理
+│   │   ├── gacha.ts               # ガチャ (抽選は shared の GachaService)
+│   │   ├── music.ts               # 音楽再生 (adapters/music.adapter.ts への再エクスポート)
+│   │   ├── room.ts                # ルーム管理 (adapters/room.adapter.ts への再エクスポート)
 │   │   ├── register.ts            # ユーザー登録
 │   │   ├── speak.ts               # 読み上げ (TTS)
 │   │   ├── voice.ts               # ボイスチャンネルイベント
@@ -99,7 +104,6 @@ packages/bot/src/
 │   │   ├── youtube.ts        # YouTube Data API
 │   │   └── spotify.ts        # Spotify
 │   │
-│   ├── services/             # サービス層 (chat.service.ts は現状空)
 │   ├── function/             # ユーティリティ関数
 │   ├── reactions.ts          # リアクション処理
 │   └── mention.ts            # メンションロジック
@@ -115,6 +119,7 @@ packages/bot/src/
 ```
 
 > モデル / リポジトリ / DataSource 設定は `@orangebot/shared` (`packages/shared/src/`) に移動済み。bot 側は import のみ。
+> Discord 非依存のサービス層 (`DiceService` / `PhotoService` / `GachaService` / `UserService` / `ChatService` / `RoomService` / `MusicService`) も `@orangebot/shared` の `services/` に集約済み (Phase 2)。bot は `bot/adapters/` 経由でこれらを呼び出し、Embed 整形・音声接続などの Discord 固有処理のみを担当する。
 
 ## メッセージフロー
 

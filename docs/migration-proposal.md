@@ -8,7 +8,8 @@
 > - **計画外の追加: `packages/speak` (2026-06)** — 別リポジトリだった speak-voicevox を読み上げ Bot として monorepo に統合。DB 層は `@orangebot/shared` を再利用し、bot からは HTTP (`/speaker/call` 等) で呼び出す。本提案の Phase 構成には影響しない
 > - **Phase 2-1 (テスト基盤 + 純粋ロジックの移動): 完了** — Vitest を shared / bot に導入 (`pnpm test`)、テスト用 MariaDB コンテナ (`docker-compose.test.yml` + `pnpm test:db:up`) を整備。`synchronize: false` へ切り替え、初期マイグレーション `InitialSchema` を生成し、マイグレーションの正しさをインテグレーションテストで検証 (詳細は `docs/database.md`)。dice / photo サービスと乱数ユーティリティ・ダイス定数を `@orangebot/shared` (`services/` `common/` `constants/`) に移動し、ユニットテストを作成
 > - **Phase 2-2 (DB 依存サービスの切り出し): 完了** — `GachaService` (抽選・通常ガチャ・拡張ガチャ・プレゼント管理・おみくじ) と `UserService` (権限チェック・ガチャ回数リセット・登録/削除/復元) を `@orangebot/shared` に新設。入出力は `types/gacha.ts` / `types/user.ts` の DTO で定義し、リポジトリはコンストラクタ注入でモック可能。ユニットテスト (リポジトリモック) + リポジトリ層のインテグレーションテスト (テスト用 DB) を整備。bot の `dot_function/gacha.ts` / `function/gacha.ts` はサービス呼び出しに置き換え (Embed 整形は bot 側に残置)
-> 次の作業は Phase 2-3 (Discord 密結合ロジックの抽出 + アダプター層) から。
+> - **Phase 2-3 (Discord 密結合ロジックの抽出 + アダプター層): 完了** — `ChatService` (LLM セッション管理・履歴永続化・モデル解決)、`RoomService` (ルーム DB 管理・チーム分け)、`MusicService` (キュー・再生設定・プレイリスト管理) を `@orangebot/shared` に新設し、Phase 2 の全サービス切り出しが完了。bot 側に `bot/adapters/` (chat / music / room) を新設して Discord 固有処理 (Embed 整形・音声接続・チャンネル操作) を分離し、旧 `dot_function/{chat,music,room}.ts` はアダプターへの再エクスポートに変更。`llmList` グローバル状態は ChatService のセッションストアに統合。サービス層のユニットテスト一式を整備 (unit 98件 + integration 16件)
+> Phase 2 (サービス層の整備) はこれで完了。次の作業は Phase 3 (API サーバー新設) から。
 
 ## 1. 背景と目的
 
@@ -315,7 +316,7 @@ Phase 2 は対応範囲が広いため、以下の 3 つのサブフェーズに
 
 ---
 
-#### Phase 2-3: Discord 密結合ロジックの抽出 + アダプター層
+#### Phase 2-3: Discord 密結合ロジックの抽出 + アダプター層 ✅ 完了
 
 **目的**: Discord.js に密結合したロジックからビジネスロジックを抽出し、アダプター層を整備する
 

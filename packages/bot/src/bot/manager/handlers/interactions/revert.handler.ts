@@ -1,10 +1,10 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { ChatHistory, ChatHistoryRepository } from '@orangebot/shared';
-import { LiteLLMModel } from '../../../../config/config.js';
+import { ChatHistory, ChatHistoryRepository, ChatSession } from '@orangebot/shared';
 import { DISCORD_CLIENT } from '../../../../constant/constants.js';
-import { getIdInfoInteraction, initalize, LiteLLM, LiteLLMMode, llmList } from '../../../../constant/chat/chat.js';
+import { getIdInfoInteraction } from '../../../../constant/chat/chat.js';
+import { createChatService } from '../../../adapters/chat.adapter.js';
 
 export class RevertHandler extends BaseInteractionHandler {
   private chatHistoryRepository: ChatHistoryRepository;
@@ -51,12 +51,13 @@ export class RevertHandler extends BaseInteractionHandler {
         return;
       }
 
-      // llmListから該当するチャットセッションを探す
-      let llm: LiteLLM | undefined;
+      // セッションストアから該当するチャットセッションを探す
+      const chatService = createChatService();
+      let llm: ChatSession | undefined;
       if (uuid) {
-        llm = llmList.llm.find((llm) => llm.uuid === uuid);
+        llm = chatService.getSessionByUuid(uuid);
       } else {
-        llm = llmList.llm.find((llm) => llm.id === id);
+        llm = chatService.getSession(id);
       }
 
       if (llm) {
@@ -70,13 +71,16 @@ export class RevertHandler extends BaseInteractionHandler {
         return;
       } else {
         // 現在のチャット履歴がない場合は、DBから取得した履歴で上書きする
-        const llm = await initalize(
+        chatService.restoreSession(
           id,
-          chatHistory.model as LiteLLMModel,
-          chatHistory.mode as LiteLLMMode,
+          {
+            uuid: chatHistory.uuid,
+            chat: chatHistory.content,
+            model: chatHistory.model,
+            mode: chatHistory.mode,
+          },
           isGuild
         );
-        llmList.llm.push({ ...llm, chat: chatHistory.content, uuid: chatHistory.uuid });
       }
 
       const successEmbed = new EmbedBuilder()

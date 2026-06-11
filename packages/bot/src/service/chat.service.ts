@@ -1,7 +1,8 @@
 import { CONFIG, LiteLLMModel } from '../config/config.js';
 import { ChatInputCommandInteraction, CacheType } from 'discord.js';
-import { initalize, LiteLLMMode, llmList, Role } from '../constant/chat/chat.js';
+import { LiteLLMMode, Role } from '../constant/chat/chat.js';
 import { MUTE_MESSAGE, TIMEOUT_MESSAGE } from '../constant/constants.js';
+import { createChatService } from '../bot/adapters/chat.adapter.js';
 
 export class InteractionChatService {
   private interaction: ChatInputCommandInteraction<CacheType>;
@@ -23,11 +24,7 @@ export class InteractionChatService {
       return;
     }
 
-    let llm = llmList.llm.find((c) => c.id === id);
-    if (!llm) {
-      llm = await initalize(id, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT, isGuild);
-      llmList.llm.push(llm);
-    }
+    const llm = createChatService().getOrCreateSession(id, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT, isGuild);
 
     llm.chat.push({ role: role, content: content });
   }
