@@ -4,9 +4,9 @@
 
 - **DBMS:** MariaDB
 - **ORM:** TypeORM v0.3
-- **スキーマ同期:** `synchronize: true` (自動マイグレーション、Phase 2-1 で `false` に切り替え予定)
+- **スキーマ同期:** bot は `synchronize: true` (自動マイグレーション、Phase 2-1 で `false` に切り替え予定)。speak は同一 DB を共有する別プロセスのため `synchronize: false` で接続
 - **エンティティ数:** 17 (`packages/shared/src/models/`)
-- **DataSource ファクトリ:** `packages/shared/src/config/datasource.ts` の `createDataSource(config)` を bot から呼び出して初期化
+- **DataSource ファクトリ:** `packages/shared/src/config/datasource.ts` の `createDataSource(config)` を bot / speak から呼び出して初期化
 - **マイグレーション CLI:** `pnpm --filter @orangebot/shared migration:{generate,run,revert,show}` (DB_HOST/DB_PORT/DB_USERNAME/DB_PASSWORD/DB_DATABASE を `.env` で指定)
 
 > Discord ID 系の主キー (`id`, `guild_id`, `channel_id` 等) は DB 上は `bigint(20)` として定義されているが、TypeORM の慣習によりアプリケーション層では `string` として扱われる。
@@ -127,12 +127,21 @@
 | `event` | string | イベント名 |
 | `message` | string | メッセージ |
 
+### Speaker - 読み上げ Bot の使用状況
+
+読み上げ Bot (`packages/speak`) インスタンスの貸出状況を guild × bot ユーザー単位で管理する。bot の `.speak` / `/speak` が未使用インスタンスの検索に、speak の `/speaker/call` / `/speaker/discon` が使用状況の更新に使う。
+
+| カラム | 型 | 説明 |
+|---|---|---|
+| `guild_id` | string (PK) | ギルド ID |
+| `user_id` | string (PK) | 読み上げ Bot のユーザー ID (複合主キー) |
+| `is_used` | tinyint | 使用中フラグ |
+
 ### その他のエンティティ
 
 - **Color** - カラーデータ
 - **Role** - ユーザーロール
-- **Speaker** - TTS スピーカー設定
-- **UserSetting** - ユーザー個別設定
+- **UserSetting** - ユーザー個別設定 (読み上げの声 ID・スピード・ピッチ・抑揚を含む)
 - **Timer** - タイマーデータ
 - **MusicInfo** - 楽曲メタデータ
 - **BotInfo** - Bot 情報

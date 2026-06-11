@@ -13,13 +13,13 @@
 
 ### 2. `synchronize: true` が本番環境でも有効
 
-- **場所**: `packages/bot/src/model/typeorm/typeorm.ts:14`
-- **問題**: TypeORM の `synchronize: true` が環境チェックなしで常に有効。スキーマ変更時にカラムやテーブルが自動削除され、データ損失の可能性がある
+- **場所**: `packages/shared/src/config/datasource.ts` (`createDataSource` の `synchronize: config.synchronize ?? true`)
+- **問題**: bot は `synchronize` を指定せず起動するためデフォルトの `true` が常に有効。スキーマ変更時にカラムやテーブルが自動削除され、データ損失の可能性がある (speak は `false` を明示して接続)
 - **対策**: `NODE_ENV` で切り替え、本番では `false` にしてマイグレーションを使用
 
 ### 3. 非同期処理の未 await (Promise の握りつぶし)
 
-- **場所**: `packages/bot/src/app.ts:128` 付近 (`DISCORD_CLIENT.guilds.cache.map(async (guild) => ...)`)
+- **場所**: `packages/bot/src/app.ts` の ready イベント内 (`DISCORD_CLIENT.guilds.cache.map(async (guild) => ...)`)
 - **問題**: `.map()` 内の async 関数が await されていない
   ```typescript
   DISCORD_CLIENT.guilds.cache.map(async (guild) => {
@@ -40,14 +40,15 @@
 
 ### 5. ハードコードされた Discord ID
 
-- **場所**: `packages/bot/src/app.ts:262,336`, `packages/bot/src/bot/reactions.ts:58`, `packages/bot/src/bot/dot_function/chat_tools/userActivity.ts:6`, `packages/bot/src/bot/manager/handlers/interactions/lyrics.handler.ts:27`, `packages/bot/src/config/config.ts:37`
+- **場所**: `packages/bot/src/app.ts`, `packages/bot/src/bot/reactions.ts`, `packages/bot/src/bot/dot_function/chat_tools/userActivity.ts`, `packages/bot/src/bot/manager/handlers/interactions/lyrics.handler.ts`, `packages/bot/src/bot/dot_function/speak.ts`, `packages/bot/src/config/config.ts`
 - **問題**: チャンネル ID やギルド ID がソースコードに直接埋め込まれている
   - `'1020972071460814868'`, `'1239718107073875978'`, `'1017341244508225596'` 等
+  - `speak.ts` には読み上げ Bot のユーザー ID (`LEMON_SPEAKER_ID` / `LIME_SPEAKER_ID`) と呼出先 URI (`http://127.0.0.1:4100` 等) もハードコード
 - **対策**: 設定ファイルまたは DB のギルド設定に移動
 
 ### 6. イベントハンドラに try/catch がない
 
-- **場所**: `packages/bot/src/app.ts:188-308` (`messageCreate` イベント等)
+- **場所**: `packages/bot/src/app.ts` (`messageCreate` イベント等)
 - **問題**: ハンドラ内で例外が発生するとイベント処理全体が停止し、Bot が無応答になる可能性
 - **対策**: 各イベントハンドラのトップレベルに try/catch を追加
 
@@ -59,13 +60,13 @@
 
 ### 8. CORS が全オリジン許可
 
-- **場所**: `packages/bot/src/app.ts:43`
+- **場所**: `packages/bot/src/app.ts` (`app.use(cors())`)
 - **問題**: `app.use(cors())` で全オリジンからのリクエストを許可
 - **対策**: 許可するオリジンを明示的に指定
 
 ### 9. DB コネクションプール設定がない
 
-- **場所**: `packages/bot/src/model/typeorm/typeorm.ts`
+- **場所**: `packages/shared/src/config/datasource.ts`
 - **問題**: MariaDB のプール設定がデフォルトのまま。並行リクエスト増加時にコネクション枯渇の恐れ
 - **対策**: `poolSize`, `maxConnections`, `minConnections` を明示的に設定
 
@@ -110,19 +111,19 @@
 
 ### 16. ソフトデリートのカスケードがない
 
-- **場所**: `packages/bot/src/model/repository/usersRepository.ts`
+- **場所**: `packages/shared/src/repository/usersRepository.ts`
 - **問題**: ユーザーをソフトデリートしても、関連する gacha / settings レコードが残り、クエリ不整合の原因になる
 - **対策**: カスケードソフトデリートロジックの実装、またはリレーション設定の見直し
 
 ### 17. DB インデックスの不足
 
-- **場所**: `packages/bot/src/model/models/*.ts`
+- **場所**: `packages/shared/src/models/*.ts`
 - **問題**: `user_id`, `guild_id`, `channel_id` 等の頻出検索カラムにインデックスが未設定の可能性
 - **対策**: 頻繁にクエリされるカラムに `@Index()` デコレータを追加
 
 ### 18. 環境別の設定切り替えがない
 
-- **場所**: `packages/bot/src/config/config.template.ts`, `packages/bot/src/model/typeorm/typeorm.ts`
+- **場所**: `packages/bot/src/config/config.template.ts`, `packages/shared/src/config/datasource.ts`
 - **問題**: `NODE_ENV` による設定の切り替え機構がなく、開発/本番で同じ設定が適用される
 - **対策**: 環境変数ベースの設定切り替えを実装
 

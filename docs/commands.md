@@ -23,6 +23,7 @@
 | `/help` | ヘルプを表示 |
 | `/nickname <name>` | ニックネームを設定 |
 | `/speak` | 読み上げ Bot を呼び出す |
+| `/discon` | 読み上げ Bot を切断する |
 | `/dict add <surface> <pronunciation> <accent_type> [word_type] [priority]` | 読み上げ辞書に単語を登録 |
 | `/dict list` | 読み上げ辞書の単語一覧を表示 |
 | `/dict remove <uuid>` | 読み上げ辞書から単語を削除 |
@@ -177,11 +178,15 @@
 
 ### 読み上げ (TTS)
 
-| コマンド | エイリアス | 説明 |
-|---|---|---|
-| `.speak` | | 読み上げを開始 |
-| `.discon` | | 読み上げを停止 |
-| `.speaker-config <voice> <speed>` | `.spcon` | 読み上げ設定 |
+`.speak` は bot 本体が処理し、未使用の読み上げ Bot インスタンス (`packages/speak`) を HTTP で呼び出します。それ以外は読み上げ Bot 側が直接処理するコマンドです (コマンド名はインスタンス別 JSON 設定で変更可能、以下はデフォルト)。
+
+| コマンド | エイリアス | 処理する Bot | 説明 |
+|---|---|---|---|
+| `.speak` | | bot | 読み上げ Bot を呼び出す |
+| `.discon` | | speak | 読み上げを停止・切断 |
+| `.speaker-config <voice_id> [speed] [pitch] [intonation]` | `.spcon` | speak | 読み上げ設定 (引数なしで現在の設定を表示) |
+| `.sp-reload` | | speak | スピーカー ID 一覧を再読込 |
+| `.<bot名> <text>` | | speak | 読み上げ Bot の LLM とチャット |
 
 ### 天気予報
 
@@ -197,3 +202,25 @@
 | `.pic` | ランダムな写真を表示 |
 | `.cat` | 猫の写真を表示 |
 | `.topic` | ランダムな話題を表示 |
+
+---
+
+## 読み上げ Bot (`packages/speak`) のスラッシュコマンド
+
+読み上げ Bot インスタンスが独自に登録するコマンドです。
+
+### サーバーコマンド (Guild)
+
+| コマンド | 説明 |
+|---|---|
+| `/speak` | 読み上げを呼び出す |
+
+### DM コマンド
+
+| コマンド | 説明 |
+|---|---|
+| `/delete [last]` | LLM とのチャット履歴を削除 |
+| `/revert [uuid]` | 最新のチャット履歴を復元 |
+| `/spcon <voice_id> [speed] [pitch] [intonation]` | 読み上げの声・スピード・ピッチ・抑揚を設定 |
+| `/model-list` | LLM モデル一覧を表示 |
+| `/model-set <model>` | LLM モデルを設定 |
