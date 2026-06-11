@@ -1,33 +1,41 @@
-// LiteLLM proxy server models
-export enum LiteLLMModel {
-  GPT_4_1 = 'openai-gpt-41',
-  GPT_4_1_MINI = 'openai-gpt-41-mini',
-  GPT_4_1_NANO = 'openai-gpt-41-nano',
-  GPT_4O = 'openai-gpt-4o',
-  GPT_4O_MINI = 'openai-gpt-4o-mini',
-  GPT_45_PREVIEW = 'openai-gpt-45-preview',
-  GPT_O1 = 'openai-gpt-o1',
-  GPT_O3_MINI = 'openai-gpt-o3-mini',
-  ANTHROPIC_CLAUDE_3_5_SONNET = 'anthropic-sonnet-35',
-  ANTHROPIC_CLAUDE_3_5_HAIKU = 'anthropic-haiku-35',
-  ANTHROPIC_CLAUDE_3_7_SONNET = 'anthropic-sonnet-37',
-  ANTHROPIC_CLAUDE_3_7_SONNET_REASON = 'anthropic-sonnet-37-reasoning',
-}
+export const LITELLM_MODEL = {
+  GPT_4O: 'chatgpt-4o-latest',
+  GPT_5: 'gpt-5-chat-latest',
+  GPT_5_1: 'gpt-5.1-chat-latest',
+  GPT_5_2: 'gpt-5.2-chat-latest',
+  GPT_5_THINKING: 'gpt-5-chat-latest-thinking',
+  GPT_5_MINI: 'gpt-5-mini',
+  GPT_5_NANO: 'gpt-5-nano',
+  CLAUDE_4_5_SONNET: 'claude-sonnet-4-5',
+  CLAUDE_4_6_SONNET: 'claude-sonnet-4-6',
+  CLAUDE_4_6_OPUS: 'claude-opus-4-6',
+  GROK_4: 'xai/grok-4-latest',
+  GROK_4_FAST: 'xai/grok-4-fast-non-reasoning',
+  GPT_5_4: 'gpt-5.4',
+} as const;
 
-// TOKEN / APP_ID / NAME / COMMAND / PORT は起動時に
-// インスタンス別 JSON (process.argv[2]) の値で上書きされる
+export type LiteLLMModel = (typeof LITELLM_MODEL)[keyof typeof LITELLM_MODEL];
+
 export const CONFIG = {
   TOKEN: 'YOUR_BOT_TOKEN',
   APP_ID: 'YOUR_APP_ID',
   NAME: 'BOT_NAME',
-  PORT: 4100,
   DB: {
     HOSTNAME: 'localhost',
     USERNAME: 'orange',
+    DATABASE: 'orangebot',
     PASSWORD: 'PASSWORD',
     PORT: 3306,
-    DATABASE: 'orangebot',
+    FLUSH: false,
   },
+  OPENAI: {
+    BASE_URL: 'https://localhost:4001/v1',
+    ORG: 'OPENAI_ORG_ID',
+    PROJECT: 'OPENAI_PROJECT_ID',
+    KEY: 'OPENAI_API_KEY',
+    DEFAULT_MODEL: LITELLM_MODEL.CLAUDE_4_6_SONNET,
+  },
+  PORT: 4100,
   COMMAND: {
     SPEAK: {
       COMMAND_NAME: 'speak',
@@ -41,13 +49,6 @@ export const CONFIG = {
     },
     DISCONNECT: 'discon',
   },
-  OPENAI: {
-    KEY: 'YOUR_OPENAI_KEY',
-    ORG: 'YOUR_OPENAI_ORG',
-    PROJECT: 'YOUR_OPENAI_PROJECT',
-    BASE_URL: 'http://localhost:4000',
-    DEFAULT_MODEL: LiteLLMModel.GPT_4_1 as LiteLLMModel,
-  },
 };
 
 export type CommandConfig = {
@@ -58,6 +59,7 @@ export type CommandConfig = {
   COMMAND: {
     SPEAK: {
       COMMAND_NAME: string;
+      SLASH_COMMAND_NAME: string;
       SLEEP_TIME: number;
     };
     SPEAKER_CONFIG: {
