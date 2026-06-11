@@ -1,5 +1,3 @@
-import ytdl from '@distube/ytdl-core';
-
 export enum LiteLLMModel {
   GPT_4_1 = 'openai-gpt-41',
   GPT_4_1_MINI = 'openai-gpt-41-mini',
@@ -46,6 +44,8 @@ export const CONFIG = {
   YOUTUBE: {
     // if disabled, still empty.
     KEY: '',
+    // logged-in cookie for youtubei.js; see: https://ytjs.dev/guide/authentication.html
+    COOKIE: ``,
   },
   // OPENAI API KEY / TOKEN
   // KEY:
@@ -83,5 +83,3 @@ export const CONFIG = {
     FLUSH: false,
   },
 };
-
-export const YT_AGENT = ytdl.createAgent();

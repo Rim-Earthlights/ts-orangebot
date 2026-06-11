@@ -6,19 +6,23 @@ import {
   entersState,
   getVoiceConnection,
   joinVoiceChannel,
+  StreamType,
 } from '@discordjs/voice';
-import ytdl from '@distube/ytdl-core';
 import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
-import pldl, { SpotifyAlbum, SpotifyTrack } from 'play-dl';
+import { Readable } from 'node:stream';
+import type { ReadableStream as WebReadableStream } from 'node:stream/web';
+import prism from 'prism-media';
+import { YTNodes } from 'youtubei.js';
 import { getRndArray } from '../../common/common.js';
 import { Logger } from '../../common/logger.js';
-import { CONFIG, YT_AGENT } from '../../config/config.js';
+import { CONFIG } from '../../config/config.js';
 import { Music, PlayerData } from '../../constant/music/music.js';
 import { Playlist } from "@orangebot/shared";
 import { MusicInfoRepository } from "@orangebot/shared";
 import { MusicRepository } from "@orangebot/shared";
 import { PlaylistRepository } from "@orangebot/shared";
 import { LogLevel } from "@orangebot/shared";
+import { extractPlaylistId, extractVideoId, getInnertube } from '../request/innertube.js';
 import { getPlaylistItems } from '../request/youtube.js';
 
 /**
@@ -34,44 +38,33 @@ export async function add(
   loop?: boolean,
   shuffle?: boolean
 ): Promise<boolean> {
-  // false | "so_playlist" | "so_track" | "sp_track" | "sp_album" | "sp_playlist" | "dz_track" | "dz_playlist" | "dz_album" | "yt_video" | "yt_playlist" | "search"
   if (url.includes('intl-ja/')) {
     url = url.replace('intl-ja/', '');
   }
 
-  const musicFlag = await pldl.validate(url);
+  const videoId = extractVideoId(url);
+  const playlistId = extractPlaylistId(url);
 
-  switch (musicFlag) {
-    case 'yt_video':
-    case 'yt_playlist': {
-      const videoFlag = !url.includes('playlist');
-
-      if (videoFlag) {
-        await addYoutubeMusic(channel, 'video', url, false, loop, shuffle);
-      } else {
-        await addYoutubeMusic(channel, 'playlist', url, false, loop, shuffle);
-      }
-
-      return true;
-    }
-    case 'sp_track':
-    case 'sp_album': {
-      await addSpotifyMusic(channel, url, musicFlag);
-      return true;
-    }
-    default: {
-      const playlistRepository = new PlaylistRepository();
-      const playlist = await playlistRepository.get(userId, url);
-      if (playlist) {
-        await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
-        return true;
-      }
-      const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
-
-      (channel as VoiceChannel).send({ content: `YoutubeかSpotifyのURLを指定して～！`, embeds: [send] });
-      return false;
-    }
+  if (videoId && !url.includes('playlist')) {
+    await addYoutubeMusic(channel, 'video', url, false, loop, shuffle);
+    return true;
   }
+
+  if (playlistId) {
+    await addYoutubeMusic(channel, 'playlist', url, false, loop, shuffle);
+    return true;
+  }
+
+  const playlistRepository = new PlaylistRepository();
+  const playlist = await playlistRepository.get(userId, url);
+  if (playlist) {
+    await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
+    return true;
+  }
+  const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
+
+  (channel as VoiceChannel).send({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
+  return false;
 }
 
 /**
@@ -81,9 +74,26 @@ export async function add(
  * @returns
  */
 export async function search(channel: VoiceBasedChannel, word: string): Promise<boolean> {
-  const searched = await pldl.search(word, { limit: 5 });
+  const innertube = await getInnertube();
+  const result = await innertube.search(word, { type: 'video' });
 
-  const isMv = searched.find((s) => s.title?.match(/((O|o)fficial|MV|mv|(M|m)usic)/) !== null);
+  const searched = result.videos
+    .filterType(YTNodes.Video)
+    .slice(0, 5)
+    .map((v) => ({
+      url: `https://www.youtube.com/watch?v=${v.video_id}`,
+      title: v.title.toString(),
+      views: Number(v.view_count?.toString().replace(/[^0-9]/g, '')) || 0,
+    }));
+
+  if (searched.length === 0) {
+    const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`検索結果が見つからない`);
+
+    (channel as VoiceChannel).send({ content: `検索結果が見つからなかった…`, embeds: [send] });
+    return false;
+  }
+
+  const isMv = searched.find((s) => s.title.match(/((O|o)fficial|MV|mv|(M|m)usic)/) !== null);
   if (isMv) {
     await addYoutubeMusic(channel, 'video', isMv.url, false, undefined, undefined);
     return true;
@@ -94,40 +104,6 @@ export async function search(channel: VoiceBasedChannel, word: string): Promise<
   });
 
   await addYoutubeMusic(channel, 'video', sorted[0].url, false, undefined, undefined);
-  return true;
-}
-
-/**
- * Spotifyの音楽情報を取得し、Youtubeで検索してキューに追加する
- * @param channel
- * @param url
- * @returns
- */
-export async function addSpotifyMusic(
-  channel: VoiceBasedChannel,
-  url: string,
-  musicFlag: 'sp_track' | 'sp_album'
-): Promise<boolean> {
-  if (pldl.is_expired()) {
-    console.log('token expire');
-    await pldl.refreshToken();
-  }
-
-  if (musicFlag === 'sp_album') {
-    const album = (await pldl.spotify(url)) as SpotifyAlbum;
-    const tracks = await album.all_tracks();
-
-    tracks.map(async (track) => {
-      await search(channel, `${track.name} ${track.artists.map((a) => a.name).join(' ')}`);
-      setTimeout(() => null, 100);
-    });
-
-    return true;
-  }
-
-  const sp = (await pldl.spotify(url)) as SpotifyTrack;
-  await search(channel, `${sp.name} ${sp.artists.map((a) => a.name).join(' ')}`);
-
   return true;
 }
 
@@ -154,7 +130,16 @@ export async function addYoutubeMusic(
   const status = p.player.state.status;
 
   if (type === 'video') {
-    const ytinfo = await pldl.video_info(url);
+    const videoId = extractVideoId(url) ?? (/^[\w-]{11}$/.test(url) ? url : null);
+    if (!videoId) {
+      return false;
+    }
+
+    const innertube = await getInnertube();
+    const ytinfo = (await innertube.getBasicInfo(videoId)).basic_info;
+    const title = ytinfo.title ?? '';
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const thumbnail = ytinfo.thumbnail?.[0]?.url ?? '';
 
     await repository.add(
       channel.guild.id,
@@ -162,9 +147,9 @@ export async function addYoutubeMusic(
       {
         guild_id: channel.guild.id,
         channel_id: channel.id,
-        title: ytinfo.video_details.title,
-        url: ytinfo.video_details.url,
-        thumbnail: ytinfo.video_details.thumbnails[0].url,
+        title: title,
+        url: videoUrl,
+        thumbnail: thumbnail,
       },
       !!interrupt
     );
@@ -176,7 +161,7 @@ export async function addYoutubeMusic(
 
     if (status === AudioPlayerStatus.Playing) {
       const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
-      const addMusic = musics.find((m) => m.url === ytinfo.video_details.url);
+      const addMusic = musics.find((m) => m.url === videoUrl);
 
       if (description.length >= 4000) {
         const sliced = musics.slice(0, 20);
@@ -184,10 +169,10 @@ export async function addYoutubeMusic(
 
         const send = new EmbedBuilder()
           .setColor('#cc66cc')
-          .setAuthor({ name: `追加: (${addMusic?.music_id}) ${ytinfo.video_details.title}` })
+          .setAuthor({ name: `追加: (${addMusic?.music_id}) ${title}` })
           .setTitle('キュー(先頭の20曲のみ表示しています): ')
           .setDescription(description)
-          .setThumbnail(ytinfo.video_details.thumbnails[0].url);
+          .setThumbnail(thumbnail);
 
         (channel as VoiceChannel).send({ embeds: [send] });
         return true;
@@ -195,10 +180,10 @@ export async function addYoutubeMusic(
 
       const send = new EmbedBuilder()
         .setColor('#cc66cc')
-        .setAuthor({ name: `追加: (${addMusic?.music_id}) ${ytinfo.video_details.title}` })
+        .setAuthor({ name: `追加: (${addMusic?.music_id}) ${title}` })
         .setTitle(`キュー(全${musics.length}曲): `)
         .setDescription(description ? description : 'none')
-        .setThumbnail(ytinfo.video_details.thumbnails[0].url);
+        .setThumbnail(thumbnail);
 
       (channel as VoiceChannel).send({ embeds: [send] });
       return true;
@@ -209,7 +194,7 @@ export async function addYoutubeMusic(
   }
 
   if (type === 'playlist') {
-    const pid = new URL(url).searchParams.get('list') ?? '';
+    const pid = extractPlaylistId(url) ?? '';
 
     try {
       const pm = await getPlaylistItems(pid);
@@ -390,80 +375,44 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
  * @returns
  */
 export async function interruptMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
-  // false | "so_playlist" | "so_track" | "sp_track" | "sp_album" | "sp_playlist" | "dz_track" | "dz_playlist" | "dz_album" | "yt_video" | "yt_playlist" | "search"
-  const musicFlag = await pldl.validate(url);
-  const repository = new MusicRepository();
+  const videoId = extractVideoId(url);
 
-  switch (musicFlag) {
-    case 'yt_video':
-    case 'yt_playlist': {
-      const videoFlag = !url.includes('playlist');
-
-      if (videoFlag) {
-        const m = addYoutubeMusic(channel, 'video', url, true);
-
-        const ytinfo = await pldl.video_info(url);
-        const musics = await repository.getQueue(channel.guild.id, channel.id);
-        const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
-
-        if (description.length >= 4000) {
-          const sliced = musics.slice(0, 20);
-          const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
-
-          const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setAuthor({ name: `割込: ${ytinfo.video_details.title}` })
-            .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
-            .setDescription(description);
-
-          (channel as VoiceChannel).send({ embeds: [send] });
-        } else {
-          const send = new EmbedBuilder()
-            .setColor('#cc66cc')
-            .setAuthor({ name: `割込: ${ytinfo.video_details.title}` })
-            .setTitle(`キュー(全${musics.length}曲): `)
-            .setDescription(description ? description : 'none');
-          (channel as VoiceChannel).send({ embeds: [send] });
-        }
-
-        await m;
-      }
-      break;
-    }
-    case 'sp_track': {
-      const s = addSpotifyMusic(channel, url, musicFlag);
-
-      const sp = await pldl.spotify(url);
-      const musics = await repository.getQueue(channel.guild.id, channel.id);
-      const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
-
-      if (description.length >= 4000) {
-        const sliced = musics.slice(0, 20);
-        const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
-
-        const send = new EmbedBuilder()
-          .setColor('#cc66cc')
-          .setAuthor({ name: `割込: ${sp.name}` })
-          .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
-          .setDescription(description);
-
-        (channel as VoiceChannel).send({ embeds: [send] });
-      } else {
-        const send = new EmbedBuilder()
-          .setColor('#cc66cc')
-          .setAuthor({ name: `割込: ${sp.name}` })
-          .setTitle(`キュー(全${musics.length}曲): `)
-          .setDescription(description ? description : 'none');
-        (channel as VoiceChannel).send({ embeds: [send] });
-      }
-
-      await s;
-      break;
-    }
-    default: {
-      return false;
-    }
+  if (!videoId) {
+    return false;
   }
+  if (url.includes('playlist')) {
+    return true;
+  }
+
+  const repository = new MusicRepository();
+  const m = addYoutubeMusic(channel, 'video', url, true);
+
+  const innertube = await getInnertube();
+  const ytinfo = (await innertube.getBasicInfo(videoId)).basic_info;
+  const musics = await repository.getQueue(channel.guild.id, channel.id);
+  const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+
+  if (description.length >= 4000) {
+    const sliced = musics.slice(0, 20);
+    const description = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
+
+    const send = new EmbedBuilder()
+      .setColor('#cc66cc')
+      .setAuthor({ name: `割込: ${ytinfo.title}` })
+      .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
+      .setDescription(description);
+
+    (channel as VoiceChannel).send({ embeds: [send] });
+  } else {
+    const send = new EmbedBuilder()
+      .setColor('#cc66cc')
+      .setAuthor({ name: `割込: ${ytinfo.title}` })
+      .setTitle(`キュー(全${musics.length}曲): `)
+      .setDescription(description ? description : 'none');
+    (channel as VoiceChannel).send({ embeds: [send] });
+  }
+
+  await m;
   return true;
 }
 
@@ -623,8 +572,14 @@ export async function playMusic(channel: VoiceBasedChannel) {
   try {
     const p = await updateAudioPlayer(channel);
 
-    const stream = ytdl(playing.url, { filter: 'audioonly', highWaterMark: 1 << 25, agent: YT_AGENT });
-    const resource = createAudioResource(stream);
+    const videoId = extractVideoId(playing.url);
+    if (!videoId) {
+      throw new Error(`動画IDを取得できない: ${playing.url}`);
+    }
+
+    const innertube = await getInnertube();
+    const stream = await innertube.download(videoId, { type: 'audio', quality: 'best', client: 'TV' });
+    const resource = createAudioResource(Readable.fromWeb(stream as WebReadableStream<Uint8Array>));
 
     if (info?.silent === 0) {
       const slicedMusics = musics.slice(0, 4);
@@ -953,13 +908,28 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
     return;
   }
 
+  const videoId = extractVideoId(playing.url);
+  if (!videoId) {
+    return;
+  }
+
   try {
     const p = await updateAudioPlayer(channel);
-    const stream = await pldl.stream(playing.url, { seek: seek, discordPlayerCompatibility: true });
 
-    const resource = createAudioResource(stream.stream, {
-      inputType: stream.type,
+    const innertube = await getInnertube();
+    const stream = await innertube.download(videoId, { type: 'audio', quality: 'best', client: 'TV' });
+
+    // ffmpegで指定秒数まで読み飛ばしてPCMに変換する
+    const transcoder = new prism.FFmpeg({
+      args: ['-analyzeduration', '0', '-loglevel', '0', '-ss', String(seek), '-i', '-', '-f', 's16le', '-ar', '48000', '-ac', '2'],
     });
+
+    const resource = createAudioResource(
+      Readable.fromWeb(stream as WebReadableStream<Uint8Array>).pipe(transcoder),
+      {
+        inputType: StreamType.Raw,
+      }
+    );
 
     p.player.play(resource);
 

@@ -15,10 +15,9 @@
         "smoke-test": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' scripts/smoke-test.ts"
     },
     "dependencies": {
-        "@orangebot/shared": "workspace:*",
         "@discordjs/opus": "^0.10.0",
-        "@discordjs/voice": "^0.18.0",
-        "@distube/ytdl-core": "^4.16.12",
+        "@discordjs/voice": "^0.19.2",
+        "@orangebot/shared": "workspace:*",
         "@types/body-parser": "^1.19.6",
         "@types/cors": "^2.8.19",
         "@types/ejs": "^3.1.1",
@@ -35,7 +34,6 @@
         "cors": "^2.8.5",
         "dayjs": "^1.11.3",
         "discord-api-types": "^0.38.16",
-        "discord-player-plus": "^2.0.5",
         "discord.js": "^14.21.0",
         "dotenv": "^17.2.0",
         "ejs": "^3.1.8",
@@ -56,11 +54,9 @@
         "reflect-metadata": "^0.2.2",
         "sharp": "^0.34.3",
         "ts-node": "^10.9.2",
-        "tweetnacl": "^1.0.3",
         "typeorm": "^0.3.25",
         "typescript": "^5.8.3",
-        "ytpl": "^2.3.0",
-        "ytsr": "^3.8.0"
+        "youtubei.js": "^17.0.1"
     },
     "devDependencies": {
         "@types/jsdom": "^21.1.7",

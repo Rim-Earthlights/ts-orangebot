@@ -12,3 +12,4 @@ packages/speak/src/config/*.json
 output/
 youtubeCookie.json
 *-player-script.js
+.cache/
