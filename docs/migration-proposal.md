@@ -1,10 +1,11 @@
 # 次フェーズ移行提案: モノレポ化 + API サーバー / フロントエンド新設
 
-> **進捗ステータス (2026-05 時点)**:
+> **進捗ステータス (2026-06 時点)**:
 > - **Phase 1-1 (パッケージマネージャ移行): 完了** — pnpm + workspace へ移行済み、未使用依存 (`@sequelize/core` / `fs` / `kysely` / `sqlite3` / `pg` / `pg-hstore`) も削除済み
 > - **Phase 1-2 (モノレポ構成・ワークスペース設定): 完了** — `packages/bot` / `packages/shared` の骨格と `pnpm-workspace.yaml` / `tsconfig.base.json` / smoke-test スクリプトが存在
 > - **Phase 1-3 (shared への切り出し): 完了** — モデル17個・リポジトリ13個・DataSource ファクトリ・Logger ポート (`getLogger`/`setLogger`)・`MusicAddItem` DTO を `@orangebot/shared` に集約。`bot/model/` と `bot/type/types.ts` は削除し、bot 全ファイルが `@orangebot/shared` 経由でアクセスする状態。`RoomRepository.init()` と `ChatHistoryRepository.getLatestByChannelId()` の Discord 依存は bot 側 (app.ts / revert.handler) に押し戻し済み
 > - **Phase 1-4 (ビルド・開発環境整備): 完了** — ルート/bot の `pnpm` スクリプトに `predev` / `presmoke-test` を追加して shared を先にビルド、TypeORM マイグレーション基盤 (`packages/shared/scripts/data-source-cli.ts` + `migration:*` scripts + `src/migrations/`) を整備。`synchronize: false` への切り替えは Phase 2-1 で実施
+> - **計画外の追加: `packages/speak` (2026-06)** — 別リポジトリだった speak-voicevox を読み上げ Bot として monorepo に統合。DB 層は `@orangebot/shared` を再利用し、bot からは HTTP (`/speaker/call` 等) で呼び出す。本提案の Phase 構成には影響しない
 > 次の作業は Phase 2-1 (テスト基盤 + 純粋ロジックの移動) から。
 
 ## 1. 背景と目的
@@ -75,6 +76,11 @@ ts-orangebot/
 │   │   │   ├── handlers/          ← コマンドハンドラ
 │   │   │   ├── managers/          ← メッセージ/インタラクション管理
 │   │   │   └── adapters/          ← shared サービスと Discord の橋渡し
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── speak/                      ← 読み上げ Bot (旧 speak-voicevox を統合済み)
+│   │   ├── src/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │

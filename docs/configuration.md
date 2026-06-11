@@ -1,8 +1,8 @@
 # 設定ガイド
 
-## 設定ファイル
+## Bot (`packages/bot`) の設定
 
-設定テンプレートは `src/config/config.template.ts` にあります。これをコピーして `config.ts` を作成し、各値を環境に合わせて設定してください。
+設定テンプレートは `packages/bot/src/config/config.template.ts` にあります。これをコピーして `config.ts` を作成し、各値を環境に合わせて設定してください。
 
 ## 設定項目
 
@@ -41,6 +41,7 @@
 | キー | 型 | 説明 |
 |---|---|---|
 | `KEY` | string | Google Cloud API キー (YouTube Data API) |
+| `COOKIE` | string | youtubei.js 用のログイン済み Cookie (音楽再生。任意) |
 
 ### OPENAI - AI チャット設定
 
@@ -51,8 +52,8 @@
 | `PROJECT` | string \| undefined | OpenAI Project ID |
 | `KEY` | string | API キー |
 | `DEFAULT_MODEL` | LiteLLMModel | デフォルトモデル |
-| `G3_MODEL` | LiteLLMModel | 軽量モデル (low) |
-| `G4_MODEL` | LiteLLMModel | 高性能モデル (high) |
+| `LOW_MODEL` | LiteLLMModel | 軽量モデル (low) |
+| `HIGH_MODEL` | LiteLLMModel | 高性能モデル (high) |
 | `ACCESSTOKEN` | string | アクセストークン |
 
 ### NICONICO - ニコニコ動画設定
@@ -88,7 +89,30 @@ LiteLLM プロキシを経由して以下のモデルが利用可能です:
 - Claude 3.5 Sonnet / Claude 3.5 Haiku
 - Claude 3.7 Sonnet / Claude 3.7 Sonnet Reasoning
 
+## 読み上げ Bot (`packages/speak`) の設定
+
+speak は 2 種類の設定ファイルを使います。どちらも gitignore されています。
+
+1. **共通設定** — `packages/speak/src/config/config.template.ts` をコピーして `config.ts` を作成し、DB (bot と共通) / OpenAI の設定を記入
+2. **インスタンス別設定** — `src/config/example.json.template` をコピーして `src/config/<name>.json` を作成し、起動引数で渡す
+
+インスタンス別 JSON の項目:
+
+| キー | 型 | 説明 |
+|---|---|---|
+| `TOKEN` | string | そのインスタンスの Discord Bot トークン |
+| `APP_ID` | string | Discord アプリケーション ID |
+| `NAME` | string | Bot 名 (`.{NAME} <text>` で LLM チャットにも使用) |
+| `PORT` | number | HTTP サーバーのポート (例: lemon=4100, lime=4101) |
+| `COMMAND.SPEAK` | object | 読み上げ呼出コマンド名・スリープ時間 |
+| `COMMAND.SPEAKER_CONFIG` | object | 読み上げ設定コマンド (`speaker-config` / `spcon` / `sp-reload`) |
+| `COMMAND.DISCONNECT` | string | 切断コマンド名 (`discon`) |
+
+また、音声合成のため [voicevox_engine](https://github.com/VOICEVOX/voicevox_engine) (port 50021)、COEIROINK を使う場合はそのエンジン (port 50032) をローカルで起動しておく必要があります。
+
 ## Web API エンドポイント
+
+### Bot (`packages/bot`)
 
 Express サーバーが以下のエンドポイントを提供します:
 
@@ -101,4 +125,13 @@ Express サーバーが以下のエンドポイントを提供します:
 | POST | `/music/*` | 音楽制御 |
 | POST | `/speaker/*` | TTS 設定 |
 | POST | `/session/*` | セッション管理 |
-| POST | `/spotify/callback` | Spotify OAuth コールバック |
+
+### 読み上げ Bot (`packages/speak`)
+
+bot から呼び出される HTTP API:
+
+| メソッド | パス | 説明 |
+|---|---|---|
+| GET | `/speaker/status/:guildId` | 読み上げ Bot の使用状況を取得 |
+| POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す |
+| POST | `/speaker/discon` | 読み上げ Bot を切断する |

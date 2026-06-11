@@ -7,7 +7,8 @@ pnpm workspace により以下のパッケージで構成されています。
 ```
 packages/
 ├── bot/        # Discord Bot 本体 (Express + Discord.js)
-└── shared/     # 共有層: TypeORM エンティティ / リポジトリ / DataSource ファクトリ / 共通型 (LoggerPort, DTO)
+├── shared/     # 共有層: TypeORM エンティティ / リポジトリ / DataSource ファクトリ / 共通型 (LoggerPort, DTO)
+└── speak/      # 読み上げ Bot (VOICEVOX / COEIROINK)。bot から HTTP で呼び出される
 ```
 
 ### shared パッケージの構成
@@ -21,7 +22,38 @@ packages/shared/src/
 └── types/          # LogData / LogLevel / LoggerPort / MusicAddItem DTO
 ```
 
-bot は `@orangebot/shared` 経由でこれらにアクセスし、起動時に `createDataSource(...)` で DataSource を初期化する。`packages/bot/src/common/logger.ts` がモジュール読み込み時に `setLogger()` で自身を shared に登録するため、shared 内のリポジトリから `getLogger().put(...)` で bot 側 Logger を呼び出せる。
+bot / speak は `@orangebot/shared` 経由でこれらにアクセスし、起動時に `createDataSource(...)` で DataSource を初期化する。`packages/bot/src/common/logger.ts` がモジュール読み込み時に `setLogger()` で自身を shared に登録するため、shared 内のリポジトリから `getLogger().put(...)` で bot 側 Logger を呼び出せる。
+
+### speak パッケージの構成
+
+旧 speak-voicevox を `packages/speak` として統合した読み上げ Bot。DB 層は `@orangebot/shared` を利用する (bot と同一 DB を共有するため `synchronize: false` で接続)。インスタンスごとに別の Discord トークン / ポートを JSON 設定で渡して複数起動する (例: lemon=4100, lime=4101)。
+
+```
+packages/speak/src/
+├── app.ts                    # エントリーポイント (引数の JSON 設定を読み込み、Express + Discord Bot 起動)
+├── routers.ts                # Express ルーター集約
+├── bot/
+│   ├── commands.ts           # ドットコマンド / スラッシュコマンドのセレクタ
+│   ├── dot_function/         # chat / room / speak のビジネスロジック
+│   ├── function/             # スラッシュコマンド向けロジック
+│   └── service/              # chatService (LLM セッション) / speakService (音声合成・再生)
+├── controllers/              # speak.controller (bot から呼ばれる HTTP API)
+├── config/                   # config.template.ts (DB/OpenAI 共通) + example.json.template (インスタンス別)
+├── common/                   # logger / VOICEVOX・COEIROINK のスピーカー ID 解決
+├── constant/                 # 定数 (DISCORD_CLIENT 等)
+├── interface/                # 音声合成 API のレスポンス型
+└── job/                      # Cron ジョブ (アイドル LLM セッションの破棄)
+```
+
+bot → speak の HTTP API (`controllers/speak.controller.ts`):
+
+| メソッド | パス | 説明 |
+|---|---|---|
+| GET | `/speaker/status/:guildId` | 読み上げ Bot の使用状況を取得 |
+| POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す |
+| POST | `/speaker/discon` | 読み上げ Bot を切断する |
+
+使用状況は shared の `SpeakerRepository` (speaker テーブル) で guild × bot ユーザー単位に管理される。音声合成は VOICEVOX (port 50021) / COEIROINK (port 50032) のローカルエンジンを HTTP で呼び出す。
 
 ## ディレクトリ構成 (`packages/bot/src`)
 
@@ -59,11 +91,12 @@ packages/bot/src/
 │   │   ├── interaction.handler.ts  # インタラクションハンドラ I/F
 │   │   └── handlers/
 │   │       ├── commands/           # ドットコマンドハンドラ (19 ファイル)
-│   │       └── interactions/       # スラッシュコマンドハンドラ (24 ファイル)
+│   │       └── interactions/       # スラッシュコマンドハンドラ (25 ファイル)
 │   │
 │   ├── request/              # 外部 API クライアント
 │   │   ├── openai.ts         # OpenAI / LiteLLM
-│   │   ├── youtube.ts        # YouTube API
+│   │   ├── innertube.ts      # youtubei.js (Innertube) — 音楽再生用ストリーム取得
+│   │   ├── youtube.ts        # YouTube Data API
 │   │   └── spotify.ts        # Spotify
 │   │
 │   ├── services/             # サービス層 (chat.service.ts は現状空)
@@ -116,6 +149,18 @@ packages/bot/src/
       → ルームが空に → 自動削除 (is_autodelete が有効の場合)
 ```
 
+### 読み上げ (TTS)
+
+```
+ユーザーが .speak / /speak を実行 (bot 側)
+  → Speak.call()
+    → SpeakerRepository で未使用の読み上げ Bot を検索
+      → 該当インスタンスへ HTTP POST /speaker/call (lemon=4100, lime=4101)
+        → speak 側がボイスチャンネルに接続し is_used を更新
+          → 以降のテキストを VOICEVOX / COEIROINK で音声合成して再生
+            → .discon / /discon で切断・解放
+```
+
 ## 設計パターン
 
 ### Handler パターン
@@ -136,14 +181,20 @@ packages/bot/src/
 | サービス | 用途 | 設定キー |
 |---|---|---|
 | OpenAI / LiteLLM | AI チャット (複数モデル対応) | `OPENAI.KEY`, `OPENAI.BASE_URL` |
+| YouTube (Innertube / youtubei.js) | 音楽再生のストリーム取得・検索 | `YOUTUBE.COOKIE` (ログイン Cookie, 任意) |
 | YouTube Data API | プレイリスト取得・検索 | `YOUTUBE.KEY` |
 | OpenWeatherMap | 天気予報 | `FORECAST.KEY` |
 | Spotify | 歌詞連携・OAuth | Spotify OAuth 設定 |
-| VOICEVOX | テキスト読み上げ | TTS Bot 経由 |
+| VOICEVOX / COEIROINK | テキスト読み上げ (音声合成) | speak パッケージがローカルエンジン (50021 / 50032) を直接呼び出し |
+
+## ボイスチャンネルの E2EE (DAVE)
+
+Discord のボイスチャンネル E2EE (DAVE プロトコル) には `@discordjs/voice` v0.19 + `@snazzah/davey` で対応している (bot の音楽再生・speak の読み上げ共通)。音楽再生はかつての play-dl / ytdl-core / discord-player-plus から youtubei.js (Innertube) に移行済み。
 
 ## Cron ジョブ
 
-| スケジュール | 処理内容 |
-|---|---|
-| `0 0 * * *` (毎日0時) | ユーザーのガチャチケットをリセット |
-| `* * * * *` (毎分) | 1時間以上アイドル状態のチャットセッションをクリーンアップ |
+| パッケージ | スケジュール | 処理内容 |
+|---|---|---|
+| bot | `0 0 * * *` (毎日0時) | ユーザーのガチャチケットをリセット |
+| bot | `* * * * *` (毎分) | 1時間以上アイドル状態のチャットセッションをクリーンアップ |
+| speak | `* * * * *` (毎分) | 30分以上アイドル状態の LLM セッションを破棄 |
