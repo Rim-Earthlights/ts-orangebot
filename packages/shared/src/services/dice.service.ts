@@ -1,5 +1,5 @@
-import { arrayEquals, getRndNumber } from '../../common/common.js';
-import { DICE_ROLE, DiceRole } from '../../constant/dice/dice.js';
+import { arrayEquals, getRndNumber } from '../common/random.js';
+import { DICE_ROLE, DiceRole } from '../constants/dice.js';
 
 export interface DiceRollResult {
   results: number[];
@@ -103,12 +103,12 @@ export function playcelovs(rounds: number = 3): {
 } {
   const playerResults = getCelo(rounds);
   const enemyResults = getCelo(rounds);
-  
+
   const playerFinalRole = playerResults[playerResults.length - 1];
   const enemyFinalRole = enemyResults[enemyResults.length - 1];
-  
+
   const judgeResult = judge(playerFinalRole, enemyFinalRole);
-  
+
   let winner: 'player' | 'enemy' | 'draw';
   if (judgeResult > 0) {
     winner = 'player';

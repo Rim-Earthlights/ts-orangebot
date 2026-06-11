@@ -15,6 +15,19 @@ import { Gacha } from './gacha.js';
 import { Guild } from './guild.js';
 import { UserSetting } from './userSetting.js';
 
+// enum はデコレーターメタデータ (design:type) から参照されるため、クラスより前に宣言する
+export enum UsersType {
+  MEMBER = 'member',
+  BOT = 'bot',
+  ADMIN = 'admin',
+  OWNER = 'owner',
+}
+
+export type VoiceChannelData = {
+  gid: string;
+  date: Date;
+};
+
 @Entity({ engine: 'InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' })
 export class Users extends BaseEntity {
   @PrimaryColumn({ type: 'bigint', width: 20 })
@@ -23,7 +36,7 @@ export class Users extends BaseEntity {
   @PrimaryColumn({ type: 'bigint', width: 20 })
   guild_id!: string;
 
-  @Column({ type: 'varchar', width: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   user_name: string | null = null;
 
   @Column({ type: 'varchar', nullable: false, default: 'member' })
@@ -58,15 +71,3 @@ export class Users extends BaseEntity {
   @JoinColumn({ name: 'id', referencedColumnName: 'user_id' })
   userSetting!: Relation<UserSetting>;
 }
-
-export enum UsersType {
-  MEMBER = 'member',
-  BOT = 'bot',
-  ADMIN = 'admin',
-  OWNER = 'owner',
-}
-
-export type VoiceChannelData = {
-  gid: string;
-  date: Date;
-};

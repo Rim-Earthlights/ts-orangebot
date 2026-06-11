@@ -8,13 +8,13 @@ export class Playlist extends BaseEntity {
   @Column({ type: 'bigint', width: 20, nullable: false })
   user_id!: string;
 
-  @Column({ type: 'varchar', width: 60, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   name!: string;
 
-  @Column({ type: 'varchar', width: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   title!: string;
 
-  @Column({ type: 'varchar', width: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   url!: string;
 
   @Column({ type: 'tinyint', nullable: false, default: 1 })

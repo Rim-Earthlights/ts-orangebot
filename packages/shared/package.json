@@ -18,6 +18,9 @@
         "build": "tsc",
         "watch": "tsc --watch",
         "clean": "rm -rf dist",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:integration": "vitest run --config vitest.integration.config.ts",
         "typeorm": "typeorm-ts-node-esm -d scripts/data-source-cli.ts",
         "migration:generate": "typeorm-ts-node-esm migration:generate -d scripts/data-source-cli.ts",
         "migration:run": "typeorm-ts-node-esm migration:run -d scripts/data-source-cli.ts",
@@ -33,6 +36,7 @@
         "@types/node": "^24.0.14",
         "dotenv": "^17.2.0",
         "ts-node": "^10.9.2",
-        "typescript": "^5.8.3"
+        "typescript": "^5.8.3",
+        "vitest": "^4.1.8"
     }
 }

@@ -4,10 +4,33 @@
 
 - **DBMS:** MariaDB
 - **ORM:** TypeORM v0.3
-- **スキーマ同期:** bot は `synchronize: true` (自動マイグレーション、Phase 2-1 で `false` に切り替え予定)。speak は同一 DB を共有する別プロセスのため `synchronize: false` で接続
-- **エンティティ数:** 17 (`packages/shared/src/models/`)
+- **スキーマ同期:** 全パッケージで `synchronize: false` (Phase 2-1 で切り替え済み)。スキーマ変更はマイグレーションで管理する
+- **エンティティ数:** 17 (`packages/shared/src/models/`)。DataSource に登録するのは `packages/shared/src/config/entities.ts` の `SHARED_ENTITIES` (Timer を除く 16)
 - **DataSource ファクトリ:** `packages/shared/src/config/datasource.ts` の `createDataSource(config)` を bot / speak から呼び出して初期化
 - **マイグレーション CLI:** `pnpm --filter @orangebot/shared migration:{generate,run,revert,show}` (DB_HOST/DB_PORT/DB_USERNAME/DB_PASSWORD/DB_DATABASE を `.env` で指定)
+- **マイグレーション定義:** `packages/shared/src/migrations/` に配置し、`src/migrations/index.ts` の `MIGRATIONS` 配列に適用順で登録する
+
+### マイグレーション運用
+
+- 新規 DB は `migration:run` で全スキーマが構築される (初期マイグレーション `InitialSchema` を含む)
+- **`synchronize: true` 時代に構築された既存 DB へのベースライン:** 既にテーブルが存在するため、`InitialSchema` を実行せずに適用済みとして記録する必要がある。以下を一度だけ手動実行する:
+  ```sql
+  CREATE TABLE IF NOT EXISTS `migrations` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `timestamp` bigint NOT NULL,
+    `name` varchar(255) NOT NULL,
+    PRIMARY KEY (`id`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  -- InitialSchema のクラス名 (タイムスタンプ付き) を登録する
+  INSERT INTO `migrations` (`timestamp`, `name`) VALUES (1781178467139, 'InitialSchema1781178467139');
+  ```
+- マイグレーションの正しさは `packages/shared/test/integration/migration.test.ts` で検証する (空 DB に全適用 → エンティティ定義との差分ゼロを確認)
+
+### テスト用 DB
+
+- ルートの `docker-compose.test.yml` で使い捨て MariaDB (ポート 3307) を起動する
+- `pnpm test:db:up` → `pnpm test:integration` → `pnpm test:db:down` の順に実行する
+- 接続先は `TEST_DB_HOST` / `TEST_DB_PORT` / `TEST_DB_USERNAME` / `TEST_DB_PASSWORD` / `TEST_DB_DATABASE` で上書き可能 (既定はコンテナの値)
 
 > Discord ID 系の主キー (`id`, `guild_id`, `channel_id` 等) は DB 上は `bigint(20)` として定義されているが、TypeORM の慣習によりアプリケーション層では `string` として扱われる。
 

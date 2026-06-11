@@ -1,6 +1,6 @@
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { arrayEquals, getRndNumber } from '../../common/common.js';
-import { DICE_ROLE, DiceRole } from '../../constant/dice/dice.js';
+import { DICE_ROLE, DiceRole } from '@orangebot/shared';
 
 /**
  * サイコロを振る

@@ -1,5 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
-import * as Models from '../models/index.js';
+import { SHARED_ENTITIES } from './entities.js';
 
 export type SharedDataSourceConfig = {
   host: string;
@@ -23,27 +23,11 @@ export function createDataSource(config: SharedDataSourceConfig): DataSource {
     port: config.port,
     database: config.database,
     logging: config.logging ?? false,
-    synchronize: config.synchronize ?? true,
+    // スキーマはマイグレーションで管理する (Phase 2-1 で synchronize: true から切り替え)
+    synchronize: config.synchronize ?? false,
     dropSchema: config.dropSchema ?? false,
     charset: 'utf8mb4',
-    entities: [
-      Models.Users,
-      Models.Gacha,
-      Models.Music,
-      Models.MusicInfo,
-      Models.Playlist,
-      Models.Item,
-      Models.Guild,
-      Models.ItemRank,
-      Models.Log,
-      Models.Role,
-      Models.Color,
-      Models.Room,
-      Models.Speaker,
-      Models.UserSetting,
-      Models.ChatHistory,
-      Models.BotInfo,
-    ],
+    entities: SHARED_ENTITIES,
   };
   dataSource = new DataSource(options);
   return dataSource;

@@ -6,7 +6,8 @@
 > - **Phase 1-3 (shared への切り出し): 完了** — モデル17個・リポジトリ13個・DataSource ファクトリ・Logger ポート (`getLogger`/`setLogger`)・`MusicAddItem` DTO を `@orangebot/shared` に集約。`bot/model/` と `bot/type/types.ts` は削除し、bot 全ファイルが `@orangebot/shared` 経由でアクセスする状態。`RoomRepository.init()` と `ChatHistoryRepository.getLatestByChannelId()` の Discord 依存は bot 側 (app.ts / revert.handler) に押し戻し済み
 > - **Phase 1-4 (ビルド・開発環境整備): 完了** — ルート/bot の `pnpm` スクリプトに `predev` / `presmoke-test` を追加して shared を先にビルド、TypeORM マイグレーション基盤 (`packages/shared/scripts/data-source-cli.ts` + `migration:*` scripts + `src/migrations/`) を整備。`synchronize: false` への切り替えは Phase 2-1 で実施
 > - **計画外の追加: `packages/speak` (2026-06)** — 別リポジトリだった speak-voicevox を読み上げ Bot として monorepo に統合。DB 層は `@orangebot/shared` を再利用し、bot からは HTTP (`/speaker/call` 等) で呼び出す。本提案の Phase 構成には影響しない
-> 次の作業は Phase 2-1 (テスト基盤 + 純粋ロジックの移動) から。
+> - **Phase 2-1 (テスト基盤 + 純粋ロジックの移動): 完了** — Vitest を shared / bot に導入 (`pnpm test`)、テスト用 MariaDB コンテナ (`docker-compose.test.yml` + `pnpm test:db:up`) を整備。`synchronize: false` へ切り替え、初期マイグレーション `InitialSchema` を生成し、マイグレーションの正しさをインテグレーションテストで検証 (詳細は `docs/database.md`)。dice / photo サービスと乱数ユーティリティ・ダイス定数を `@orangebot/shared` (`services/` `common/` `constants/`) に移動し、ユニットテストを作成
+> 次の作業は Phase 2-2 (DB 依存サービスの切り出し) から。
 
 ## 1. 背景と目的
 
@@ -190,7 +191,7 @@ Phase 1 は対応範囲が広いため、以下の 4 つのサブフェーズに
 
 ---
 
-#### Phase 1-3: shared パッケージへのモデル・リポジトリ切り出し 🔜 次に着手
+#### Phase 1-3: shared パッケージへのモデル・リポジトリ切り出し ✅ 完了
 
 **目的**: TypeORM エンティティとリポジトリ層を shared パッケージに移動する
 
@@ -264,7 +265,7 @@ Phase 2 は対応範囲が広いため、以下の 3 つのサブフェーズに
 
 ---
 
-#### Phase 2-1: テスト基盤 + 純粋ロジックの移動
+#### Phase 2-1: テスト基盤 + 純粋ロジックの移動 ✅ 完了
 
 **目的**: Vitest を導入し、Discord 非依存の純粋ロジックから着手する
 

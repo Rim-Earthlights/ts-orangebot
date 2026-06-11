@@ -6,13 +6,13 @@ export class BotInfo extends BaseEntity {
   @PrimaryColumn({ type: 'bigint', width: 20 })
   bot_id!: number;
 
-  @Column({ type: 'varchar', width: 255 })
+  @Column({ type: 'varchar', length: 255 })
   name!: string | null;
 
-  @Column({ type: 'varchar', width: 255, default: '#ffffff' })
+  @Column({ type: 'varchar', length: 255, default: '#ffffff' })
   font_color!: string;
 
-  @Column({ type: 'varchar', width: 255, default: '#000000' })
+  @Column({ type: 'varchar', length: 255, default: '#000000' })
   background_color!: string;
 
   @CreateDateColumn({ type: 'datetime', nullable: false })

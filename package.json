@@ -11,7 +11,11 @@
         "dev": "pnpm --filter @orangebot/bot dev",
         "dev:speak": "pnpm --filter @orangebot/speak dev",
         "lint": "pnpm --filter @orangebot/bot lint",
-        "smoke-test": "pnpm --filter @orangebot/bot smoke-test"
+        "smoke-test": "pnpm --filter @orangebot/bot smoke-test",
+        "test": "pnpm -r test",
+        "test:integration": "pnpm -r test:integration",
+        "test:db:up": "docker compose -f docker-compose.test.yml up -d",
+        "test:db:down": "docker compose -f docker-compose.test.yml down -v"
     },
     "pnpm": {
         "onlyBuiltDependencies": [

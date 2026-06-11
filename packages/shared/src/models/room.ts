@@ -16,7 +16,7 @@ export class Room extends BaseEntity {
   @Column({ type: 'bigint', width: 20 })
   guild_id!: string;
 
-  @Column({ type: 'varchar', width: 255 })
+  @Column({ type: 'varchar', length: 255 })
   name!: string;
 
   @Column({ type: 'tinyint', width: 1, default: 1 })
