@@ -26,10 +26,10 @@ export class Log extends BaseEntity {
   @Column({ type: 'bigint', width: 20, nullable: true })
   user_id: string | null = null;
 
-  @Column({ type: 'varchar', width: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   level!: LogLevel;
 
-  @Column({ type: 'varchar', width: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   event!: string;
 
   @Column({ type: 'text', nullable: true })

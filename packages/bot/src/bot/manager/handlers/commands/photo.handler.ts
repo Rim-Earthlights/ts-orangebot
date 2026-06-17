@@ -1,6 +1,6 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import { Logger } from '../../../../common/logger.js';
-import * as PhotoService from '../../../services/photo.service.js';
+import { PhotoService } from '@orangebot/shared';
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class PhotoHandler extends BaseMessageHandler {

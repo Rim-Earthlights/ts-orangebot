@@ -16,10 +16,10 @@ export class Color extends BaseEntity {
   @Column({ type: 'bigint', width: 20 })
   role_id!: string;
 
-  @Column({ type: 'varchar', width: 7 })
+  @Column({ type: 'varchar', length: 255 })
   color_code!: string;
 
-  @Column({ type: 'varchar', width: 255 })
+  @Column({ type: 'varchar', length: 255 })
   color_name!: string;
 
   @DeleteDateColumn({ type: 'datetime', nullable: true })

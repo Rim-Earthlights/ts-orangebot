@@ -11,13 +11,13 @@ export class Music extends BaseEntity {
   @PrimaryColumn({ type: 'smallint' })
   music_id!: number;
 
-  @Column({ type: 'varchar', width: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   title!: string;
 
-  @Column({ type: 'varchar', width: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   url!: string;
 
-  @Column({ type: 'varchar', width: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   thumbnail!: string;
 
   @Column({ type: 'tinyint', nullable: false, default: 0 })

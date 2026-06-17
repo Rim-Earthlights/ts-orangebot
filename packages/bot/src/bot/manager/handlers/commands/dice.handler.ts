@@ -1,6 +1,6 @@
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { Logger } from '../../../../common/logger.js';
-import * as DiceService from '../../../services/dice.service.js';
+import { DiceService } from '@orangebot/shared';
 import * as DotBotFunctions from '../../../dot_function/index.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 

@@ -1,8 +1,6 @@
-import dayjs from 'dayjs';
 import * as cron from 'node-cron';
 import { Logger } from '../common/logger.js';
-import { llmList } from '../constant/chat/chat.js';
-import { UsersRepository } from "@orangebot/shared";
+import { createChatService } from '../bot/adapters/chat.adapter.js';
 import { LogLevel } from "@orangebot/shared";
 import { UserJob } from './user.job.js';
 
@@ -26,9 +24,9 @@ export async function initJob() {
    * 1分毎に実行されるタスク
    */
   cron.schedule('* * * * *', async () => {
-    llmList.llm.map(async (c) => {
-      if (c.timestamp.isBefore(dayjs().subtract(1, 'hour')) && !c.memory) {
-        llmList.llm = llmList.llm.filter((g) => g.id !== c.id);
+    const expired = createChatService().pruneIdleSessions(60 * 60 * 1000);
+    await Promise.all(
+      expired.map(async (c) => {
         await Logger.put({
           guild_id: c.isGuild ? c.id : undefined,
           channel_id: c.isGuild ? undefined : c.id,
@@ -37,8 +35,8 @@ export async function initJob() {
           event: 'Cron job: * * * * *',
           message: [`ChatGPT data deleted`],
         });
-      }
-    });
+      })
+    );
   });
   await Logger.put({
     guild_id: undefined,

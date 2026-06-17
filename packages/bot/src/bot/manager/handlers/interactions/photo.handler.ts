@@ -1,7 +1,7 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import * as PhotoService from '../../../services/photo.service.js';
+import { PhotoService } from '@orangebot/shared';
 
 export class PhotoHandler extends BaseInteractionHandler {
   constructor(logger?: Logger) {

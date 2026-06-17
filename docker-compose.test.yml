@@ -1,0 +1,19 @@
+# インテグレーションテスト用の使い捨て MariaDB コンテナ
+# 起動: pnpm test:db:up / 停止: pnpm test:db:down
+services:
+  mariadb-test:
+    image: docker.io/library/mariadb:lts
+    environment:
+      MARIADB_ROOT_PASSWORD: orangebot_test
+      MARIADB_DATABASE: orangebot_test
+      MARIADB_USER: orangebot_test
+      MARIADB_PASSWORD: orangebot_test
+    ports:
+      - '127.0.0.1:3307:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 2s
+      timeout: 5s
+      retries: 30

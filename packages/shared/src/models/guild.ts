@@ -17,16 +17,16 @@ export class Guild extends BaseEntity {
   @PrimaryColumn({ type: 'bigint', width: 20 })
   id!: string;
 
-  @Column({ type: 'varchar', width: 255 })
+  @Column({ type: 'varchar', length: 255 })
   name!: string;
 
-  @Column({ type: 'varchar', width: 255, default: 'ロビー' })
+  @Column({ type: 'varchar', length: 255, default: 'ロビー' })
   lobby_name!: string;
 
-  @Column({ type: 'varchar', width: 255, default: '墓' })
+  @Column({ type: 'varchar', length: 255, default: '墓' })
   inactive_name!: string;
 
-  @Column({ type: 'varchar', width: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   exclude_names: string | null = null;
 
   @Column({ type: 'tinyint', default: 0 })

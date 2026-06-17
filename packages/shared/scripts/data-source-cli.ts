@@ -11,13 +11,12 @@
  *   pnpm --filter @orangebot/shared migration:generate src/migrations/AddUserIndex
  *   pnpm --filter @orangebot/shared migration:run
  *   pnpm --filter @orangebot/shared migration:revert
- *
- * NOTE: synchronize: true から false への切り替えは Phase 2-1 (Vitest 導入後) に行う。
  */
 
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import * as Models from '../src/models/index.js';
+import { SHARED_ENTITIES } from '../src/config/entities.js';
+import { MIGRATIONS } from '../src/migrations/index.js';
 
 const port = Number(process.env.DB_PORT ?? 3306);
 
@@ -36,23 +35,6 @@ export default new DataSource({
   // CLI 専用なので synchronize は常に false。マイグレーションのみで管理する。
   synchronize: false,
   logging: true,
-  entities: [
-    Models.Users,
-    Models.Gacha,
-    Models.Music,
-    Models.MusicInfo,
-    Models.Playlist,
-    Models.Item,
-    Models.Guild,
-    Models.ItemRank,
-    Models.Log,
-    Models.Role,
-    Models.Color,
-    Models.Room,
-    Models.Speaker,
-    Models.UserSetting,
-    Models.ChatHistory,
-    Models.BotInfo,
-  ],
-  migrations: ['src/migrations/*.ts'],
+  entities: SHARED_ENTITIES,
+  migrations: MIGRATIONS,
 });

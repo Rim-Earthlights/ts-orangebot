@@ -1,10 +1,10 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { getIdInfoInteraction, llmList } from '../../../../constant/chat/chat.js';
+import { getIdInfoInteraction } from '../../../../constant/chat/chat.js';
 import { ModelType } from "@orangebot/shared";
 import { UsersRepository } from "@orangebot/shared";
-import { CONFIG, LiteLLMModel } from '../../../../config/config.js';
+import { createChatService } from '../../../adapters/chat.adapter.js';
 
 export class ModelHandler extends BaseInteractionHandler {
   constructor(logger?: Logger) {
@@ -24,24 +24,15 @@ export class ModelHandler extends BaseInteractionHandler {
     if (!model) {
       return;
     }
-    let modelType: LiteLLMModel;
-    switch (model) {
-      case ModelType.DEFAULT:
-        modelType = CONFIG.OPENAI.DEFAULT_MODEL;
-        break;
-      case ModelType.LOW:
-        modelType = CONFIG.OPENAI.LOW_MODEL;
-        break;
-      case ModelType.HIGH:
-        modelType = CONFIG.OPENAI.HIGH_MODEL;
-        break;
-      default:
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`default, low, high のいずれかを選択してください。`);
-        interaction.reply({ embeds: [send] });
-        return;
+    const chatService = createChatService();
+    const modelType = chatService.resolveModelByType(model as (typeof ModelType)[keyof typeof ModelType]);
+    if (!modelType) {
+      const send = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle(`エラー`)
+        .setDescription(`default, low, high のいずれかを選択してください。`);
+      interaction.reply({ embeds: [send] });
+      return;
     }
     const userRepository = new UsersRepository();
     await userRepository.saveUserSetting({
@@ -49,7 +40,7 @@ export class ModelHandler extends BaseInteractionHandler {
       model_type: model as (typeof ModelType)[keyof typeof ModelType],
     });
 
-    const llm = llmList.llm.find((c) => c.id === id);
+    const llm = chatService.getSession(id);
     if (llm) {
       llm.model = modelType;
     }

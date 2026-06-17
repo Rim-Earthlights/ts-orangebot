@@ -1,13 +1,10 @@
 import dayjs from 'dayjs';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { Logger } from '../../common/logger.js';
-import { CONFIG, LiteLLMModel } from '../../config/config.js';
-import { LiteLLMMode, Role, llmList, initalize, getIdInfoInteraction } from '../../constant/chat/chat.js';
+import { LiteLLMModel } from '../../config/config.js';
+import { LiteLLMMode, Role, getIdInfoInteraction } from '../../constant/chat/chat.js';
 import { LogLevel } from "@orangebot/shared";
-import { ChatHistoryRepository } from "@orangebot/shared";
-import { ChatHistoryChannelType } from "@orangebot/shared";
-import { UsersRepository } from "@orangebot/shared";
-import { ModelType } from "@orangebot/shared";
+import { createChatService } from '../adapters/chat.adapter.js';
 
 /**
  * メモリ機能を切り替える
@@ -18,12 +15,11 @@ export async function setMemory(interaction: ChatInputCommandInteraction<CacheTy
   if (!id) {
     return;
   }
-  const gpt = llmList.llm.find((c) => c.id === id);
-  if (!gpt) {
+  const memory = createChatService().toggleMemory(id);
+  if (memory === null) {
     return;
   }
-  gpt.memory = !gpt.memory;
-  await interaction.reply(`メモリ機能を${gpt.memory ? '有効化' : '無効化'}したよ！`);
+  await interaction.reply(`メモリ機能を${memory ? '有効化' : '無効化'}したよ！`);
 }
 
 /**
@@ -32,20 +28,7 @@ export async function setMemory(interaction: ChatInputCommandInteraction<CacheTy
  * @returns
  */
 export async function getUserModelType(userId: string): Promise<LiteLLMModel> {
-  const userRepository = new UsersRepository();
-  const userSetting = await userRepository.getUserSetting(userId);
-  const modelType = userSetting?.model_type ?? ModelType.DEFAULT;
-
-  switch (modelType) {
-    case ModelType.DEFAULT:
-      return CONFIG.OPENAI.DEFAULT_MODEL;
-    case ModelType.LOW:
-      return CONFIG.OPENAI.LOW_MODEL;
-    case ModelType.HIGH:
-      return CONFIG.OPENAI.HIGH_MODEL;
-    default:
-      return CONFIG.OPENAI.DEFAULT_MODEL;
-  }
+  return (await createChatService().resolveUserModel(userId)) as LiteLLMModel;
 }
 
 /**
@@ -56,13 +39,10 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
   if (!id) {
     return;
   }
-  const model = await getUserModelType(id);
-  let liteLLM = llmList.llm.find((c) => c.id === id);
-  if (!liteLLM) {
-    liteLLM = await initalize(id, model, mode, isGuild);
-    llmList.llm.push(liteLLM);
-  }
-  const llm = liteLLM.litellm;
+  const chatService = createChatService();
+  const model = await chatService.resolveUserModel(id);
+  const liteLLM = chatService.getOrCreateSession(id, model, mode, isGuild);
+  const llm = liteLLM.client;
 
   const systemContent = {
     server: { name: interaction.guild?.name },
@@ -93,7 +73,7 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
   }
 
   liteLLM.chat.push({ role: Role.ASSISTANT, content: completion.content });
-  liteLLM.timestamp = dayjs();
+  chatService.touchSession(id);
 
   if (completion.content.length > 2000) {
     const texts = completion.content.split('\n');
@@ -115,15 +95,14 @@ export async function talk(interaction: ChatInputCommandInteraction<CacheType>, 
     await interaction.editReply(completion.content);
   }
 
-  const chatHistoryRepository = new ChatHistoryRepository();
-  await chatHistoryRepository.save({
+  await chatService.saveHistory({
     uuid: liteLLM.uuid,
-    channel_id: id,
+    channelId: id,
     name: name,
     content: liteLLM.chat,
     model: model,
     mode: LiteLLMMode.DEFAULT,
-    channel_type: isGuild ? ChatHistoryChannelType.GUILD : ChatHistoryChannelType.DM,
+    isGuild,
   });
 
   await Logger.put({
@@ -150,7 +129,8 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
   if (!id) {
     return;
   }
-  const gpt = llmList.llm.find((c) => c.id === id);
+  const chatService = createChatService();
+  const gpt = chatService.getSession(id);
   if (!gpt) {
     const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`会話データが削除済みだよ！`);
     await interaction.reply({ embeds: [send] });
@@ -168,7 +148,7 @@ export async function deleteChatData(interaction: ChatInputCommandInteraction<Ca
     await interaction.reply({ embeds: [send] });
     return;
   }
-  llmList.llm = llmList.llm.filter((c) => c.id !== id);
+  chatService.deleteSession(id);
   Logger.put({
     guild_id: interaction.guild?.id,
     channel_id: interaction.channel?.id,

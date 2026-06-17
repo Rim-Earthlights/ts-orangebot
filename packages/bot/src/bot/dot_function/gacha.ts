@@ -1,16 +1,10 @@
-import dayjs from 'dayjs';
 import { ChannelType, EmbedBuilder, Message } from 'discord.js';
 import { checkUserType } from '../../common/common.js';
 import { Logger } from '../../common/logger.js';
 import { CONFIG } from '../../config/config.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
-import { Gacha, GachaPercents, Omikuji } from '../../constant/gacha/gacha.js';
-import { UsersType } from "@orangebot/shared";
-import { GachaRepository } from "@orangebot/shared";
-import { ItemRepository } from "@orangebot/shared";
-import { UsersRepository } from "@orangebot/shared";
-import { LogLevel } from "@orangebot/shared";
-import { getGachaOnce } from '../function/gacha.js';
+import { GachaPercents, GachaService, LogLevel, UserService, UsersType } from '@orangebot/shared';
+import { buildOmikujiSummary } from '../function/gacha.js';
 
 /**
  * ガチャを引く
@@ -54,28 +48,18 @@ async function reset(message: Message, id?: string, num?: string) {
     });
     return;
   }
-  if (!message.guild) {
-    return;
-  }
   if (id) {
-    const users = new UsersRepository();
-    const user = await users.get(message.guild.id, id);
+    const userService = new UserService();
+    const count = num ? Number(num) : 10;
+    const user = await userService.resetGachaCount(message.guild.id, id, count);
     if (!user) {
       await message.reply({
         content: `リセットしようとするユーザが登録されてないみたい…？`,
       });
       return;
     }
-    if (num) {
-      await users.resetGacha(message.guild.id, id, Number(num));
-      await message.reply({
-        content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を${num}に再セットしたよ！`,
-      });
-      return;
-    }
-    await users.resetGacha(message.guild.id, id, 10);
     await message.reply({
-      content: `${user?.user_name ? user.user_name : user.id} さんのガチャ回数を10に再セットしたよ！`,
+      content: `${user.userName ? user.userName : user.id} さんのガチャ回数を${count}に再セットしたよ！`,
     });
   }
   return;
@@ -88,42 +72,22 @@ async function reset(message: Message, id?: string, num?: string) {
  * @returns
  */
 async function pickExtra(message: Message, args: string[]) {
-  const gachaList: Gacha[] = [];
-
   const num = Number(args[1]);
-  if (num) {
-    for (let i = 0; i < num; i++) {
-      const gacha = await getGachaOnce();
-      gachaList.push(gacha);
-    }
-  } else {
-    do {
-      const gacha = await getGachaOnce();
-      gachaList.push(gacha);
-      if (gacha.rare === args[1].toUpperCase()) {
-        if (gacha.reroll === 0) {
-          break;
-        }
-      }
-      if (
-        gacha.name.includes(args[1]) &&
-        !['C', 'UC', 'R', 'SR', 'SSR', 'UR', 'UUR'].find((r) => r === args[1].toUpperCase())
-      ) {
-        break;
-      }
-      if (gachaList.length > 1_000_000) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`1,000,000回引いても該当の等級が出なかった`);
+  const result = num
+    ? GachaService.simulateExtraPicks({ mode: 'count', count: num })
+    : GachaService.simulateExtraPicks({ mode: 'target', target: args[1], matchByName: true });
 
-        await message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
-        return;
-      }
-      // eslint-disable-next-line no-constant-condition
-    } while (true);
+  if ('error' in result) {
+    const send = new EmbedBuilder()
+      .setColor('#ff0000')
+      .setTitle(`エラー`)
+      .setDescription(`1,000,000回引いても該当の等級が出なかった`);
+
+    await message.reply({ content: `ガチャ、出なかったみたい・・・`, embeds: [send] });
+    return;
   }
 
+  const gachaList = result.list;
   const rareList = [...new Set(gachaList.map((g) => g.rare))];
 
   // 等級と総数
@@ -168,152 +132,68 @@ async function pickNormal(message: Message, gnum = '10') {
     return;
   }
 
-  let limitFlag = false;
-  let num = 10;
+  const limit = gnum === 'limit' || gnum === 'l';
 
-  const gachaList = [];
+  const gachaService = new GachaService();
+  const result = await gachaService.pickNormal({
+    guildId: message.guild.id,
+    userId: message.author.id,
+    userName: message.author.displayName,
+    count: Number(gnum),
+    limit,
+    requireVoiceActivity: true,
+  });
 
-  const users = new UsersRepository();
-  const user = await users.get(message.guild.id, message.author.id);
+  if ('type' in result) {
+    if (result.type === 'NO_VOICE_HISTORY') {
+      const send = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle(`エラー`)
+        .setDescription(`7日以内の通話参加履歴が見つからなかった`);
 
-  if (gnum === 'limit' || gnum === 'l') {
-    limitFlag = true;
-    num = user?.pick_left ? user.pick_left : 1;
-  } else {
-    num = Number(gnum);
-  }
+      await message.reply({
+        content: `このサーバーで通話に参加した履歴がないみたい……？`,
+        embeds: [send],
+      });
+    } else if (result.type === 'VOICE_HISTORY_EXPIRED') {
+      const send = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle(`エラー`)
+        .setDescription(`7日以内の通話参加履歴が見つからなかった`);
 
-  if (user) {
-    if (user.voice_channel_data?.length) {
-      const vc = user.voice_channel_data.find((v) => v.gid === message.guild?.id);
-      if (vc) {
-        const now = new Date();
-        const diff = now.getTime() - new Date(vc.date).getTime();
-        if (diff >= 1000 * 60 * 60 * 24 * 7) {
-          const send = new EmbedBuilder()
-            .setColor('#ff0000')
-            .setTitle(`エラー`)
-            .setDescription(`7日以内の通話参加履歴が見つからなかった`);
-
-          await message.reply({
-            content: `最後に通話してから1週間以上通話に参加してないみたい……`,
-            embeds: [send],
-          });
-          return;
-        }
-      } else {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`7日以内の通話参加履歴が見つからなかった`);
-
-        await message.reply({
-          content: `このサーバーで通話に参加した履歴がないみたい……？`,
-          embeds: [send],
-        });
-        return;
-      }
-    }
-
-    if (user.pick_left < num) {
+      await message.reply({
+        content: `最後に通話してから1週間以上通話に参加してないみたい……`,
+        embeds: [send],
+      });
+    } else if (result.type === 'INSUFFICIENT_PICKS') {
       const send = new EmbedBuilder()
         .setColor('#ff0000')
         .setTitle(`ガチャ回数不足`)
-        .setFields({ name: '残り回数', value: user.pick_left.toString() });
+        .setFields({ name: '残り回数', value: result.pickLeft.toString() });
       await message.reply({
         content: `ガチャを引く残り回数が足りないみたい！`,
         embeds: [send],
       });
-      return;
     }
-  } else {
-    await users.save({
-      id: message.author.id,
-      guild_id: message.guild.id,
-      user_name: message.author.displayName,
-      pick_left: 10,
-      voice_channel_data: [{ gid: message.guild?.id ?? 'DM', date: new Date() }],
-    });
-    num = 10;
+    return;
   }
 
-  for (let i = 0; i < num; i++) {
-    const gacha = await getGachaOnce();
-    gachaList.push(gacha);
-  }
+  const { totalRolls, pickLeft, presents } = result;
 
-  // チケットを引いた分だけ加算する
-  const ticketRolls = gachaList
-    .filter((g) => g.reroll > 0)
-    .reduce(function (sum, element) {
-      return sum + element.reroll;
-    }, 0);
-
-  let totalRolls = ticketRolls;
-  if (limitFlag) {
-    let tickets = ticketRolls;
-
-    do {
-      let tempList = 0;
-      if (tickets <= 0) {
-        break;
-      }
-      for (let i = 0; i < tickets; i++) {
-        const gacha = await getGachaOnce();
-        gachaList.push(gacha);
-        if (gacha.reroll > 0) {
-          tempList += gacha.reroll;
-        }
-      }
-      tickets = tempList;
-      totalRolls += tickets;
-      // eslint-disable-next-line no-constant-condition
-    } while (true);
-  }
-
-  const t = gachaList.sort((a, b) => {
+  // 等級の高い順に並び替える
+  const t = [...result.list].sort((a, b) => {
     return a.rank - b.rank;
   });
 
   const highTier = t.slice(0, 50);
   t.reverse();
 
-  const gachaTable = new GachaRepository();
-  const nowTime = dayjs().toDate();
-  const createTables = t.map((g) => {
-    return {
-      user_id: message.author.id,
-      item_id: g.item_id,
-      pick_date: nowTime,
-      rare: g.rare,
-      rank: g.rank,
-      is_used: 0,
-    };
-  });
-
-  await gachaTable.save(createTables);
-
-  const itemRepository = new ItemRepository();
-  const items = await itemRepository.getAll();
-  let pickLeft = 0;
-  if (!limitFlag) {
-    pickLeft = (user ? user.pick_left : 10) - num + ticketRolls;
-  }
-
-  await users.save({
-    id: message.author.id,
-    guild_id: message.guild.id,
-    user_name: message.author.displayName,
-    last_pick_date: dayjs().toDate(),
-    pick_left: pickLeft,
-  });
-  const presents = t.filter((g) => items.find((i) => i.id === g.item_id)?.is_present === 1);
   const desc = t.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n');
 
   if (t.length > 99) {
     const send = new EmbedBuilder()
       .setColor('#ff9900')
-      .setTitle(`${gachaList.length}連の結果: 高い順に50要素のみ抜き出しています`)
+      .setTitle(`${t.length}連の結果: 高い順に50要素のみ抜き出しています`)
       .setDescription(`${highTier.map((g) => `[${g.rare}]${g.icon ? g.icon : ''} ${g.name}`).join('\n')}`)
       .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png')
       .setFields(
@@ -321,26 +201,10 @@ async function pickNormal(message: Message, gnum = '10') {
         { name: '残り回数', value: pickLeft.toString() }
       );
     await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
-    if (presents.length > 0) {
-      await Logger.put({
-        guild_id: message.guild?.id,
-        channel_id: message.channel.id,
-        user_id: message.id,
-        level: LogLevel.INFO,
-        event: 'get-gacha',
-        message: [`user: ${message.author.displayName}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)],
-      });
-      const send = new EmbedBuilder()
-        .setColor('#ff9900')
-        .setTitle('プレゼントだ～！おめでと～！！')
-        .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
-        .setFields({ name: '通知:', value: '<@246007305156558848>' });
-      await message.channel.send({ embeds: [send] });
-    }
   } else {
     const send = new EmbedBuilder()
       .setColor('#ff9900')
-      .setTitle(`${gachaList.length}連の結果`)
+      .setTitle(`${t.length}連の結果`)
       .setDescription(`${desc}`)
       .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/gacha.png')
       .setFields(
@@ -348,22 +212,23 @@ async function pickNormal(message: Message, gnum = '10') {
         { name: '残り回数', value: pickLeft.toString() }
       );
     await message.reply({ content: `ガチャだよ！からんころーん！`, embeds: [send] });
-    if (presents.length > 0) {
-      await Logger.put({
-        guild_id: message.guild?.id,
-        channel_id: message.channel.id,
-        user_id: message.id,
-        level: LogLevel.INFO,
-        event: 'get-gacha',
-        message: [`user: ${message.author.displayName}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)],
-      });
-      const send = new EmbedBuilder()
-        .setColor('#ff9900')
-        .setTitle('プレゼントだ～！おめでと～！！')
-        .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
-        .setFields({ name: '通知用:', value: '<@246007305156558848>' });
-      await message.channel.send({ embeds: [send] });
-    }
+  }
+
+  if (presents.length > 0) {
+    await Logger.put({
+      guild_id: message.guild?.id,
+      channel_id: message.channel.id,
+      user_id: message.id,
+      level: LogLevel.INFO,
+      event: 'get-gacha',
+      message: [`user: ${message.author.displayName}`, ...presents.map((p) => `[${p.rare}] ${p.name}`)],
+    });
+    const send = new EmbedBuilder()
+      .setColor('#ff9900')
+      .setTitle('プレゼントだ～！おめでと～！！')
+      .setDescription(presents.map((p) => `[${p.rare}] ${p.name}`).join('\n'))
+      .setFields({ name: '通知:', value: '<@246007305156558848>' });
+    await message.channel.send({ embeds: [send] });
   }
 }
 
@@ -387,15 +252,14 @@ export async function getPresent(message: Message, uid?: string, hist?: boolean)
     }
     getUid = uid;
   }
-  const users = new UsersRepository();
-  const user = await users.get(message.guild.id, getUid);
-  const pickLeft = user?.pick_left;
 
-  if (pickLeft != undefined) {
+  const gachaService = new GachaService();
+  const info = await gachaService.getPresentInfo(message.guild.id, getUid);
 
+  if (info) {
     const send = new EmbedBuilder()
       .setColor('#ff9900')
-      .setTitle(`${user?.user_name} さんのガチャ情報だよ！`)
+      .setTitle(`${info.userName} さんのガチャ情報だよ！`)
       .setDescription(
         `${CONFIG.COMMON.HOST_URL}/gacha/history?uid=${getUid}&hist=${hist ?? false}`
       );
@@ -422,15 +286,15 @@ export async function usePresent(message: Message, args: string[]) {
     return;
   }
 
-  const gachaRepository = new GachaRepository();
+  const gachaService = new GachaService();
   args.map(async (arg) => {
-    const result = await gachaRepository.usePresent(Number(arg));
+    const result = await gachaService.usePresent(Number(arg));
     if (result) {
       const send = new EmbedBuilder()
         .setColor('#ff9900')
         .setTitle('プレゼントを使用したよ！')
         .setDescription(
-          `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.user_id)).displayName}\nプレゼント: ${result.items.name}`
+          `ユーザ: ${(await DISCORD_CLIENT.users.fetch(result.userId)).displayName}\nプレゼント: ${result.itemName}`
         );
 
       await message.reply({
@@ -462,14 +326,14 @@ export async function givePresent(message: Message, uid: string, itemId: number)
     return;
   }
 
-  const gachaRepository = new GachaRepository();
-  const result = await gachaRepository.givePresent(uid, itemId);
+  const gachaService = new GachaService();
+  const result = await gachaService.givePresent(uid, itemId);
   if (result) {
     const send = new EmbedBuilder()
       .setColor('#ff9900')
       .setTitle('プレゼントを渡したよ！')
       .setDescription(
-        `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).displayName}\nプレゼント: ${result.items.name}`
+        `ユーザ: ${(await DISCORD_CLIENT.users.fetch(uid)).displayName}\nプレゼント: ${result.itemName}`
       );
 
     await message.reply({
@@ -520,65 +384,25 @@ export const showPercent = async (message: Message) => {
  * @returns
  */
 export async function pickOmikuji(message: Message, args?: string[]) {
-  const omikujis: Omikuji[] = [];
-
   if (args != undefined && args.length > 0) {
-    do {
-      const o = getOmikujiOnce();
-      omikujis.push(o);
-      if (o.luck === args[0]) {
-        break;
-      }
-      if (omikujis.length > 500) {
-        const send = new EmbedBuilder()
-          .setColor('#ff0000')
-          .setTitle(`エラー`)
-          .setDescription(`500回引いても該当のおみくじが出なかった`);
+    const { list, found } = GachaService.drawOmikujiUntil(args[0]);
 
-        await message.reply({ content: `おみくじ、出なかったみたい・・・`, embeds: [send] });
-        return;
-      }
-      // eslint-disable-next-line no-constant-condition
-    } while (true);
+    if (!found) {
+      const send = new EmbedBuilder()
+        .setColor('#ff0000')
+        .setTitle(`エラー`)
+        .setDescription(`500回引いても該当のおみくじが出なかった`);
 
-    const send = new EmbedBuilder()
-      .setColor('#ff9900')
-      .setTitle(`${omikujis.length}回目で出たよ！`)
-      .setDescription(`${omikujis.map((o) => o.luck).join(', ')}`)
-      .addFields({
-        name: '大吉',
-        value: omikujis.filter((o) => o.luck === '大吉').length.toString(),
-      })
-      .addFields({
-        name: '吉',
-        value: omikujis.filter((o) => o.luck === '吉').length.toString(),
-      })
-      .addFields({
-        name: '中吉',
-        value: omikujis.filter((o) => o.luck === '中吉').length.toString(),
-      })
-      .addFields({
-        name: '小吉',
-        value: omikujis.filter((o) => o.luck === '小吉').length.toString(),
-      })
-      .addFields({
-        name: '末吉',
-        value: omikujis.filter((o) => o.luck === '末吉').length.toString(),
-      })
-      .addFields({
-        name: '凶',
-        value: omikujis.filter((o) => o.luck === '凶').length.toString(),
-      })
-      .addFields({
-        name: '大凶',
-        value: omikujis.filter((o) => o.luck === '大凶').length.toString(),
-      })
-      .setThumbnail('https://s3-ap-northeast-1.amazonaws.com/rim.public-upload/pic/mikuji.png');
+      await message.reply({ content: `おみくじ、出なかったみたい・・・`, embeds: [send] });
+      return;
+    }
+
+    const send = buildOmikujiSummary(list);
 
     await message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
     return;
   } else {
-    const omikuji = getOmikujiOnce();
+    const omikuji = GachaService.drawOmikuji();
 
     const send = new EmbedBuilder()
       .setColor('#ff9900')
@@ -589,41 +413,4 @@ export async function pickOmikuji(message: Message, args?: string[]) {
     await message.reply({ content: `おみくじ！がらがらがら～！`, embeds: [send] });
     return;
   }
-}
-
-/**
- * ランダムにおみくじを一度引く
- * @returns
- */
-function getOmikujiOnce(): Omikuji {
-  const rnd = Math.random();
-  let luck = '';
-  let description = '';
-
-  if (rnd < 0.141) {
-    luck = '大吉';
-    description = 'おめでとういいことあるよ！！！';
-  } else if (rnd < 0.426) {
-    luck = '吉';
-    description = '結構よき！誇っていいよ！';
-  } else if (rnd < 0.56) {
-    luck = '中吉';
-    description = 'それなりにいいことありそう。';
-  } else if (rnd < 0.692) {
-    luck = '小吉';
-    description = 'ふつうがいちばんだよね。';
-  } else if (rnd < 0.831) {
-    luck = '末吉';
-    description = 'まあこういうときもあるよね。';
-  } else if (rnd < 0.975) {
-    luck = '凶';
-    description = '気をつけようね。';
-  } else {
-    luck = '大凶';
-    description = '逆にレアだしポジティブに考えてこ';
-  }
-  return {
-    luck,
-    description,
-  };
 }

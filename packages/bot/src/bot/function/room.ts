@@ -10,7 +10,7 @@ import {
 } from 'discord.js';
 import { GuildRepository } from "@orangebot/shared";
 import { RoleRepository } from "@orangebot/shared";
-import { RoomRepository } from "@orangebot/shared";
+import { RoomService } from "@orangebot/shared";
 import { UsersRepository } from "@orangebot/shared";
 
 /**
@@ -82,14 +82,14 @@ export async function createRoom(
     ],
   });
 
-  const room = new RoomRepository();
-  await room.createRoom({
-    room_id: vc.id,
-    guild_id: vc.guild.id,
+  const roomService = new RoomService();
+  await roomService.registerRoom({
+    roomId: vc.id,
+    guildId: vc.guild.id,
     name: vc.name,
-    is_autodelete: true,
-    is_live: isLive,
-    is_private: isPrivate,
+    isAutodelete: true,
+    isLive: isLive,
+    isPrivate: isPrivate,
   });
 
   await interaction.editReply({ content: 'お部屋を作りました！' });
@@ -113,8 +113,8 @@ export async function addPermission(interaction: ChatInputCommandInteraction<Cac
     return;
   }
 
-  const roomRepository = new RoomRepository();
-  const room = await roomRepository.getRoom(interaction.channelId);
+  const roomService = new RoomService();
+  const room = await roomService.getRoom(interaction.channelId);
   if (!room) {
     return;
   }
@@ -151,8 +151,8 @@ export async function removePermission(interaction: ChatInputCommandInteraction<
     return;
   }
 
-  const roomRepository = new RoomRepository();
-  const room = await roomRepository.getRoom(interaction.channelId);
+  const roomService = new RoomService();
+  const room = await roomService.getRoom(interaction.channelId);
   if (!room) {
     return;
   }
@@ -181,18 +181,14 @@ export async function toggleAutoDelete(interaction: ChatInputCommandInteraction<
     return;
   }
 
-  const roomRepository = new RoomRepository();
-  const room = await roomRepository.getRoom(interaction.channelId);
-  if (!room) {
+  const roomService = new RoomService();
+  const isAutodelete = await roomService.toggleAutoDelete(interaction.channelId);
+  if (isAutodelete === null) {
     return;
   }
 
-  room.is_autodelete = !room.is_autodelete;
-
-  await roomRepository.updateRoom(interaction.channelId, room);
-
   await interaction.editReply({
-    content: 'お部屋の自動削除を' + (room.is_autodelete ? '有効' : '無効') + 'にしたよ！',
+    content: 'お部屋の自動削除を' + (isAutodelete ? '有効' : '無効') + 'にしたよ！',
   });
 }
 
@@ -208,16 +204,16 @@ export async function changeRoomName(interaction: ChatInputCommandInteraction<Ca
     return;
   }
 
-  const roomRepository = new RoomRepository();
-  const room = await roomRepository.getRoom(interaction.channelId);
+  const roomService = new RoomService();
+  const room = await roomService.getRoom(interaction.channelId);
   if (!room) {
-    await roomRepository.createRoom({
-      room_id: interaction.channelId,
-      guild_id: guild.id,
+    await roomService.registerRoom({
+      roomId: interaction.channelId,
+      guildId: guild.id,
       name: name,
-      is_autodelete: true,
-      is_live: false,
-      is_private: false,
+      isAutodelete: true,
+      isLive: false,
+      isPrivate: false,
     });
 
     await (interaction.channel as VoiceChannel).setName(name);
@@ -233,9 +229,8 @@ export async function changeRoomName(interaction: ChatInputCommandInteraction<Ca
   }
 
   const oldName = room.name;
-  room.name = name;
 
-  await roomRepository.updateRoom(interaction.channelId, room);
+  await roomService.renameRoom(interaction.channelId, name);
   await (interaction.channel as VoiceChannel).setName(name);
 
   const embed = new EmbedBuilder()
@@ -288,19 +283,15 @@ export async function toggleLive(interaction: ChatInputCommandInteraction<CacheT
     return;
   }
 
-  const roomRepository = new RoomRepository();
-  const room = await roomRepository.getRoom(interaction.channelId);
+  const roomService = new RoomService();
+  const room = await roomService.toggleLive(interaction.channelId);
   if (!room) {
     return;
   }
 
-  room.is_live = !room.is_live;
-
   // 名前に[●配信]とつける
   const name = room.name;
   await (interaction.channel as VoiceChannel).setName(name + (room.is_live ? ' [●配信]' : ''));
-
-  await roomRepository.updateRoom(interaction.channelId, room);
 
   await interaction.editReply({
     content: '配信中に変更したよ！',
