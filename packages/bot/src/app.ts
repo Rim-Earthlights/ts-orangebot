@@ -193,6 +193,43 @@ DISCORD_CLIENT.once('ready', async () => {
     });
   });
 
+  // ギルドに在籍していないユーザーを softDelete し、在籍ユーザーへ DM チャンネルを作成
+  const userRepository = new UsersRepository();
+  await Promise.all(
+    DISCORD_CLIENT.guilds.cache.map(async (guild) => {
+      const members = await guild.members.fetch();
+
+      // DB 上のユーザーのうち、ギルドから消えているものを softDelete
+      const dbUsers = await userRepository.getAll(guild.id);
+      await Promise.all(
+        dbUsers.map(async (dbUser) => {
+          if (members.has(dbUser.id)) {
+            return;
+          }
+          await userRepository.delete(guild.id, dbUser.id);
+          await Logger.put({
+            guild_id: guild.id,
+            channel_id: undefined,
+            user_id: dbUser.id,
+            level: LogLevel.SYSTEM,
+            event: 'user-soft-delete',
+            message: [`id : ${dbUser.id}`, `name : ${dbUser.user_name}`],
+          });
+        })
+      );
+
+      // 在籍ユーザーごとに DM チャンネルを作成し、ユーザからのDMを受け取れるようにする
+      await Promise.all(
+        members.map(async (member) => {
+          if (member.user.bot) {
+            return;
+          }
+          await member.user.createDM();
+        })
+      );
+    })
+  );
+
   await Logger.put({
     guild_id: undefined,
     channel_id: undefined,
@@ -280,7 +317,7 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     });
     await Chat.talk(message, message.content, LiteLLMMode.DEFAULT);
     return;
-  } else if (message.channel.id === '1020972071460814868') {
+  } else if (message.channel.id === '1020972071460814868' || message.channel.id === '1510840474032803973') {
     if (CHAT_PAUSE_FLAGS.includes(message.channel.id)) {
       return;
     }
