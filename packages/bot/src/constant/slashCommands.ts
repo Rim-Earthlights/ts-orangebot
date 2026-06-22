@@ -194,13 +194,92 @@ export const SERVER_SLASH_COMMANDS = [
     ),
   new SlashCommandBuilder().setName('pause').setDescription('チャットを一時停止します (10分後に自動で再開します)'),
   new SlashCommandBuilder().setName('resume').setDescription('チャットを再開します'),
+  // 音楽再生機能
+  new SlashCommandBuilder()
+    .setName('music')
+    .setDescription('音楽の再生関連機能です')
+    .addSubcommand((sc) =>
+      sc
+        .setName('play')
+        .setDescription('音楽を再生します (登録済みプレイリスト名も指定できます)')
+        .addStringOption((option) => option.setName('url').setDescription('YoutubeのURL or プレイリスト名').setRequired(true))
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('search')
+        .setDescription('単語で検索して再生します')
+        .addStringOption((option) => option.setName('word').setDescription('検索する単語').setRequired(true))
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('interrupt')
+        .setDescription('割込予約します (URL or キュー番号)')
+        .addStringOption((option) => option.setName('target').setDescription('YoutubeのURL or キュー番号').setRequired(true))
+    )
+    .addSubcommand((sc) => sc.setName('stop').setDescription('再生を停止します'))
+    .addSubcommand((sc) =>
+      sc
+        .setName('remove')
+        .setDescription('キューから曲を削除します (番号を省略すると全曲削除)')
+        .addIntegerOption((option) => option.setName('num').setDescription('キュー番号').setRequired(false))
+    )
+    .addSubcommand((sc) => sc.setName('pause').setDescription('再生を一時停止/再開します'))
+    .addSubcommand((sc) => sc.setName('queue').setDescription('現在の予約状況を表示します'))
+    .addSubcommand((sc) => sc.setName('shuffle').setDescription('キューをシャッフルします'))
+    .addSubcommand((sc) => sc.setName('silent').setDescription('サイレントモードを切り替えます'))
+    .addSubcommand((sc) =>
+      sc
+        .setName('mode')
+        .setDescription('再生設定を表示/変更します (未指定で表示)')
+        .addStringOption((option) =>
+          option
+            .setName('name')
+            .setDescription('変更する設定')
+            .setRequired(false)
+            .addChoices({ name: 'シャッフル', value: 'sf' }, { name: 'ループ', value: 'lp' })
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('seek')
+        .setDescription('再生位置を移動します')
+        .addStringOption((option) => option.setName('time').setDescription('秒数 or mm:ss 形式').setRequired(true))
+    ),
+  // プレイリスト管理機能
+  new SlashCommandBuilder()
+    .setName('playlist')
+    .setDescription('プレイリストの管理機能です')
+    .addSubcommand((sc) => sc.setName('list').setDescription('登録済みプレイリストの一覧を表示します'))
+    .addSubcommand((sc) =>
+      sc
+        .setName('add')
+        .setDescription('プレイリストを登録します')
+        .addStringOption((option) => option.setName('name').setDescription('登録名').setRequired(true))
+        .addStringOption((option) => option.setName('url').setDescription('プレイリスト or 動画のURL').setRequired(true))
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('remove')
+        .setDescription('プレイリストを削除します')
+        .addStringOption((option) => option.setName('name').setDescription('登録名').setRequired(true))
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('loop')
+        .setDescription('プレイリストのループ設定を変更します')
+        .addStringOption((option) => option.setName('name').setDescription('登録名').setRequired(true))
+        .addBooleanOption((option) => option.setName('enabled').setDescription('ループON/OFF').setRequired(true))
+    )
+    .addSubcommand((sc) =>
+      sc
+        .setName('shuffle')
+        .setDescription('プレイリストのシャッフル設定を変更します')
+        .addStringOption((option) => option.setName('name').setDescription('登録名').setRequired(true))
+        .addBooleanOption((option) => option.setName('enabled').setDescription('シャッフルON/OFF').setRequired(true))
+    ),
   // new SlashCommandBuilder().setName('tenki').setDescription('天気予報を表示します'),
   // new SlashCommandBuilder().setName('luck').setDescription('今日の運勢を表示します'),
   // new SlashCommandBuilder().setName('info').setDescription('ユーザ情報を表示します'),
-  // new SlashCommandBuilder()
-  //     .setName('pl')
-  //     .setDescription('音楽を再生します')
-  //     .addStringOption((option) => option.setName('url').setDescription('youtube url').setRequired(true))
 ];
 
 export const DM_SLASH_COMMANDS = [

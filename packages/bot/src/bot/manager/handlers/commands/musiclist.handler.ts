@@ -1,8 +1,6 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import { Logger } from '../../../../common/logger.js';
-import { PlaylistRepository } from "@orangebot/shared";
 import * as DotBotFunctions from '../../../dot_function/index.js';
-import { extractPlaylistId, extractVideoId, getInnertube } from '../../../request/innertube.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class MusicListHandler extends BaseMessageHandler {
@@ -111,10 +109,9 @@ export class MusicListHandler extends BaseMessageHandler {
       const name = args[1];
       const url = args[2];
 
-      const repository = new PlaylistRepository();
-      const p = await repository.get(message.author.id, name);
+      const result = await DotBotFunctions.Music.registerPlaylist(message.author.id, name, url);
 
-      if (p) {
+      if (result.status === 'exists') {
         const send = new EmbedBuilder()
           .setColor('#ff0000')
           .setTitle(`エラー`)
@@ -126,56 +123,21 @@ export class MusicListHandler extends BaseMessageHandler {
         return;
       }
 
-      const playlistId = extractPlaylistId(url);
-      const videoId = extractVideoId(url);
-
-      if (playlistId) {
-        const innertube = await getInnertube();
-        const playlist = await innertube.getPlaylist(playlistId);
-        const title = playlist.info.title ?? '';
-
-        await repository.save({
-          name: name,
-          user_id: message.author.id,
-          title: title,
-          url: `https://www.youtube.com/playlist?list=${playlistId}`,
-        });
-
+      if (result.status === 'invalid') {
         const send = new EmbedBuilder()
-          .setColor('#ff9900')
-          .setTitle(`登録`)
-          .setDescription(`登録名: ${name}\nプレイリスト名: ${title}\nURL: ${url}`);
-        message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
-
+          .setColor('#ff0000')
+          .setTitle(`エラー`)
+          .setDescription(`プレイリストor動画のURLではない`);
+        message.reply({ content: `プレイリストが非公開かも？`, embeds: [send] });
         return;
       }
 
-      if (videoId) {
-        const innertube = await getInnertube();
-        const movie = await innertube.getBasicInfo(videoId);
-        const title = movie.basic_info.title ?? '';
-
-        await repository.save({
-          name: name,
-          user_id: message.author.id,
-          title: title,
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-        });
-
-        const send = new EmbedBuilder()
-          .setColor('#ff9900')
-          .setTitle(`登録`)
-          .setDescription(`登録名: ${name}\n動画名: ${title}\nURL: ${url}`);
-        message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
-
-        return;
-      }
-
+      const label = result.type === 'playlist' ? 'プレイリスト名' : '動画名';
       const send = new EmbedBuilder()
-        .setColor('#ff0000')
-        .setTitle(`エラー`)
-        .setDescription(`プレイリストor動画のURLではない`);
-      message.reply({ content: `プレイリストが非公開かも？`, embeds: [send] });
+        .setColor('#ff9900')
+        .setTitle(`登録`)
+        .setDescription(`登録名: ${name}\n${label}: ${result.title}\nURL: ${url}`);
+      message.reply({ content: `以下の内容で登録したよ～！`, embeds: [send] });
 
       return;
     } catch (e) {
@@ -194,17 +156,20 @@ export class MusicListHandler extends BaseMessageHandler {
   }
 
   private async handleLoopPlaylist(message: Message, args: string[]): Promise<void> {
-    const name = args[1];
-    const state = args[2].toUpperCase() === 'ON';
-
-    const repository = new PlaylistRepository();
-    const p = await repository.get(message.author.id, name);
-
-    if (!p) {
+    if (args.length < 3) {
+      const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`引数が足りない`);
+      message.reply({ content: `ループのON/OFFを指定してね！`, embeds: [send] });
       return;
     }
 
-    await repository.save({ id: p.id, loop: Number(state) });
+    const name = args[1];
+    const state = args[2].toUpperCase() === 'ON';
+
+    const updated = await DotBotFunctions.Music.setPlaylistLoop(message.author.id, name, state);
+    if (!updated) {
+      return;
+    }
+
     const send = new EmbedBuilder()
       .setColor('#ff9900')
       .setTitle(`更新`)
@@ -213,17 +178,20 @@ export class MusicListHandler extends BaseMessageHandler {
   }
 
   private async handleShufflePlaylist(message: Message, args: string[]): Promise<void> {
-    const name = args[1];
-    const state = args[2].toUpperCase() === 'ON';
-
-    const repository = new PlaylistRepository();
-    const p = await repository.get(message.author.id, name);
-
-    if (!p) {
+    if (args.length < 3) {
+      const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`引数が足りない`);
+      message.reply({ content: `シャッフルのON/OFFを指定してね！`, embeds: [send] });
       return;
     }
 
-    await repository.save({ id: p.id, shuffle: Number(state) });
+    const name = args[1];
+    const state = args[2].toUpperCase() === 'ON';
+
+    const updated = await DotBotFunctions.Music.setPlaylistShuffle(message.author.id, name, state);
+    if (!updated) {
+      return;
+    }
+
     const send = new EmbedBuilder()
       .setColor('#ff9900')
       .setTitle(`更新`)

@@ -13,7 +13,7 @@ import {
   joinVoiceChannel,
   StreamType,
 } from '@discordjs/voice';
-import { EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
+import { BaseMessageOptions, EmbedBuilder, VoiceBasedChannel, VoiceChannel } from 'discord.js';
 import { Readable } from 'node:stream';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 import prism from 'prism-media';
@@ -21,9 +21,23 @@ import { YTNodes } from 'youtubei.js';
 import { Logger } from '../../common/logger.js';
 import { CONFIG } from '../../config/config.js';
 import { Music, PlayerData } from '../../constant/music/music.js';
-import { LogLevel, MusicService, Playlist } from '@orangebot/shared';
+import { LogLevel, MusicService, Playlist, PlaylistRepository } from '@orangebot/shared';
 import { extractPlaylistId, extractVideoId, getInnertube } from '../request/innertube.js';
 import { getPlaylistItems } from '../request/youtube.js';
+
+/**
+ * コマンドの応答送信関数。
+ * スラッシュコマンドからは interaction への返信関数を渡し、
+ * 省略時 (テキストコマンド / 再生ループからの呼び出し) はボイスチャンネルへ送信する。
+ */
+export type ReplyFn = (payload: BaseMessageOptions) => Promise<unknown>;
+
+/**
+ * 応答先を解決する。reply が渡されればそれを、なければ channel.send を使う。
+ */
+function resolveReply(channel: VoiceBasedChannel, reply?: ReplyFn): ReplyFn {
+  return reply ?? ((payload) => (channel as VoiceChannel).send(payload));
+}
 
 /**
  * キューに音楽を追加する
@@ -36,7 +50,8 @@ export async function add(
   url: string,
   userId: string,
   loop?: boolean,
-  shuffle?: boolean
+  shuffle?: boolean,
+  reply?: ReplyFn
 ): Promise<boolean> {
   if (url.includes('intl-ja/')) {
     url = url.replace('intl-ja/', '');
@@ -46,24 +61,24 @@ export async function add(
   const playlistId = extractPlaylistId(url);
 
   if (videoId && !url.includes('playlist')) {
-    await addYoutubeMusic(channel, 'video', url, false, loop, shuffle);
+    await addYoutubeMusic(channel, 'video', url, false, loop, shuffle, reply);
     return true;
   }
 
   if (playlistId) {
-    await addYoutubeMusic(channel, 'playlist', url, false, loop, shuffle);
+    await addYoutubeMusic(channel, 'playlist', url, false, loop, shuffle, reply);
     return true;
   }
 
   const musicService = new MusicService();
   const playlist = await musicService.getPlaylistByName(userId, url);
   if (playlist) {
-    await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle));
+    await add(channel, playlist.url, userId, Boolean(playlist.loop), Boolean(playlist.shuffle), reply);
     return true;
   }
   const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`URLが不正`);
 
-  (channel as VoiceChannel).send({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
+  await resolveReply(channel, reply)({ content: `YoutubeのURLを指定して～！`, embeds: [send] });
   return false;
 }
 
@@ -73,7 +88,7 @@ export async function add(
  * @param word 検索語句
  * @returns
  */
-export async function search(channel: VoiceBasedChannel, word: string): Promise<boolean> {
+export async function search(channel: VoiceBasedChannel, word: string, reply?: ReplyFn): Promise<boolean> {
   const innertube = await getInnertube();
   const result = await innertube.search(word, { type: 'video' });
 
@@ -89,13 +104,13 @@ export async function search(channel: VoiceBasedChannel, word: string): Promise<
   if (searched.length === 0) {
     const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`検索結果が見つからない`);
 
-    (channel as VoiceChannel).send({ content: `検索結果が見つからなかった…`, embeds: [send] });
+    await resolveReply(channel, reply)({ content: `検索結果が見つからなかった…`, embeds: [send] });
     return false;
   }
 
   const isMv = searched.find((s) => s.title.match(/((O|o)fficial|MV|mv|(M|m)usic)/) !== null);
   if (isMv) {
-    await addYoutubeMusic(channel, 'video', isMv.url, false, undefined, undefined);
+    await addYoutubeMusic(channel, 'video', isMv.url, false, undefined, undefined, reply);
     return true;
   }
 
@@ -103,7 +118,7 @@ export async function search(channel: VoiceBasedChannel, word: string): Promise<
     return b.views - a.views;
   });
 
-  await addYoutubeMusic(channel, 'video', sorted[0].url, false, undefined, undefined);
+  await addYoutubeMusic(channel, 'video', sorted[0].url, false, undefined, undefined, reply);
   return true;
 }
 
@@ -123,9 +138,11 @@ export async function addYoutubeMusic(
   url: string,
   interrupt?: boolean,
   loop?: boolean,
-  shuffle?: boolean
+  shuffle?: boolean,
+  reply?: ReplyFn
 ): Promise<boolean> {
   const musicService = new MusicService();
+  const notify = resolveReply(channel, reply);
   const p = await updateAudioPlayer(channel);
   const status = p.player.state.status;
 
@@ -172,7 +189,7 @@ export async function addYoutubeMusic(
           .setDescription(description)
           .setThumbnail(thumbnail);
 
-        (channel as VoiceChannel).send({ embeds: [send] });
+        await notify({ embeds: [send] });
         return true;
       }
 
@@ -183,7 +200,7 @@ export async function addYoutubeMusic(
         .setDescription(description ? description : 'none')
         .setThumbnail(thumbnail);
 
-      (channel as VoiceChannel).send({ embeds: [send] });
+      await notify({ embeds: [send] });
       return true;
     }
     await initPlayerInfo(channel, !!loop, !!shuffle);
@@ -214,7 +231,7 @@ export async function addYoutubeMusic(
             .setTitle('キュー(先頭の20曲のみ表示しています): ')
             .setDescription(description);
 
-          (channel as VoiceChannel).send({ embeds: [send] });
+          await notify({ embeds: [send] });
           return true;
         }
 
@@ -224,7 +241,7 @@ export async function addYoutubeMusic(
           .setTitle(`キュー(全${musics.length}曲): `)
           .setDescription(description ? description : 'none');
 
-        (channel as VoiceChannel).send({ embeds: [send] });
+        await notify({ embeds: [send] });
         return true;
       }
       await initPlayerInfo(channel, !!loop, !!shuffle);
@@ -244,7 +261,7 @@ export async function addYoutubeMusic(
         .setTitle('エラー:')
         .setDescription('非公開のプレイリストを読み込んだ');
 
-      (channel as VoiceChannel).send({
+      await notify({
         content: `非公開のプレイリストみたい、公開か限定公開にして～！`,
         embeds: [send],
       });
@@ -259,7 +276,7 @@ export async function addYoutubeMusic(
  * @param channel
  * @returns
  */
-export async function getPlayerInfo(channel: VoiceBasedChannel): Promise<void> {
+export async function getPlayerInfo(channel: VoiceBasedChannel, reply?: ReplyFn): Promise<void> {
   const musicService = new MusicService();
   const info = await musicService.getSettings(channel.guild.id, channel.id);
 
@@ -274,7 +291,7 @@ export async function getPlayerInfo(channel: VoiceBasedChannel): Promise<void> {
   ].join('\n');
 
   const send = new EmbedBuilder().setColor('#cc66cc').setTitle(`再生設定: `).setDescription(description);
-  (channel as VoiceChannel).send({
+  await resolveReply(channel, reply)({
     embeds: [send],
   });
 }
@@ -285,8 +302,9 @@ export async function getPlayerInfo(channel: VoiceBasedChannel): Promise<void> {
  * @param name
  * @returns
  */
-export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): Promise<void> {
+export async function editPlayerInfo(channel: VoiceBasedChannel, name: string, reply?: ReplyFn): Promise<void> {
   const musicService = new MusicService();
+  const notify = resolveReply(channel, reply);
 
   switch (name) {
     case 'sf': {
@@ -298,7 +316,7 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
         .setColor('#cc66cc')
         .setTitle(`再生設定の変更: `)
         .setDescription(`シャッフル: ${next === 1 ? '有効' : '無効'}`);
-      (channel as VoiceChannel).send({
+      await notify({
         embeds: [send],
       });
       break;
@@ -312,7 +330,7 @@ export async function editPlayerInfo(channel: VoiceBasedChannel, name: string): 
         .setColor('#cc66cc')
         .setTitle(`再生設定の変更: `)
         .setDescription(`ループ: ${next === 1 ? '有効' : '無効'}`);
-      (channel as VoiceChannel).send({
+      await notify({
         embeds: [send],
       });
       break;
@@ -347,7 +365,7 @@ export async function initPlayerInfo(channel: VoiceBasedChannel, loop?: boolean,
  * @param url 動画url
  * @returns
  */
-export async function interruptMusic(channel: VoiceBasedChannel, url: string): Promise<boolean> {
+export async function interruptMusic(channel: VoiceBasedChannel, url: string, reply?: ReplyFn): Promise<boolean> {
   const videoId = extractVideoId(url);
 
   if (!videoId) {
@@ -358,6 +376,7 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
   }
 
   const musicService = new MusicService();
+  const notify = resolveReply(channel, reply);
   const m = addYoutubeMusic(channel, 'video', url, true);
 
   const innertube = await getInnertube();
@@ -375,14 +394,14 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
       .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
       .setDescription(description);
 
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   } else {
     const send = new EmbedBuilder()
       .setColor('#cc66cc')
       .setAuthor({ name: `割込: ${ytinfo.title}` })
       .setTitle(`キュー(全${musics.length}曲): `)
       .setDescription(description ? description : 'none');
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   }
 
   await m;
@@ -395,8 +414,9 @@ export async function interruptMusic(channel: VoiceBasedChannel, url: string): P
  * @param index music_id
  * @returns
  */
-export async function interruptIndex(channel: VoiceBasedChannel, index: number): Promise<boolean> {
+export async function interruptIndex(channel: VoiceBasedChannel, index: number, reply?: ReplyFn): Promise<boolean> {
   const musicService = new MusicService();
+  const notify = resolveReply(channel, reply);
   const musics = await musicService.getQueue(channel.guildId, channel.id);
   const music = musics.find((m) => m.music_id === index);
 
@@ -432,7 +452,7 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
       .setDescription(description)
       .setThumbnail(music.thumbnail);
 
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   } else {
     const send = new EmbedBuilder()
       .setColor('#cc66cc')
@@ -441,7 +461,7 @@ export async function interruptIndex(channel: VoiceBasedChannel, index: number):
       .setDescription(description ? description : 'none')
       .setThumbnail(music.thumbnail);
 
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   }
 
   return result;
@@ -464,8 +484,14 @@ export async function remove(gid: string, cid: string, musicId?: number): Promis
  * @param gid guild.id
  * @param musicId music_id
  */
-export async function removeId(channel: VoiceBasedChannel, gid: string, musicId: number): Promise<void> {
+export async function removeId(
+  channel: VoiceBasedChannel,
+  gid: string,
+  musicId: number,
+  reply?: ReplyFn
+): Promise<void> {
   const musicService = new MusicService();
+  const notify = resolveReply(channel, reply);
   const musics = await musicService.getQueue(gid, channel.id);
 
   if (musics.length <= 0) {
@@ -492,7 +518,7 @@ export async function removeId(channel: VoiceBasedChannel, gid: string, musicId:
       .setTitle(`キュー(20曲表示/ 全${musics.length}曲): `)
       .setDescription(description);
 
-    (channel as VoiceChannel).send({
+    await notify({
       embeds: [send],
     });
   } else {
@@ -502,7 +528,7 @@ export async function removeId(channel: VoiceBasedChannel, gid: string, musicId:
       .setTitle(`キュー(全${musics.length}曲): `)
       .setDescription(description ? description : 'none');
 
-    (channel as VoiceChannel).send({
+    await notify({
       embeds: [send],
     });
   }
@@ -646,8 +672,9 @@ export async function extermAudioPlayer(gid: string, cid: string): Promise<boole
  * @param gid guild.id
  * @returns
  */
-export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean> {
+export async function shuffleMusic(channel: VoiceBasedChannel, reply?: ReplyFn): Promise<boolean> {
   const musicService = new MusicService();
+  const notify = resolveReply(channel, reply);
   const shuffled = await musicService.shuffleQueue(channel.guild.id, channel.id);
 
   if (!shuffled) {
@@ -666,14 +693,14 @@ export async function shuffleMusic(channel: VoiceBasedChannel): Promise<boolean>
       .setTitle(`キュー(20曲表示/ 全${shuffled.length}曲): `)
       .setDescription(description);
 
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   } else {
     const send = new EmbedBuilder()
       .setColor('#cc66cc')
       .setAuthor({ name: 'シャッフル完了' })
       .setTitle(`キュー(全${shuffled.length}曲): `)
       .setDescription(description ? description : 'none');
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   }
   return true;
 }
@@ -726,8 +753,9 @@ export async function pause(channel: VoiceBasedChannel): Promise<void> {
  * @param channel 送信するチャンネル
  * @returns
  */
-export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
+export async function showQueue(channel: VoiceBasedChannel, reply?: ReplyFn): Promise<void> {
   const musicService = new MusicService();
+  const notify = resolveReply(channel, reply);
   const musics = await musicService.getQueue(channel.guild.id, channel.id);
   const info = await musicService.getSettings(channel.guild.id, channel.id);
 
@@ -749,7 +777,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
         name: '再生キュー',
         value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
       });
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   } else {
     const send = new EmbedBuilder()
       .setColor('#cc66cc')
@@ -761,7 +789,7 @@ export async function showQueue(channel: VoiceBasedChannel): Promise<void> {
         name: '再生キュー',
         value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
       });
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await notify({ embeds: [send] });
   }
   return;
 }
@@ -788,11 +816,89 @@ export async function removePlaylist(userId: string, name: string): Promise<bool
 }
 
 /**
+ * プレイリストを登録する
+ * URL からタイトルを取得して DB に保存する。Embed 送信は呼び出し側で行う。
+ * @param userId
+ * @param name 登録名
+ * @param url プレイリスト or 動画 URL
+ * @returns 登録結果 (既存/登録完了/不正URL)
+ */
+export async function registerPlaylist(
+  userId: string,
+  name: string,
+  url: string
+): Promise<{ status: 'exists' | 'registered' | 'invalid'; title?: string; type?: 'playlist' | 'video' }> {
+  const repository = new PlaylistRepository();
+  const exists = await repository.get(userId, name);
+
+  if (exists) {
+    return { status: 'exists' };
+  }
+
+  const playlistId = extractPlaylistId(url);
+  const videoId = extractVideoId(url);
+
+  if (playlistId) {
+    const innertube = await getInnertube();
+    const playlist = await innertube.getPlaylist(playlistId);
+    const title = playlist.info.title ?? '';
+
+    await repository.save({
+      name: name,
+      user_id: userId,
+      title: title,
+      url: `https://www.youtube.com/playlist?list=${playlistId}`,
+    });
+    return { status: 'registered', title: title, type: 'playlist' };
+  }
+
+  if (videoId) {
+    const innertube = await getInnertube();
+    const movie = await innertube.getBasicInfo(videoId);
+    const title = movie.basic_info.title ?? '';
+
+    await repository.save({
+      name: name,
+      user_id: userId,
+      title: title,
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+    });
+    return { status: 'registered', title: title, type: 'video' };
+  }
+
+  return { status: 'invalid' };
+}
+
+/**
+ * プレイリストのループ設定を変更する
+ * @param userId
+ * @param name 登録名
+ * @param state
+ * @returns 対象が存在し更新できたか
+ */
+export async function setPlaylistLoop(userId: string, name: string, state: boolean): Promise<boolean> {
+  const repository = new PlaylistRepository();
+  return await repository.changeState(userId, name, 'loop', state);
+}
+
+/**
+ * プレイリストのシャッフル設定を変更する
+ * @param userId
+ * @param name 登録名
+ * @param state
+ * @returns 対象が存在し更新できたか
+ */
+export async function setPlaylistShuffle(userId: string, name: string, state: boolean): Promise<boolean> {
+  const repository = new PlaylistRepository();
+  return await repository.changeState(userId, name, 'shuffle', state);
+}
+
+/**
  * 音楽の通知状態を変更する
  * @param channel
  * @returns
  */
-export async function changeNotify(channel: VoiceBasedChannel): Promise<void> {
+export async function changeNotify(channel: VoiceBasedChannel, reply?: ReplyFn): Promise<void> {
   const musicService = new MusicService();
   const next = await musicService.toggleSilent(channel.guild.id, channel.id);
 
@@ -805,7 +911,7 @@ export async function changeNotify(channel: VoiceBasedChannel): Promise<void> {
     .setTitle(`サイレントモード設定: `)
     .setDescription(next === 1 ? '有効に設定' : '無効に設定');
 
-  (channel as VoiceChannel).send({ content: `サイレントモードを変更したよ！`, embeds: [send] });
+  await resolveReply(channel, reply)({ content: `サイレントモードを変更したよ！`, embeds: [send] });
 }
 
 /**
@@ -854,7 +960,7 @@ async function removeAudioPlayer(gid: string, cid: string): Promise<void> {
  * @param seek number 秒数
  * @returns
  */
-export async function seek(channel: VoiceBasedChannel, seek: number): Promise<void> {
+export async function seek(channel: VoiceBasedChannel, seek: number, reply?: ReplyFn): Promise<void> {
   const musicService = new MusicService();
 
   const playing = await musicService.getSettings(channel.guild.id, channel.id);
@@ -910,6 +1016,6 @@ export async function seek(channel: VoiceBasedChannel, seek: number): Promise<vo
         name: '再生キュー',
         value: `${CONFIG.COMMON.HOST_URL + '/music?gid=' + channel.guild.id + '&cid=' + channel.id}`,
       });
-    (channel as VoiceChannel).send({ embeds: [send] });
+    await resolveReply(channel, reply)({ embeds: [send] });
   }
 }
