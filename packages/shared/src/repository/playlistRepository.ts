@@ -70,7 +70,7 @@ export class PlaylistRepository {
       .createQueryBuilder()
       .delete()
       .where('user_id = :user_id', { user_id: userId })
-      .where('name = :name', { name: name })
+      .andWhere('name = :name', { name: name })
       .execute();
     return Boolean(result.affected);
   }

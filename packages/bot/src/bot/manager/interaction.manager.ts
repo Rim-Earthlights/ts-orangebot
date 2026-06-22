@@ -27,6 +27,8 @@ import { ModelHandler } from './handlers/interactions/model.handler.js';
 import { PhotoHandler } from './handlers/interactions/photo.handler.js';
 import { PauseHandler } from './handlers/interactions/pause.handler.js';
 import { DictHandler } from './handlers/interactions/dict.handler.js';
+import { MusicHandler } from './handlers/interactions/music.handler.js';
+import { PlaylistHandler } from './handlers/interactions/playlist.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -94,6 +96,10 @@ export class InteractionManager {
     this.handlers.set('lyrics', new LyricsHandler(this.logger));
 
     this.handlers.set('cat', new PhotoHandler(this.logger));
+
+    // Music commands
+    this.handlers.set('music', new MusicHandler(this.logger));
+    this.handlers.set('playlist', new PlaylistHandler(this.logger));
   }
 
   /**
