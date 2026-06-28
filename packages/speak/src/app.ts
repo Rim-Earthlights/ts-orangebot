@@ -166,6 +166,21 @@ DISCORD_CLIENT.once('ready', async () => {
     });
   });
 
+  // 在籍ユーザーごとに DM チャンネルを作成し、ユーザからのDMを受け取れるようにする
+  await Promise.all(
+    DISCORD_CLIENT.guilds.cache.map(async (guild) => {
+      const members = await guild.members.fetch();
+      await Promise.all(
+        members.map(async (member) => {
+          if (member.user.bot) {
+            return;
+          }
+          await member.user.createDM();
+        })
+      );
+    })
+  );
+
   await Logger.put({
     guild_id: undefined,
     channel_id: undefined,
