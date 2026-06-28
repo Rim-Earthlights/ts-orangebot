@@ -46,14 +46,14 @@
 
 | コマンド | 説明 |
 |---|---|
-| `/room name <name>` | ルーム名を変更 |
+| `/room name [name]` | ルーム名を変更。省略時は `お部屋: #nnn` に設定 |
 | `/room create <name> [live] [private]` | ルームを作成 |
 | `/room live` | 配信モードに設定 |
 | `/room limit <limit>` | メンバー上限を設定 |
 | `/room add <user>` | ユーザーをルームに追加 |
 | `/room remove <user>` | ユーザーをルームから削除 |
 | `/room lock` | 自動削除の切り替え |
-| `/rn <name>` | ルーム名変更のショートカット |
+| `/rn [name]` | ルーム名変更のショートカット。省略時は `お部屋: #nnn` に設定 |
 
 #### AI チャット
 

@@ -8,10 +8,11 @@ import {
   PermissionsBitField,
   VoiceChannel,
 } from 'discord.js';
-import { GuildRepository } from "@orangebot/shared";
-import { RoleRepository } from "@orangebot/shared";
-import { RoomService } from "@orangebot/shared";
-import { UsersRepository } from "@orangebot/shared";
+import { GuildRepository } from '@orangebot/shared';
+import { RoleRepository } from '@orangebot/shared';
+import { RoomService } from '@orangebot/shared';
+import { UsersRepository } from '@orangebot/shared';
+import { getDefaultRoomName } from '../utils/roomName.js';
 
 /**
  * チャンネルを作成する
@@ -192,11 +193,13 @@ export async function toggleAutoDelete(interaction: ChatInputCommandInteraction<
   });
 }
 
-export async function changeRoomName(interaction: ChatInputCommandInteraction<CacheType>, name: string) {
+export async function changeRoomName(interaction: ChatInputCommandInteraction<CacheType>, name?: string | null) {
   const guild = interaction.guild;
   if (!guild) {
     return;
   }
+
+  const roomName = name?.trim() || getDefaultRoomName(guild);
 
   const type = interaction.channel?.type;
   if (type !== ChannelType.GuildVoice) {
@@ -210,18 +213,18 @@ export async function changeRoomName(interaction: ChatInputCommandInteraction<Ca
     await roomService.registerRoom({
       roomId: interaction.channelId,
       guildId: guild.id,
-      name: name,
+      name: roomName,
       isAutodelete: true,
       isLive: false,
       isPrivate: false,
     });
 
-    await (interaction.channel as VoiceChannel).setName(name);
+    await (interaction.channel as VoiceChannel).setName(roomName);
 
     const embed = new EmbedBuilder()
       .setColor('#cc66cc')
       .setTitle(`お部屋名変更`)
-      .setDescription(`${name}に変更したよ～！`)
+      .setDescription(`${roomName}に変更したよ～！`)
       .setFooter({ text: `by ${interaction.user.displayName}` });
 
     await interaction.editReply({ embeds: [embed] });
@@ -230,13 +233,13 @@ export async function changeRoomName(interaction: ChatInputCommandInteraction<Ca
 
   const oldName = room.name;
 
-  await roomService.renameRoom(interaction.channelId, name);
-  await (interaction.channel as VoiceChannel).setName(name);
+  await roomService.renameRoom(interaction.channelId, roomName);
+  await (interaction.channel as VoiceChannel).setName(roomName);
 
   const embed = new EmbedBuilder()
     .setColor('#cc66cc')
     .setTitle(`お部屋名変更`)
-    .setDescription(`「${oldName}」から「${name}」に変更したよ～！`)
+    .setDescription(`「${oldName}」から「${roomName}」に変更したよ～！`)
     .setFooter({ text: `by ${interaction.user.displayName}` });
 
   await interaction.editReply({ embeds: [embed] });

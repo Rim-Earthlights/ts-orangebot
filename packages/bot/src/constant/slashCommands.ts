@@ -50,7 +50,9 @@ export const SERVER_SLASH_COMMANDS = [
       sc
         .setName('name')
         .setDescription('お部屋名を変更します')
-        .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true))
+        .addStringOption((option) =>
+          option.setName('name').setDescription('お部屋名 (省略時は お部屋: #nnn)').setRequired(false)
+        )
     )
     .addSubcommand((sc) =>
       sc
@@ -87,7 +89,9 @@ export const SERVER_SLASH_COMMANDS = [
   new SlashCommandBuilder()
     .setName('rn')
     .setDescription('お部屋名を変更します (/room nameの短縮形)')
-    .addStringOption((option) => option.setName('name').setDescription('お部屋名').setRequired(true)),
+    .addStringOption((option) =>
+      option.setName('name').setDescription('お部屋名 (省略時は お部屋: #nnn)').setRequired(false)
+    ),
   new SlashCommandBuilder()
     .setName('dc')
     .setDescription('特定のユーザーをボイスチャンネルから切断します')
@@ -202,7 +206,9 @@ export const SERVER_SLASH_COMMANDS = [
       sc
         .setName('play')
         .setDescription('音楽を再生します (登録済みプレイリスト名も指定できます)')
-        .addStringOption((option) => option.setName('url').setDescription('YoutubeのURL or プレイリスト名').setRequired(true))
+        .addStringOption((option) =>
+          option.setName('url').setDescription('YoutubeのURL or プレイリスト名').setRequired(true)
+        )
     )
     .addSubcommand((sc) =>
       sc
@@ -214,7 +220,9 @@ export const SERVER_SLASH_COMMANDS = [
       sc
         .setName('interrupt')
         .setDescription('割込予約します (URL or キュー番号)')
-        .addStringOption((option) => option.setName('target').setDescription('YoutubeのURL or キュー番号').setRequired(true))
+        .addStringOption((option) =>
+          option.setName('target').setDescription('YoutubeのURL or キュー番号').setRequired(true)
+        )
     )
     .addSubcommand((sc) => sc.setName('stop').setDescription('再生を停止します'))
     .addSubcommand((sc) =>
@@ -255,7 +263,9 @@ export const SERVER_SLASH_COMMANDS = [
         .setName('add')
         .setDescription('プレイリストを登録します')
         .addStringOption((option) => option.setName('name').setDescription('登録名').setRequired(true))
-        .addStringOption((option) => option.setName('url').setDescription('プレイリスト or 動画のURL').setRequired(true))
+        .addStringOption((option) =>
+          option.setName('url').setDescription('プレイリスト or 動画のURL').setRequired(true)
+        )
     )
     .addSubcommand((sc) =>
       sc
