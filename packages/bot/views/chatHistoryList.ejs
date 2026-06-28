@@ -111,9 +111,19 @@
                                                         lastContent = '[マルチメディアコンテンツ]';
                                                     }
                                                 }
+                                                if (lastMessage.role === 'tool') {
+                                                    lastContent = lastContent || '[ツール実行結果]';
+                                                } else if (lastMessage.tool_calls && lastMessage.tool_calls.length > 0 && !lastContent) {
+                                                    const toolNames = lastMessage.tool_calls
+                                                        .map(call => call.function && call.function.name)
+                                                        .filter(Boolean)
+                                                        .join(', ');
+                                                    lastContent = toolNames ? `[ツール呼び出し: ${toolNames}]` : '[ツール呼び出し]';
+                                                }
+                                                const lastRoleLabel = lastMessage.role === 'tool' ? '🔧 tool' : lastMessage.role;
                                             %>
                                                 <div class="last-message truncate">
-                                                    <strong><%= lastMessage.role %>:</strong> <%= lastContent %>
+                                                    <strong><%= lastRoleLabel %>:</strong> <%= lastContent %>
                                                 </div>
                                             <% } %>
 
@@ -131,7 +141,7 @@
 
                                             <div class="mt-2">
                                                 <span class="badge bg-secondary">
-                                                    <%= history.content ? history.content.length - 1 : 0 %>件のメッセージ
+                                                    <%= history.content ? history.content.filter(message => message.role !== 'system').length : 0 %>件のメッセージ
                                                 </span>
                                             </div>
                                         </div>

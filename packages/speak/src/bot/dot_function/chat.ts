@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
 import { ChatCompletionContentPart } from 'openai/resources';
-import { ChatHistoryChannelType, ChatHistoryRepository, LogLevel } from '@orangebot/shared';
+import { ChatHistoryChannelType, ChatHistoryRepository, LogLevel, stripSystemMessages } from '@orangebot/shared';
 import { Logger } from '../../common/logger.js';
 import { LiteLLMModel } from '../../config/config.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
@@ -105,7 +105,7 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
       bot_id: DISCORD_CLIENT.user!.id,
       channel_id: id,
       name: message.author.displayName,
-      content: llm.chat,
+      content: stripSystemMessages(llm.chat),
       model: llm.model,
       mode: ChatService.LiteLLMMode.DEFAULT,
       channel_type: isGuild ? ChatHistoryChannelType.GUILD : ChatHistoryChannelType.DM,

@@ -69,9 +69,23 @@ describe('ChatService セッション管理', () => {
       true
     );
     expect(session.uuid).toBe('restored-uuid');
-    expect(session.chat).toBe(chat);
+    expect(session.chat).toEqual([{ role: ChatRole.SYSTEM, content: 'system prompt' }, ...chat]);
     expect(session.model).toBe('model-low');
     expect(service.getSessionByUuid('restored-uuid')).toBe(session);
+  });
+
+  it('restoreSession は既に system ロールが含まれる旧データでは重複追加しない', () => {
+    const { service } = makeService();
+    const chat = [
+      { role: ChatRole.SYSTEM, content: 'old system prompt' },
+      { role: ChatRole.USER, content: 'hello' },
+    ];
+    const session = service.restoreSession(
+      '100',
+      { uuid: 'restored-uuid', chat, model: 'model-low', mode: 'default' },
+      true
+    );
+    expect(session.chat).toEqual(chat);
   });
 
   it('toggleMemory はセッションがなければ null', () => {
@@ -161,6 +175,33 @@ describe('ChatService.saveHistory', () => {
     });
     expect(saveSpy).toHaveBeenCalledWith(
       expect.objectContaining({ uuid: 'u-2', channel_type: ChatHistoryChannelType.DM })
+    );
+  });
+
+  it('content はセッション上の内容をそのままリポジトリへ渡す', async () => {
+    const saveSpy = vi.fn().mockResolvedValue(undefined);
+    const { service } = makeService({ saveSpy });
+    const content = [
+      { role: ChatRole.SYSTEM, content: 'system prompt' },
+      { role: ChatRole.USER, content: 'hello' },
+      { role: ChatRole.ASSISTANT, content: 'hi' },
+    ];
+
+    await service.saveHistory({
+      uuid: 'u-3',
+      botId: 'bot-1',
+      channelId: '100',
+      name: 'guild-name',
+      content,
+      model: 'model-default',
+      mode: 'default',
+      isGuild: true,
+    });
+
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content,
+      })
     );
   });
 });

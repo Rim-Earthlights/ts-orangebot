@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
-import { ChatHistoryRepository, LogLevel, Models } from '@orangebot/shared';
+import { ChatHistoryRepository, LogLevel, Models, countNonSystemMessages, prependSystemMessageIfMissing } from '@orangebot/shared';
 import { Logger } from '../../common/logger.js';
 import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
@@ -142,14 +142,18 @@ export async function revert(interaction: ChatInputCommandInteraction<CacheType>
         chatHistory.mode as ChatService.LiteLLMMode,
         isGuild
       );
-      ChatService.llmList.llm.push({ ...llm, chat: chatHistory.content, uuid: chatHistory.uuid });
+      ChatService.llmList.llm.push({
+        ...llm,
+        chat: prependSystemMessageIfMissing(chatHistory.content, llm.chat[0]),
+        uuid: chatHistory.uuid,
+      });
     }
 
     const successEmbed = new EmbedBuilder()
       .setColor('#00ff00')
       .setTitle('復元完了')
       .setDescription(
-        `チャット履歴を復元しました。\n履歴UUID: ${chatHistory.uuid}\nメッセージ数: ${chatHistory.content.length - 1}`
+        `チャット履歴を復元しました。\n履歴UUID: ${chatHistory.uuid}\nメッセージ数: ${countNonSystemMessages(chatHistory.content)}`
       );
 
     await interaction.editReply({ embeds: [successEmbed] });

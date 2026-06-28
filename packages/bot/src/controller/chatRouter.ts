@@ -1,6 +1,6 @@
 import Express from 'express';
 import { Logger } from '../common/logger.js';
-import { ChatHistoryRepository } from "@orangebot/shared";
+import { ChatHistoryRepository, stripSystemMessages } from "@orangebot/shared";
 
 export const chatRouter = Express.Router();
 
@@ -70,7 +70,7 @@ chatRouter.get('/chat/history/:uuid', async (req: Express.Request, res: Express.
     res.render('chatHistory', {
       chatHistory: {
         ...chatHistory,
-        content: chatHistory.content.slice(1),
+        content: stripSystemMessages(chatHistory.content),
       }
     });
   } catch (error) {

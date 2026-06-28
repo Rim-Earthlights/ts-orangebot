@@ -11,6 +11,7 @@ import {
   ChatSession,
   LiteLLMMode,
 } from '../types/chat.js';
+import { prependSystemMessageIfMissing } from '../utils/chatHistory.js';
 
 /** ユニットテストでリポジトリをモックできるよう、利用メソッドのみを依存として宣言する */
 type UsersRepositoryLike = Pick<UsersRepository, 'getUserSetting'>;
@@ -95,7 +96,7 @@ export class ChatService {
     isGuild: boolean
   ): ChatSession {
     const session = this.createSession(id, history.model, history.mode as LiteLLMMode, isGuild);
-    session.chat = history.chat;
+    session.chat = prependSystemMessageIfMissing(history.chat, session.chat[0]);
     session.uuid = history.uuid;
     return session;
   }
