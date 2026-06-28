@@ -1,7 +1,7 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { ChatHistory, ChatHistoryRepository, ChatSession } from '@orangebot/shared';
+import { ChatHistory, ChatHistoryRepository, ChatSession, countNonSystemMessages } from '@orangebot/shared';
 import { DISCORD_CLIENT } from '../../../../constant/constants.js';
 import { getIdInfoInteraction } from '../../../../constant/chat/chat.js';
 import { createChatService } from '../../../adapters/chat.adapter.js';
@@ -87,7 +87,7 @@ export class RevertHandler extends BaseInteractionHandler {
         .setColor('#00ff00')
         .setTitle('復元完了')
         .setDescription(
-          `チャット履歴を復元しました。\n履歴UUID: ${chatHistory.uuid}\nメッセージ数: ${chatHistory.content.length - 1}`
+          `チャット履歴を復元しました。\n履歴UUID: ${chatHistory.uuid}\nメッセージ数: ${countNonSystemMessages(chatHistory.content)}`
         );
 
       await interaction.editReply({ embeds: [successEmbed] });

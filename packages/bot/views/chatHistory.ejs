@@ -40,6 +40,10 @@
             background-color: #fff3e0;
             border-left: 4px solid #ff9800;
         }
+        .message.tool {
+            background-color: #e8f5e9;
+            border-left: 4px solid #009688;
+        }
         .role-badge {
             font-size: 0.8em;
             font-weight: bold;
@@ -49,6 +53,37 @@
         .message-content {
             white-space: pre-line;
             overflow-wrap: anywhere;
+        }
+        .tool-call-box {
+            border: 1px solid #b2dfdb;
+            border-radius: 8px;
+            background-color: #ffffff;
+            padding: 10px 12px;
+            margin-top: 8px;
+        }
+        .tool-call-box .tool-name {
+            font-weight: bold;
+            color: #00796b;
+            word-break: break-all;
+        }
+        .tool-call-box .tool-id {
+            font-size: 0.75em;
+            color: #6c757d;
+            word-break: break-all;
+        }
+        .tool-call-box pre,
+        .tool-result-content pre {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .tool-result-content {
+            margin-top: 4px;
         }
         .image-content {
             max-width: 100%;
@@ -73,6 +108,47 @@
 </head>
 
 <body>
+    <%
+        // ツール呼び出しの引数 / ツール結果を見やすく整形する。
+        // JSON としてパースできる場合は整形し、できない場合は元の文字列をそのまま返す。
+        function formatMaybeJson(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+            if (typeof value !== 'string') {
+                try {
+                    return JSON.stringify(value, null, 2);
+                } catch (e) {
+                    return String(value);
+                }
+            }
+            const trimmed = value.trim();
+            if (trimmed === '') {
+                return '';
+            }
+            try {
+                return JSON.stringify(JSON.parse(trimmed), null, 2);
+            } catch (e) {
+                return value;
+            }
+        }
+        // role: 'tool' のメッセージから content を文字列として取り出す。
+        function extractToolText(content) {
+            if (content === null || content === undefined) {
+                return '';
+            }
+            if (typeof content === 'string') {
+                return content;
+            }
+            if (Array.isArray(content)) {
+                return content
+                    .map((part) => (part && part.type === 'text' && typeof part.text === 'string' ? part.text : ''))
+                    .filter((text) => text !== '')
+                    .join('\n');
+            }
+            return String(content);
+        }
+    %>
     <div class="chat-container">
         <h1 class="mb-4">チャット履歴</h1>
 
@@ -90,10 +166,23 @@
         <div class="messages">
             <% chatHistory.content.forEach((message, index) => { %>
                 <div class="message <%= message.role %>">
-                    <div class="role-badge text-<%= message.role === 'system' ? 'secondary' : message.role === 'user' ? 'primary' : message.role === 'assistant' ? 'success' : 'warning' %>">
-                        <%= message.role === 'assistant' ? chatHistory.bot_info.name : message.role %>
+                    <div class="role-badge text-<%= message.role === 'system' ? 'secondary' : message.role === 'user' ? 'primary' : message.role === 'assistant' ? 'success' : message.role === 'tool' ? 'info' : 'warning' %>">
+                        <% if (message.role === 'assistant') { %><%= (chatHistory.bot_info && chatHistory.bot_info.name) ? chatHistory.bot_info.name : 'assistant' %><% } else if (message.role === 'tool') { %>🔧 TOOL<% } else { %><%= message.role %><% } %>
                         <% if (message.name) { %> - <%= message.name %><% } %>
                     </div>
+
+                    <% if (message.role === 'tool') {
+                        const toolText = extractToolText(message.content);
+                        const formattedTool = formatMaybeJson(toolText);
+                    %>
+                        <% if (message.tool_call_id) { %>
+                            <div class="tool-id mb-1">tool_call_id: <%= message.tool_call_id %></div>
+                        <% } %>
+                        <div class="tool-result-content"><%
+                            if (formattedTool === '') { %><em class="text-muted">結果なし</em><%
+                            } else { %><pre><%= formattedTool %></pre><% }
+                        %></div>
+                    <% } else { %>
 
                     <div class="message-content"><%
                         if (typeof message.content === 'string') { %><%- message.content.replace(/\n/g, '<br>') %><%
@@ -125,11 +214,21 @@
 
                     <% if (message.tool_calls && message.tool_calls.length > 0) { %>
                         <div class="tool-calls mt-2">
-                            <small class="text-muted">ツール呼び出し:</small>
-                            <% message.tool_calls.forEach((toolCall, toolIndex) => { %>
-                                <div class="bg-light p-2 mt-1 rounded">
-                                    <strong><%= toolCall.function.name %></strong>
-                                    <pre class="mb-0"><%= toolCall.function.arguments %></pre>
+                            <small class="text-muted">ツール呼び出し (<%= message.tool_calls.length %>件):</small>
+                            <% message.tool_calls.forEach((toolCall, toolIndex) => {
+                                const fn = toolCall.function || {};
+                                const formattedArgs = formatMaybeJson(fn.arguments);
+                            %>
+                                <div class="tool-call-box">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap">
+                                        <span class="tool-name">🔧 <%= fn.name || '(不明なツール)' %></span>
+                                        <% if (toolCall.id) { %><span class="tool-id">id: <%= toolCall.id %></span><% } %>
+                                    </div>
+                                    <% if (formattedArgs === '') { %>
+                                        <small class="text-muted d-block mt-1">引数なし</small>
+                                    <% } else { %>
+                                        <pre class="mt-1"><%= formattedArgs %></pre>
+                                    <% } %>
                                 </div>
                             <% }) %>
                         </div>
@@ -139,6 +238,7 @@
                         <div class="refusal mt-2">
                             <small class="text-danger">拒否理由: <%= message.refusal %></small>
                         </div>
+                    <% } %>
                     <% } %>
                 </div>
             <% }) %>

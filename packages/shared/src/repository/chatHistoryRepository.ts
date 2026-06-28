@@ -1,6 +1,7 @@
 import { DeepPartial, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
 import { getDataSource } from '../config/datasource.js';
+import { stripSystemMessages } from '../utils/chatHistory.js';
 
 export class ChatHistoryRepository {
   private repository: Repository<Models.ChatHistory>;
@@ -87,7 +88,14 @@ export class ChatHistoryRepository {
    * @returns Promise<void>
    */
   public async save(chatHistory: DeepPartial<Models.ChatHistory>): Promise<void> {
-    await this.repository.save(chatHistory);
+    await this.repository.save(
+      chatHistory.content
+        ? {
+            ...chatHistory,
+            content: stripSystemMessages(chatHistory.content as Models.ChatHistory['content']),
+          }
+        : chatHistory
+    );
   }
 
   /**
@@ -103,7 +111,7 @@ export class ChatHistoryRepository {
       // 既存のレコードがある場合は content を更新
       await this.repository.save({
         uuid,
-        content,
+        content: stripSystemMessages(content),
       });
     } else {
       // 既存のレコードがない場合はエラーを投げる（UUIDが存在しない）
