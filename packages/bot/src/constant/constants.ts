@@ -314,7 +314,7 @@ export const HELP_COMMANDS_INTERACTIONS = [
     .addFields(
       {
         name: '/room name [部屋名] | /rn [部屋名]',
-        value: 'お部屋の名前を変更します',
+        value: 'お部屋の名前を変更します。部屋名を省略すると`お部屋: #nnn`にします',
       },
       {
         name: '/room live',

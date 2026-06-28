@@ -1,10 +1,11 @@
 import { CategoryChannel, ChannelType, Guild, VoiceChannel, VoiceState } from 'discord.js';
 import { Logger } from '../../common/logger.js';
 import { DISCORD_CLIENT, EXCLUDE_ROOM } from '../../constant/constants.js';
-import { RoomRepository } from "@orangebot/shared";
-import { UsersRepository } from "@orangebot/shared";
-import { LogLevel } from "@orangebot/shared";
+import { RoomRepository } from '@orangebot/shared';
+import { UsersRepository } from '@orangebot/shared';
+import { LogLevel } from '@orangebot/shared';
 import { extermAudioPlayer } from './music.js';
+import { getDefaultRoomName } from '../utils/roomName.js';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -149,22 +150,4 @@ export async function joinVoiceChannel(guild: Guild, userId: string, voiceState:
       await userRepository.save(user);
     }
   }
-}
-
-/**
- * ボイスチャンネルの名前を取得する
- * @param guild
- * @returns
- */
-export function getDefaultRoomName(guild: Guild): string {
-  const rooms = guild.channels.cache.filter((c) => c.name.includes('お部屋:'));
-  if (rooms.size > 0) {
-    const channelLength =
-      guild.channels.cache
-        .filter((c) => c.name.includes('お部屋: #'))
-        .map((c) => Number(c.name.replace('お部屋: #', '')))
-        .sort((a, b) => b - a)[0] + 1;
-    return `お部屋: #${('000' + channelLength).slice(-3)}`;
-  }
-  return `お部屋: #001`;
 }

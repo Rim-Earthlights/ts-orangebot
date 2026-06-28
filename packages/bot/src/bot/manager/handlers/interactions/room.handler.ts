@@ -45,10 +45,6 @@ export class RoomHandler extends BaseInteractionHandler {
       case 'name': {
         await interaction.deferReply();
         const name = interaction.options.getString('name');
-        if (!name) {
-          await interaction.editReply({ content: 'チャンネル名を指定してください' });
-          return;
-        }
         await BotFunctions.Room.changeRoomName(interaction, name);
         break;
       }
@@ -98,10 +94,6 @@ export class RoomHandler extends BaseInteractionHandler {
   private async handleRoomNameInteraction(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
     await interaction.deferReply();
     const name = interaction.options.getString('name');
-    if (!name) {
-      await interaction.editReply({ content: 'チャンネル名を指定してください' });
-      return;
-    }
     await BotFunctions.Room.changeRoomName(interaction, name);
   }
 }

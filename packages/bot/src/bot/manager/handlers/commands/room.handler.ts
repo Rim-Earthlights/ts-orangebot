@@ -1,7 +1,7 @@
 import { EmbedBuilder, Message } from 'discord.js';
 import { Logger } from '../../../../common/logger.js';
 import * as DotBotFunctions from '../../../dot_function/index.js';
-import { getDefaultRoomName } from '../../../dot_function/voice.js';
+import { getDefaultRoomName } from '../../../utils/roomName.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class RoomHandler extends BaseMessageHandler {
