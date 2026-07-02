@@ -61,7 +61,6 @@ export class AcceptHandler extends BaseInteractionHandler {
       if (!userSetting) {
         const saveUserSetting: Partial<UserSetting> = {
           user_id: user.id,
-          nickname: user.displayName,
         };
         await userRepository.saveUserSetting(saveUserSetting);
       }

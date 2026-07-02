@@ -10,9 +10,6 @@ export class NicknameHandler extends BaseInteractionHandler {
 
   async execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
     const name = interaction.options.getString('name');
-    if (!name) {
-      return;
-    }
     if (interaction.guild) {
       const usersRepository = new UsersRepository();
       const user = await usersRepository.get(interaction.guild.id, interaction.user.id);
@@ -20,8 +17,13 @@ export class NicknameHandler extends BaseInteractionHandler {
         await interaction.reply({ content: `あなたのことが登録されていないみたい……？` });
         return;
       }
-      await usersRepository.save({ ...user, userSetting: { ...user.userSetting, nickname: name } });
-      await interaction.reply({ content: `はーい！これから「${name}」って呼ぶね～！` });
+      const nickname = name && name.trim() ? name.trim() : null;
+      await usersRepository.save({ ...user, userSetting: { ...user.userSetting, nickname } });
+      await interaction.reply({
+        content: nickname
+          ? `はーい！これから「${nickname}」って呼ぶね～！`
+          : `呼び方をリセットしたよ！これからは表示名で呼ぶね～！`,
+      });
     }
   }
 }
