@@ -377,6 +377,10 @@ export const HELP_COMMANDS_INTERACTIONS = [
     {
       name: '/user-type [ユーザー] [タイプ]',
       value: 'ユーザー権限を設定します (要:オーナー権限)',
+    },
+    {
+      name: '/term [command]',
+      value: 'サーバー上でコマンドを実行します (要:オーナー権限)',
     }
   ),
   new EmbedBuilder()

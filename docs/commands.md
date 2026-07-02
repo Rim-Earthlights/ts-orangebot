@@ -14,6 +14,7 @@
 | `/mute <user> <time> <reason>` | ユーザーをミュート |
 | `/timeout <user> <time> <reason>` | ユーザーをタイムアウト |
 | `/user-type <user_id> <type>` | ユーザー権限を変更 (OWNER/ADMIN/MEMBER/GUEST) |
+| `/term <command>` | サーバー上でコマンドを実行 (OWNER のみ) |
 | `/accept <user>` | ユーザーのルール同意を承認 |
 
 #### ユーティリティ

@@ -29,6 +29,7 @@ import { PauseHandler } from './handlers/interactions/pause.handler.js';
 import { DictHandler } from './handlers/interactions/dict.handler.js';
 import { MusicHandler } from './handlers/interactions/music.handler.js';
 import { PlaylistHandler } from './handlers/interactions/playlist.handler.js';
+import { TermHandler } from './handlers/interactions/term.handler.js';
 
 /**
  * スラッシュコマンドのマネージャー
@@ -48,6 +49,7 @@ export class InteractionManager {
     this.handlers.set('mute', new MuteHandler(this.logger));
     this.handlers.set('timeout', new TimeoutHandler(this.logger));
     this.handlers.set('user-type', new UserTypeHandler(this.logger));
+    this.handlers.set('term', new TermHandler(this.logger));
 
     this.handlers.set('help', new HelpHandler(this.logger));
     this.handlers.set('nickname', new NicknameHandler(this.logger));
