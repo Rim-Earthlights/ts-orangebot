@@ -120,7 +120,9 @@ export const SERVER_SLASH_COMMANDS = [
   new SlashCommandBuilder()
     .setName('nickname')
     .setDescription('あなたの呼び方を登録します')
-    .addStringOption((option) => option.setName('name').setDescription('呼び方').setRequired(true)),
+    .addStringOption((option) =>
+      option.setName('name').setDescription('呼び方 (空で登録すると表示名に戻ります)').setRequired(false)
+    ),
   new SlashCommandBuilder()
     .setName('dice')
     .setDescription('サイコロを振ります')

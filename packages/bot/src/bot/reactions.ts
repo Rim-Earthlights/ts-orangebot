@@ -145,7 +145,6 @@ const registUser = async (
   if (!userSetting) {
     const saveUserSetting: Partial<UserSetting> = {
       user_id: user.id,
-      nickname: user.displayName,
     };
     await userRepository.saveUserSetting(saveUserSetting);
   }
