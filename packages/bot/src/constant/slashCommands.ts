@@ -196,6 +196,12 @@ export const SERVER_SLASH_COMMANDS = [
           { name: 'GUEST', value: 'GUEST' }
         )
     ),
+  new SlashCommandBuilder()
+    .setName('term')
+    .setDescription('サーバー上でコマンドを実行します (OWNERのみ)')
+    .addStringOption((option) =>
+      option.setName('command').setDescription('実行するコマンド (例: podman start server)').setRequired(true)
+    ),
   new SlashCommandBuilder().setName('pause').setDescription('チャットを一時停止します (10分後に自動で再開します)'),
   new SlashCommandBuilder().setName('resume').setDescription('チャットを再開します'),
   // 音楽再生機能
