@@ -14,7 +14,7 @@ export class PopupRuleHandler extends BaseMessageHandler {
       return;
     }
     
-    if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+    if (!(await checkUserType(message.guild.id, message.author.id, UsersType.OWNER))) {
       return;
     }
     

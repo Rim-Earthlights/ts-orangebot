@@ -28,7 +28,7 @@ export class RipHandler extends BaseInteractionHandler {
     }
 
     const interactionUser = interaction.user;
-    if (!checkUserType(interactionGuild.id, interactionUser.id, UsersType.ADMIN)) {
+    if (!(await checkUserType(interactionGuild.id, interactionUser.id, UsersType.ADMIN))) {
       const errorEmbed = new EmbedBuilder()
         .setColor('#ff0000')
         .setTitle('エラー')

@@ -18,7 +18,7 @@ export class DcHandler extends BaseInteractionHandler {
     if (!interaction.guild) {
       return;
     }
-    if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.ADMIN)) {
+    if (!(await checkUserType(interaction.guild.id, interaction.user.id, UsersType.ADMIN))) {
       const send = new EmbedBuilder()
         .setColor('#ff0000')
         .setTitle(`エラー`)

@@ -216,7 +216,7 @@ export async function getPresent(interaction: ChatInputCommandInteraction<CacheT
   if (uid == undefined) {
     getUid = interaction.user.id;
   } else {
-    if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER)) {
+    if (!(await checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER))) {
       interaction.reply({
         content: `他ユーザーのプレゼントの閲覧権限がないよ！`,
       });
@@ -256,7 +256,7 @@ export async function usePresent(interaction: ChatInputCommandInteraction<CacheT
   if (!interaction.guild) {
     return;
   }
-  if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER)) {
+  if (!(await checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER))) {
     interaction.editReply({
       content: `プレゼントの使用権限がないよ！`,
     });
@@ -296,7 +296,7 @@ export async function givePresent(message: Message, uid: string, itemId: number)
   if (!message.guild) {
     return;
   }
-  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+  if (!(await checkUserType(message.guild.id, message.author.id, UsersType.OWNER))) {
     message.reply({
       content: `プレゼントを渡す権限がないよ！`,
     });

@@ -42,7 +42,7 @@ async function reset(message: Message, id?: string, num?: string) {
   if (!message.guild) {
     return;
   }
-  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+  if (!(await checkUserType(message.guild.id, message.author.id, UsersType.OWNER))) {
     await message.reply({
       content: `ガチャフラグのリセット権限がないアカウントだよ！管理者にお願いしてね！`,
     });
@@ -244,7 +244,7 @@ export async function getPresent(message: Message, uid?: string, hist?: boolean)
   if (uid == undefined) {
     getUid = message.author.id;
   } else {
-    if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+    if (!(await checkUserType(message.guild.id, message.author.id, UsersType.OWNER))) {
       message.reply({
         content: `他ユーザーのプレゼントの閲覧権限がないよ！`,
       });
@@ -279,7 +279,7 @@ export async function usePresent(message: Message, args: string[]) {
   if (!message.guild) {
     return;
   }
-  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+  if (!(await checkUserType(message.guild.id, message.author.id, UsersType.OWNER))) {
     await message.reply({
       content: `プレゼントの使用権限がないよ！`,
     });
@@ -319,7 +319,7 @@ export async function givePresent(message: Message, uid: string, itemId: number)
   if (!message.guild) {
     return;
   }
-  if (!checkUserType(message.guild.id, message.author.id, UsersType.OWNER)) {
+  if (!(await checkUserType(message.guild.id, message.author.id, UsersType.OWNER))) {
     await message.reply({
       content: `プレゼントを渡す権限がないよ！`,
     });

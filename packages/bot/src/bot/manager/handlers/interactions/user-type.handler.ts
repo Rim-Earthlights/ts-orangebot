@@ -16,7 +16,7 @@ export class UserTypeHandler extends BaseInteractionHandler {
       return;
     }
 
-    if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER)) {
+    if (!(await checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER))) {
       await interaction.reply({ content: 'このコマンドを実行する権限がありません。', flags: MessageFlags.Ephemeral });
       return;
     }

@@ -17,7 +17,7 @@ export class TimeoutHandler extends BaseInteractionHandler {
       return;
     }
     
-    if (!checkUserType(interaction.guild.id, interaction.user.id, UsersType.ADMIN)) {
+    if (!(await checkUserType(interaction.guild.id, interaction.user.id, UsersType.ADMIN))) {
       const send = new EmbedBuilder()
         .setColor('#ff0000')
         .setTitle(`エラー`)
