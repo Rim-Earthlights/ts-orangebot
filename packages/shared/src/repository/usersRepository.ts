@@ -19,7 +19,10 @@ export class UsersRepository {
    * @returns Promise<Users | null>
    */
   public async get(gid: string, uid: string): Promise<Models.Users | null> {
-    const user = await this.repository.findOne({ relations: { guild: true, userSetting: true }, where: { id: uid, guild_id: gid } });
+    const user = await this.repository.findOne({
+      relations: { guild: true, userSetting: true },
+      where: { id: uid, guild_id: gid },
+    });
     return user;
   }
 
@@ -33,7 +36,7 @@ export class UsersRepository {
     const user = await this.repository.findOne({
       relations: { guild: true, userSetting: true },
       where: { id: uid, guild_id: gid },
-      withDeleted: true
+      withDeleted: true,
     });
     return user;
   }
@@ -54,7 +57,10 @@ export class UsersRepository {
    * @returns Promise<Users[]>
    */
   public async getAll(gid: string): Promise<Models.Users[]> {
-    const user = await this.repository.find({ relations: { guild: true, userSetting: true }, where: { guild_id: gid } });
+    const user = await this.repository.find({
+      relations: { guild: true, userSetting: true },
+      where: { guild_id: gid },
+    });
     return user;
   }
 
@@ -119,7 +125,7 @@ export class UsersRepository {
    * @returns
    */
   public async getUsersType(gid: string, uid: string): Promise<UsersType | null> {
-    const users = await this.repository.findOne({ where: { id: uid } });
+    const users = await this.repository.findOne({ where: { id: uid, guild_id: gid } });
     if (!users) {
       return null;
     }
