@@ -33,6 +33,8 @@
 - 接続先は `TEST_DB_HOST` / `TEST_DB_PORT` / `TEST_DB_USERNAME` / `TEST_DB_PASSWORD` / `TEST_DB_DATABASE` で上書き可能 (既定はコンテナの値)
 
 > Discord ID 系の主キー (`id`, `guild_id`, `channel_id` 等) は DB 上は `bigint(20)` として定義されているが、TypeORM の慣習によりアプリケーション層では `string` として扱われる。
+>
+> また、多くのエンティティは `@DeleteDateColumn` による `deleted_at` カラムを持ち、論理削除 (ソフトデリート) に対応している。以下の各表では `created_at` / `updated_at` / `deleted_at` の記載は省略する。
 
 ## エンティティ一覧
 
@@ -66,12 +68,13 @@
 |---|---|---|
 | `id` | number (PK, auto) | ID |
 | `name` | string | アイテム名 |
-| `rare` | number | レアリティ |
+| `rare` | string (FK) | レアリティ (ItemRank.rare への外部キー) |
 | `icon` | string | アイコン |
 | `description` | string | 説明 |
 | `weight` | number | ドロップ率の重み |
 | `price` | number | 価格 |
 | `is_present` | boolean | プレゼントフラグ |
+| `reroll` | number | リロール回数 |
 
 ### ItemRank - レアリティランク
 
@@ -136,6 +139,7 @@
 | `content` | JSON | メッセージ配列 |
 | `model` | string | 使用モデル |
 | `mode` | string | チャットモード |
+| `name` | string (nullable) | 会話相手の名前 (DM はユーザーの表示名、ギルドはサーバー名) |
 
 ### Log - ログ
 
@@ -146,7 +150,7 @@
 | `guild_id` | string | ギルド ID |
 | `channel_id` | string | チャンネル ID |
 | `user_id` | string | ユーザー ID |
-| `level` | enum | ログレベル (SYSTEM/INFO/WARN/ERROR) |
+| `level` | enum | ログレベル (SYSTEM/INFO/ERROR/DEBUG) |
 | `event` | string | イベント名 |
 | `message` | string | メッセージ |
 

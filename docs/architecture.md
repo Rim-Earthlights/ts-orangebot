@@ -75,6 +75,7 @@ packages/bot/src/
 │   │   ├── chat_tools/            # Tool Calling 用ツール群
 │   │   │   ├── index.ts
 │   │   │   ├── types.ts
+│   │   │   ├── commands.ts        # Bot コマンド一覧取得
 │   │   │   ├── userActivity.ts    # ユーザーアクティビティ取得
 │   │   │   └── weather.ts         # 天気取得
 │   │   ├── dice.ts                # ダイス / ゲーム
@@ -94,9 +95,10 @@ packages/bot/src/
 │   │   ├── interaction.manager.ts  # スラッシュコマンドのルーター
 │   │   ├── message.handler.ts      # メッセージハンドラ I/F
 │   │   ├── interaction.handler.ts  # インタラクションハンドラ I/F
+│   │   ├── base.handler.ts         # ハンドラ共通の基底クラス
 │   │   └── handlers/
 │   │       ├── commands/           # ドットコマンドハンドラ (19 ファイル)
-│   │       └── interactions/       # スラッシュコマンドハンドラ (25 ファイル)
+│   │       └── interactions/       # スラッシュコマンドハンドラ (29 ファイル。rust.handler.ts 等)
 │   │
 │   ├── request/              # 外部 API クライアント
 │   │   ├── openai.ts         # OpenAI / LiteLLM
@@ -105,6 +107,7 @@ packages/bot/src/
 │   │   └── spotify.ts        # Spotify
 │   │
 │   ├── function/             # ユーティリティ関数
+│   ├── utils/                # 補助ユーティリティ (roomName.ts)
 │   ├── reactions.ts          # リアクション処理
 │   └── mention.ts            # メンションロジック
 │
@@ -149,7 +152,7 @@ packages/bot/src/
 ```
 ユーザーがボイスチャンネルに参加/退出
   → app.ts (voiceStateUpdate イベント)
-    → Voice.channelUpdate()
+    → joinVoiceChannel() / leftVoiceChannel() (dot_function/voice.ts)
       → ロビーに参加 → 自動ルーム作成
       → ルームが空に → 自動削除 (is_autodelete が有効の場合)
 ```
@@ -191,6 +194,7 @@ packages/bot/src/
 | OpenWeatherMap | 天気予報 | `FORECAST.KEY` |
 | Spotify | 歌詞連携・OAuth | Spotify OAuth 設定 |
 | VOICEVOX / COEIROINK | テキスト読み上げ (音声合成) | speak パッケージがローカルエンジン (50021 / 50032) を直接呼び出し |
+| Rust ゲームサーバー (rcon) | `/rust whitelist add\|revoke` で whitelist を管理 (`rust.handler.ts` が `rcon` CLI を `execFile` で実行) | `~/rcon.yaml` (rcon CLI の設定ファイル) |
 
 ## ボイスチャンネルの E2EE (DAVE)
 
@@ -200,6 +204,6 @@ Discord のボイスチャンネル E2EE (DAVE プロトコル) には `@discord
 
 | パッケージ | スケジュール | 処理内容 |
 |---|---|---|
-| bot | `0 0 * * *` (毎日0時) | ユーザーのガチャチケットをリセット |
+| bot | `0 0 * * *` (毎日0時) | ガチャの抽選回数を補充 (30 未満なら +10)。あわせてモデル設定を DEFAULT に戻し、ユーザー名を displayName に更新 |
 | bot | `* * * * *` (毎分) | 1時間以上アイドル状態のチャットセッションをクリーンアップ |
 | speak | `* * * * *` (毎分) | 30分以上アイドル状態の LLM セッションを破棄 |

@@ -15,14 +15,14 @@
 
 ### 現状
 
-OrangeBot-TS は Discord Bot 単体として動作しており、Express サーバーと Discord クライアントが **単一プロセス** で稼働している。Web UI は EJS テンプレートによる簡易的なもので、外部から利用可能な JSON API は存在しない。
+OrangeBot-TS は Discord Bot 単体として動作しており、Express サーバーと Discord クライアントが **単一プロセス** で稼働している。Web UI は EJS テンプレートによる簡易的なもので、認証・バリデーションのない断片的な JSON エンドポイント (`/message`, `/session` 等) はあるものの、体系的な JSON API は存在しない。
 
 ### 課題 (詳細は `docs/issues.md` を参照)
 
 - HTTP エンドポイントに認証がない
-- ビジネスロジックが Discord.js と密結合しており、Web からの再利用が困難
-- サービス層が未整備 (3ファイル中1ファイルは空)
-- テストがゼロ
+- ビジネスロジックが Discord.js と密結合しており、Web からの再利用が困難 (Phase 2-3 のサービス/アダプター層整備で大幅に緩和)
+- ~~サービス層が未整備~~ → Phase 2 で `@orangebot/shared` の `services/` に 7 サービスを整備済み
+- ~~テストがゼロ~~ → Phase 2-1 で Vitest を導入済み (ユニット + インテグレーション)
 - Express コントローラが EJS テンプレートに直結し、API として使えない
 
 ### 目的
@@ -109,9 +109,11 @@ ts-orangebot/
 
 ### 技術選定
 
-| 項目 | 現状 | 移行後 |
+「移行前」列は本提案作成時 (Phase 1 着手前) のスナップショット。パッケージマネージャ (pnpm) とテスト (Vitest)、テスト用 DB コンテナは移行済み。
+
+| 項目 | 移行前 | 移行後 |
 |---|---|---|
-| パッケージマネージャ | Yarn Classic (v1) | **pnpm** (ワークスペース対応、厳密な依存解決) |
+| パッケージマネージャ | Yarn Classic (v1) | **pnpm** (ワークスペース対応、厳密な依存解決) ✅ 移行済み |
 | モジュール | ESNext (ESM) | ESNext (ESM) ← 変更なし |
 | TypeScript | 5.8 | 5.8 ← 変更なし |
 | DB | MariaDB + TypeORM | MariaDB + TypeORM ← 変更なし |
@@ -119,8 +121,8 @@ ts-orangebot/
 | 認証 | passport (未活用) | **JWT (@fastify/jwt)** |
 | バリデーション | なし | **zod** (`fastify-type-provider-zod` で Fastify と統合。shared の DTO バリデーションにも統一的に使用) |
 | フロントエンド | EJS テンプレート | **Vue 3 + Vuetify 3** (Vite / Composition API + Material Design コンポーネントにより管理画面を高速に構築) |
-| テスト | なし | **Vitest** |
-| コンテナ | なし | **Docker Compose** (開発環境) |
+| テスト | なし | **Vitest** ✅ 導入済み (Phase 2-1) |
+| コンテナ | なし | **Docker Compose** (開発環境) ※ テスト用 DB (`docker-compose.test.yml`) は導入済み |
 
 ---
 

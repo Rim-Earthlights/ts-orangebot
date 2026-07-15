@@ -11,28 +11,22 @@
   - `/gacha`, `/music` 等も同様
 - **対策**: JWT やAPIキー検証等の認証ミドルウェアを全エンドポイントに追加
 
-### 2. `synchronize: true` が本番環境でも有効
+### 2. `synchronize: true` が本番環境でも有効 (解決済み — Phase 2-1)
 
-- **場所**: `packages/shared/src/config/datasource.ts` (`createDataSource` の `synchronize: config.synchronize ?? true`)
-- **問題**: bot は `synchronize` を指定せず起動するためデフォルトの `true` が常に有効。スキーマ変更時にカラムやテーブルが自動削除され、データ損失の可能性がある (speak は `false` を明示して接続)
-- **対策**: `NODE_ENV` で切り替え、本番では `false` にしてマイグレーションを使用
+- **場所**: `packages/shared/src/config/datasource.ts` (`createDataSource`)
+- **状況**: デフォルトが `synchronize: config.synchronize ?? false` に切り替え済みで、スキーマはマイグレーションで管理される。環境別の設定切り替えが無い点は #18 として残る
 
-### 3. 非同期処理の未 await (Promise の握りつぶし)
+### 3. 非同期処理の未 await (Promise の握りつぶし) — 部分的に解決
 
-- **場所**: `packages/bot/src/app.ts` の ready イベント内 (`DISCORD_CLIENT.guilds.cache.map(async (guild) => ...)`)
-- **問題**: `.map()` 内の async 関数が await されていない
-  ```typescript
-  DISCORD_CLIENT.guilds.cache.map(async (guild) => {
-    await repository.save(...); // Promise.all で包まれていない
-  });
-  ```
-- **対策**: `Promise.all()` で非同期処理を正しく待機する
+- **場所**: `packages/bot/src/app.ts` の ready イベント内
+- **問題**: ユーザーの softDelete / DM チャンネル作成ループは `Promise.all()` で待機するよう修正済み。一方、サーバー登録ループ (`// サーバー登録` の `DISCORD_CLIENT.guilds.cache.map(async ...)`) とコマンド登録ループ (`// コマンド登録` の `guilds.map(async ...)`) は依然として await されていない
+- **対策**: 残りのループも `Promise.all()` で非同期処理を正しく待機する
 
-### 4. テストが存在しない
+### 4. テストが存在しない (解決済み — Phase 2)
 
 - **場所**: プロジェクト全体
-- **問題**: ルート / `packages/bot` のいずれにも test スクリプトが定義されておらず、ユニット/インテグレーションテストはゼロ。`packages/bot` には起動疎通用の `smoke-test` スクリプトのみ存在
-- **対策**: Vitest を導入し、主要なサービス・リポジトリのテストを作成
+- **状況**: Vitest 導入済み。ルートに `pnpm test` / `pnpm test:integration`、`packages/shared/test/` にサービス・リポジトリのユニットテストとインテグレーションテスト (`migration.test.ts` / `repository.test.ts` 等) が存在する
+- **残課題**: `packages/bot` 側 (ハンドラ・アダプタ層) のテスト拡充
 
 ---
 
@@ -86,16 +80,16 @@
 
 ## 優先度: Medium
 
-### 12. chat.ts が肥大化 (God Class)
+### 12. チャットアダプタが肥大化 (God Class)
 
-- **場所**: `packages/bot/src/bot/dot_function/chat.ts` (340行)
-- **問題**: 天気予報、ファイル処理、LLM 呼び出し、ログ、メッセージフォーマットなど多くの責務を持つ。Tool Calling 化により一部は `chat_tools/`・`chat_attachments.ts` に分離済みだが、本体は依然として大きい
-- **対策**: ChatService, WeatherService, FileProcessingService 等にさらに分割
+- **場所**: `packages/bot/src/bot/adapters/chat.adapter.ts` (約340行。旧 `dot_function/chat.ts` は再エクスポートのみのスタブに移行済み — Phase 2-3)
+- **問題**: ファイル処理、LLM 呼び出し、Tool Calling 実行、ログ、メッセージフォーマットなど多くの責務を持つ。Tool Calling 化により一部は `chat_tools/`・`chat_attachments.ts` に分離済みだが、本体は依然として大きい
+- **対策**: 責務ごとにさらに分割 (Embed 整形 / セッション管理 / ツール実行等)
 
 ### 13. LLM 呼び出しの抽象化がない
 
-- **場所**: `packages/bot/src/bot/dot_function/chat.ts`, `packages/bot/src/bot/request/openai.ts`
-- **問題**: OpenAI API 呼び出しがビジネスロジックに直接埋め込まれており、プロバイダ変更やテストが困難
+- **場所**: `packages/shared/src/services/chat.service.ts`, `packages/bot/src/bot/adapters/chat.adapter.ts`
+- **問題**: OpenAI クライアント (`new OpenAI(...)`) の生成・呼び出しがサービス/アダプタに直接埋め込まれており、プロバイダ変更やテストが困難。なお旧参照先の `packages/bot/src/bot/request/openai.ts` は空ファイルとして残っており削除候補
 - **対策**: LLMProvider インターフェースを作成し、実装を差し替え可能にする
 
 ### 14. 未使用の依存関係 (対応済み)
@@ -133,6 +127,6 @@
 
 | 優先度 | 件数 | 主な領域 |
 |---|---|---|
-| Critical | 4 | 認証、DB安全性、非同期処理、テスト |
+| Critical | 4 (うち #2 #4 は解決済み、#3 は部分解決) | 認証、DB安全性、非同期処理、テスト |
 | High | 7 | セキュリティ、エラーハンドリング、運用 |
 | Medium | 7 | アーキテクチャ、コード品質、依存関係 (#14 は対応済み) |
