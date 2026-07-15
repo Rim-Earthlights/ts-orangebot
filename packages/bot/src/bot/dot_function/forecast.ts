@@ -16,6 +16,8 @@ import { Onecall, ONECALL_URI } from '../../interface/onecall.js';
 import { UsersRepository } from "@orangebot/shared";
 import { LogLevel } from "@orangebot/shared";
 
+export type WeatherJson = { name: string; value: string }[];
+
 /**
  * 現在の天気を返す.
  * @param message 受け取ったメッセージング情報
@@ -256,40 +258,95 @@ export async function weatherJson(message: Message, args?: string[]) {
       });
     }
 
-    const forecastResponse = await axios.get(FORECAST_URI, {
-      params: new url.URLSearchParams({
-        lat: lat.toString(),
-        lon: lon.toString(),
-        appid: forecastKey,
-        lang: 'ja',
-        units: 'metric',
-      }),
-    });
-
-    const onecallResponse = await axios.get(ONECALL_URI, {
-      params: new url.URLSearchParams({
-        lat: lat.toString(),
-        lon: lon.toString(),
-        exclude: 'current,minutely,hourly',
-        appid: forecastKey,
-        units: 'metric',
-        lang: 'ja',
-      }),
-    });
-
-    const forecast = <Forecast>forecastResponse.data;
-    const onecall = <Onecall>onecallResponse.data;
-
-    if (day === 0) {
-      return await weatherTodayJson(forecast, onecall, cityName);
-    } else {
-      return await weatherDayJson(onecall, day, cityName);
-    }
+    return await buildWeatherJsonByCoordinates(message, lat, lon, day, cityName);
   } catch (e) {
     const error = <Error>e;
     const send = new EmbedBuilder().setColor('#ff0000').setTitle('エラー').setDescription(error.message);
 
     message.reply({ content: `ありゃ、エラーみたい…なんだろ？`, embeds: [send] });
+  }
+}
+
+/**
+ * 緯度経度から天気をJson情報で返す.
+ * Tool から利用しやすいよう、地名ジオコーディングを介さずに OpenWeatherMap へ問い合わせる.
+ * @param message 受け取ったメッセージング情報
+ * @param latitude 緯度 (-90 〜 90)
+ * @param longitude 経度 (-180 〜 180)
+ * @param day 何日後の予報か。0=今日, 1=明日, 最大6まで。
+ * @param locationName 表示用の地名。省略時はOpenWeatherMapの地名または座標を使用する。
+ * @returns 天気情報
+ */
+export async function weatherJsonByCoordinates(
+  message: Message,
+  latitude: number,
+  longitude: number,
+  day = 0,
+  locationName?: string
+): Promise<WeatherJson> {
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    throw new Error('緯度は -90 から 90 の範囲で指定してください');
+  }
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    throw new Error('経度は -180 から 180 の範囲で指定してください');
+  }
+  if (!Number.isInteger(day) || day < 0 || day > 6) {
+    throw new Error('予報日は 0 から 6 の整数で指定してください');
+  }
+
+  return await buildWeatherJsonByCoordinates(message, latitude, longitude, day, locationName);
+}
+
+async function buildWeatherJsonByCoordinates(
+  message: Message,
+  latitude: number,
+  longitude: number,
+  day: number,
+  locationName?: string
+): Promise<WeatherJson> {
+  const forecastKey = CONFIG.FORECAST.KEY;
+  if (!forecastKey) {
+    throw new Error('天気情報取得用のAPIキーが登録されていません');
+  }
+
+  const forecastResponse = await axios.get(FORECAST_URI, {
+    params: new url.URLSearchParams({
+      lat: latitude.toString(),
+      lon: longitude.toString(),
+      appid: forecastKey,
+      lang: 'ja',
+      units: 'metric',
+    }),
+  });
+
+  const onecallResponse = await axios.get(ONECALL_URI, {
+    params: new url.URLSearchParams({
+      lat: latitude.toString(),
+      lon: longitude.toString(),
+      exclude: 'current,minutely,hourly',
+      appid: forecastKey,
+      units: 'metric',
+      lang: 'ja',
+    }),
+  });
+
+  const forecast = <Forecast>forecastResponse.data;
+  const onecall = <Onecall>onecallResponse.data;
+  const displayName = locationName?.trim() || forecast.name || `${latitude}, ${longitude}`;
+
+  await Logger.put({
+    guild_id: message.guild?.id,
+    channel_id: message.channel.id,
+    user_id: message.id,
+    level: LogLevel.INFO,
+    event: 'get-forecast | coordinates',
+    message: [`lat: ${latitude}, lon: ${longitude}, name: ${displayName}`],
+  });
+
+  if (day === 0) {
+    return await weatherTodayJson(forecast, onecall, displayName);
+  } else {
+    return await weatherDayJson(onecall, day, displayName);
   }
 }
 
