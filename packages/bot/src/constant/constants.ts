@@ -360,7 +360,7 @@ export const HELP_COMMANDS_INTERACTIONS = [
   new EmbedBuilder().setColor('Aqua').setTitle('管理系 (要:管理者権限)').addFields(
     {
       name: '/rip [ユーザー]',
-      value: 'ユーザーを墓へ移動します',
+      value: 'ユーザーを墓(AFK)チャンネルへ移動します',
     },
     {
       name: '/dc',
@@ -413,7 +413,7 @@ export const HELP_COMMANDS_INTERACTIONS = [
       },
       {
         name: '/revert [履歴ID]',
-        value: 'チャット履歴を復元します, 履歴IDは`/history`で確認できます',
+        value: 'チャット履歴を復元します。uuid（履歴ID）は`/history`から取得できます',
       },
       {
         name: '/model [model]',

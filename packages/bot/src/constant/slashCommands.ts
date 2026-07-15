@@ -98,7 +98,7 @@ export const SERVER_SLASH_COMMANDS = [
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
   new SlashCommandBuilder()
     .setName('rip')
-    .setDescription('特定のユーザーを墓へ移動します')
+    .setDescription('特定のユーザーを墓(AFK)チャンネルへ移動します')
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
   new SlashCommandBuilder()
     .setName('timeout')
@@ -337,8 +337,10 @@ export const DM_SLASH_COMMANDS = [
     .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
   new SlashCommandBuilder()
     .setName('revert')
-    .setDescription('最新のチャット履歴を復元します')
-    .addStringOption((option) => option.setName('uuid').setDescription('会話ID').setRequired(false)),
+    .setDescription('最新のチャット履歴を復元します（uuidは/historyから取得できます）')
+    .addStringOption((option) =>
+      option.setName('uuid').setDescription('会話ID（/historyから取得できます）').setRequired(false)
+    ),
   new SlashCommandBuilder().setName('history').setDescription('このチャンネルのチャット履歴を表示します'),
   new SlashCommandBuilder()
     .setName('lyrics')

@@ -9,7 +9,7 @@ import { GuildRepository } from "@orangebot/shared";
 
 /**
  * /rip <user>
- * 特定のユーザーを墓へ移動する
+ * 特定のユーザーを墓(AFK)チャンネルへ移動する
  */
 export class RipHandler extends BaseInteractionHandler {
   constructor(logger?: Logger) {
