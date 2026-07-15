@@ -381,6 +381,14 @@ export const HELP_COMMANDS_INTERACTIONS = [
     {
       name: '/term [command]',
       value: 'サーバー上でコマンドを実行します (要:オーナー権限)',
+    },
+    {
+      name: '/rust whitelist add [url_or_id]',
+      value: 'Rustサーバーのwhitelist.allowを付与します (要:利用規約同意)',
+    },
+    {
+      name: '/rust whitelist revoke [url_or_id]',
+      value: 'Rustサーバーのwhitelist.allowを剥奪します (要:利用規約同意)',
     }
   ),
   new EmbedBuilder()
