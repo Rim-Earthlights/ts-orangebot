@@ -9,12 +9,14 @@
 | コマンド | 説明 |
 |---|---|
 | `/ping` | Ping テスト |
-| `/rip <user>` | ユーザーを墓地チャンネルに移動 |
+| `/rip <user>` | ユーザーを墓(AFK)チャンネルに移動 |
 | `/dc <user>` | ユーザーをボイスチャンネルから切断 |
 | `/mute <user> <time> <reason>` | ユーザーをミュート |
 | `/timeout <user> <time> <reason>` | ユーザーをタイムアウト |
 | `/user-type <user_id> <type>` | ユーザー権限を変更 (OWNER/ADMIN/MEMBER/GUEST) |
 | `/term <command>` | サーバー上でコマンドを実行 (OWNER のみ) |
+| `/rust whitelist add <url_or_id>` | Rust whitelist.allow を付与 (利用規約同意済みユーザー) |
+| `/rust whitelist revoke <url_or_id>` | Rust whitelist.allow を剥奪 (利用規約同意済みユーザー) |
 | `/accept <user>` | ユーザーのルール同意を承認 |
 
 #### ユーティリティ
@@ -64,26 +66,43 @@
 | `/ai start` | AI 会話を開始 |
 | `/ai stop` | AI 会話を停止 |
 | `/memory` | メモリ機能の切り替え |
-| `/model <model>` | AI モデルを変更 (default/low/high) |
-| `/delete [last]` | チャット履歴を削除 |
-| `/revert [uuid]` | 削除したチャットを復元 |
-| `/history` | 会話履歴を表示 |
 | `/pause` | チャットを一時停止 (10分後自動再開) |
 | `/resume` | チャットを再開 |
 
-#### メディア
+※ `/model` `/delete` `/revert` `/history` `/lyrics` `/cat` は DM コマンドとしてのみ登録されています。
+
+#### 音楽再生
 
 | コマンド | 説明 |
 |---|---|
-| `/lyrics [query]` | 歌詞を表示 (Spotify 連携 or 検索) |
-| `/cat` | 猫の写真を表示 |
+| `/music play <url>` | YouTube URL / プレイリスト名を再生 |
+| `/music search <word>` | YouTube で検索して再生 |
+| `/music interrupt <target>` | URL またはキュー番号を優先キューに追加 |
+| `/music stop` | 再生を停止 |
+| `/music remove [num]` | キューからアイテムを削除 |
+| `/music pause` | 一時停止 / 再開 |
+| `/music queue` | キューを表示 |
+| `/music shuffle` | キューをシャッフル |
+| `/music silent` | 再生通知の切り替え |
+| `/music mode [name]` | ループ / シャッフルモード切り替え |
+| `/music seek <time>` | シーク (秒数 or mm:ss 形式) |
+
+#### プレイリスト
+
+| コマンド | 説明 |
+|---|---|
+| `/playlist list` | 登録済みプレイリスト一覧を表示 |
+| `/playlist add <name> <url>` | プレイリストを登録 |
+| `/playlist remove <name>` | プレイリストを削除 |
+| `/playlist loop <name> <enabled>` | ループの ON/OFF |
+| `/playlist shuffle <name> <enabled>` | シャッフルの ON/OFF |
 
 ### DM コマンド
 
 | コマンド | 説明 |
 |---|---|
 | `/delete [last]` | DM チャット履歴を削除 |
-| `/revert [uuid]` | 削除したメッセージを復元 |
+| `/revert [uuid]` | 削除したメッセージを復元。uuid は `/history` から取得できます |
 | `/history` | DM 履歴を表示 |
 | `/lyrics [query]` | 歌詞を表示 |
 | `/model <model>` | AI モデルを切り替え |
@@ -116,7 +135,7 @@
 | `.dice [num] [max]` | | ダイスを振る |
 | `.celo` | | チンチロリンダイスゲーム (3回振り) |
 | `.celovs` | | みかんとチンチロリン対戦 |
-| `.choose <選択肢1> <選択肢2> ...` | `.ch` | ランダムに1つ選択 |
+| `.choose <選択肢1> <選択肢2> ...` | `.choice` / `.ch` | ランダムに1つ選択 |
 | `.dall` | | ボイスチャット全員で100面ダイス |
 | `.team [num] [?move]` | | ボイスメンバーをチーム分け |
 
@@ -137,7 +156,8 @@
 | `.mikan <text>` | みかんと会話 |
 | `.raw <text>` | AI のレスポンスをそのまま表示 |
 | `.memory` | メモリ機能の切り替え |
-| `.model` / `.model-info` | AI モデル情報を表示 |
+| `.model [default\|g3\|g4] [model]` / `.model-info` | AI モデル設定を表示。引数を指定すると変更 |
+| `.speech <text>` | テキストから音声を生成 |
 
 ### 音楽再生
 
@@ -200,7 +220,7 @@
 | コマンド | 説明 |
 |---|---|
 | `.luck` | 今日の運勢を表示 |
-| `.pic` | ランダムな写真を表示 |
+| `.pic <prompt>` | プロンプトから画像を生成 |
 | `.cat` | 猫の写真を表示 |
 | `.topic` | ランダムな話題を表示 |
 
@@ -221,7 +241,7 @@
 | コマンド | 説明 |
 |---|---|
 | `/delete [last]` | LLM とのチャット履歴を削除 |
-| `/revert [uuid]` | 最新のチャット履歴を復元 |
+| `/revert [uuid]` | 最新のチャット履歴を復元。uuid は `/history` から取得できます |
 | `/spcon <voice_id> [speed] [pitch] [intonation]` | 読み上げの声・スピード・ピッチ・抑揚を設定 |
 | `/model-list` | LLM モデル一覧を表示 |
 | `/model-set <model>` | LLM モデルを設定 |

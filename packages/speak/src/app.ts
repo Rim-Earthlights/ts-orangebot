@@ -106,8 +106,10 @@ const dmCommands = [
     .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
   new SlashCommandBuilder()
     .setName('revert')
-    .setDescription('最新のチャット履歴を復元します')
-    .addStringOption((option) => option.setName('uuid').setDescription('会話ID').setRequired(false)),
+    .setDescription('最新のチャット履歴を復元します（uuidは/historyから取得できます）')
+    .addStringOption((option) =>
+      option.setName('uuid').setDescription('会話ID（/historyから取得できます）').setRequired(false)
+    ),
   new SlashCommandBuilder()
     .setName(CONFIG.COMMAND.SPEAKER_CONFIG.COMMAND_NAME_SHORT)
     .setDescription('スピーカーの設定を行う')

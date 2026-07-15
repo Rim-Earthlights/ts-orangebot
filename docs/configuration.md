@@ -77,7 +77,9 @@
 
 ## 対応 AI モデル (LiteLLM)
 
-LiteLLM プロキシを経由して以下のモデルが利用可能です:
+LiteLLM プロキシを経由して利用します。利用可能なモデルの定義は bot と speak で別々に管理されています。
+
+### Bot (`packages/bot` の `LiteLLMModel` enum)
 
 **GPT 系:**
 - GPT-4.1 / GPT-4.1 Mini / GPT-4.1 Nano
@@ -88,6 +90,22 @@ LiteLLM プロキシを経由して以下のモデルが利用可能です:
 **Claude 系:**
 - Claude 3.5 Sonnet / Claude 3.5 Haiku
 - Claude 3.7 Sonnet / Claude 3.7 Sonnet Reasoning
+
+### 読み上げ Bot (`packages/speak` の `LITELLM_MODEL` 定数)
+
+**GPT 系:**
+- GPT-4o (latest)
+- GPT-5 / GPT-5.1 / GPT-5.2 / GPT-5.4
+- GPT-5 Thinking / GPT-5 Mini / GPT-5 Nano
+
+**Claude 系:**
+- Claude Sonnet 4.5 / Claude Sonnet 4.6
+- Claude Opus 4.6
+
+**Grok 系:**
+- Grok 4 / Grok 4 Fast (non-reasoning)
+
+デフォルトモデルは Claude Sonnet 4.6 (`DEFAULT_MODEL: LITELLM_MODEL.CLAUDE_4_6_SONNET`) です。
 
 ## 読み上げ Bot (`packages/speak`) の設定
 
@@ -118,13 +136,18 @@ Express サーバーが以下のエンドポイントを提供します:
 
 | メソッド | パス | 説明 |
 |---|---|---|
-| GET | `/` | ヘルスチェック |
-| POST | `/messaging/*` | メッセージルーティング |
-| POST | `/chat/*` | チャット操作 |
-| POST | `/gacha/*` | ガチャシステム |
-| POST | `/music/*` | 音楽制御 |
-| POST | `/speaker/*` | TTS 設定 |
-| POST | `/session/*` | セッション管理 |
+| GET | `/` | ヘルスチェック (JSON) |
+| POST | `/message` | 指定ユーザー / チャンネルへのメッセージ送信 (JSON) |
+| GET | `/gacha` | ガチャ結果の表示 (EJS) |
+| GET | `/gacha/history` | プレゼント履歴の表示 (EJS) |
+| GET | `/music` | 再生キューの表示 (EJS) |
+| GET | `/speakers` | TTS 話者一覧の表示 (EJS) |
+| GET | `/session` | セッショントークンの取得 (JSON) |
+| GET | `/chat/history` | チャット履歴一覧の表示 (EJS) |
+| GET | `/chat/history/:uuid` | チャット履歴詳細の表示 (EJS) |
+| DELETE | `/chat/history/:uuid` | チャット履歴の削除 (JSON) |
+
+※ `controller/spotifyRouter.ts` (POST `/spotify/callback`) も存在しますが、`routers.ts` に登録されておらず現在は無効です。
 
 ### 読み上げ Bot (`packages/speak`)
 

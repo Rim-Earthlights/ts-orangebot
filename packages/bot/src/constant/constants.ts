@@ -360,7 +360,7 @@ export const HELP_COMMANDS_INTERACTIONS = [
   new EmbedBuilder().setColor('Aqua').setTitle('管理系 (要:管理者権限)').addFields(
     {
       name: '/rip [ユーザー]',
-      value: 'ユーザーを墓へ移動します',
+      value: 'ユーザーを墓(AFK)チャンネルへ移動します',
     },
     {
       name: '/dc',
@@ -381,6 +381,14 @@ export const HELP_COMMANDS_INTERACTIONS = [
     {
       name: '/term [command]',
       value: 'サーバー上でコマンドを実行します (要:オーナー権限)',
+    },
+    {
+      name: '/rust whitelist add [url_or_id]',
+      value: 'Rustサーバーのwhitelist.allowを付与します (要:利用規約同意)',
+    },
+    {
+      name: '/rust whitelist revoke [url_or_id]',
+      value: 'Rustサーバーのwhitelist.allowを剥奪します (要:利用規約同意)',
     }
   ),
   new EmbedBuilder()
@@ -405,7 +413,7 @@ export const HELP_COMMANDS_INTERACTIONS = [
       },
       {
         name: '/revert [履歴ID]',
-        value: 'チャット履歴を復元します, 履歴IDは`/history`で確認できます',
+        value: 'チャット履歴を復元します。uuid（履歴ID）は`/history`から取得できます',
       },
       {
         name: '/model [model]',

@@ -98,7 +98,7 @@ export const SERVER_SLASH_COMMANDS = [
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
   new SlashCommandBuilder()
     .setName('rip')
-    .setDescription('特定のユーザーを墓へ移動します')
+    .setDescription('特定のユーザーを墓(AFK)チャンネルへ移動します')
     .addUserOption((option) => option.setName('user').setDescription('ユーザー').setRequired(true)),
   new SlashCommandBuilder()
     .setName('timeout')
@@ -204,6 +204,36 @@ export const SERVER_SLASH_COMMANDS = [
     .addStringOption((option) =>
       option.setName('command').setDescription('実行するコマンド (例: podman start server)').setRequired(true)
     ),
+  new SlashCommandBuilder()
+    .setName('rust')
+    .setDescription('Rustサーバー関連機能 (利用規約同意済みユーザー)')
+    .addSubcommandGroup((group) =>
+      group
+        .setName('whitelist')
+        .setDescription('Rust whitelist関連機能')
+        .addSubcommand((sc) =>
+          sc
+            .setName('add')
+            .setDescription('Steamユーザーへwhitelist.allowを付与します')
+            .addStringOption((option) =>
+              option
+                .setName('url_or_id')
+                .setDescription('SteamID または https://steamcommunity.com/profiles/<SteamID>/')
+                .setRequired(true)
+            )
+        )
+        .addSubcommand((sc) =>
+          sc
+            .setName('revoke')
+            .setDescription('Steamユーザーからwhitelist.allowを剥奪します')
+            .addStringOption((option) =>
+              option
+                .setName('url_or_id')
+                .setDescription('SteamID または https://steamcommunity.com/profiles/<SteamID>/')
+                .setRequired(true)
+            )
+        )
+    ),
   new SlashCommandBuilder().setName('pause').setDescription('チャットを一時停止します (10分後に自動で再開します)'),
   new SlashCommandBuilder().setName('resume').setDescription('チャットを再開します'),
   // 音楽再生機能
@@ -307,8 +337,10 @@ export const DM_SLASH_COMMANDS = [
     .addBooleanOption((option) => option.setName('last').setDescription('直前のみ削除します').setRequired(false)),
   new SlashCommandBuilder()
     .setName('revert')
-    .setDescription('最新のチャット履歴を復元します')
-    .addStringOption((option) => option.setName('uuid').setDescription('会話ID').setRequired(false)),
+    .setDescription('最新のチャット履歴を復元します（uuidは/historyから取得できます）')
+    .addStringOption((option) =>
+      option.setName('uuid').setDescription('会話ID（/historyから取得できます）').setRequired(false)
+    ),
   new SlashCommandBuilder().setName('history').setDescription('このチャンネルのチャット履歴を表示します'),
   new SlashCommandBuilder()
     .setName('lyrics')
