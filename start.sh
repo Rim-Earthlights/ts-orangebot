@@ -49,9 +49,12 @@ esac
 echo "server starting... (target: $TARGET)"
 
 # 初回のみ更新・ビルドする (反映したいときは手動で再起動する)
-git pull
-pnpm install
-pnpm run build
+# SKIP_SETUP=1 のときはスキップする (tmux-start.sh からの一括起動時に使用)
+if [ "${SKIP_SETUP:-0}" != "1" ]; then
+  git pull
+  pnpm install
+  pnpm run build
+fi
 
 # プロセスが落ちたら再起動する
 while :
