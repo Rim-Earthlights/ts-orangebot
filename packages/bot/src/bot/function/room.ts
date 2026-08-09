@@ -13,6 +13,7 @@ import { RoleRepository } from '@orangebot/shared';
 import { RoomService } from '@orangebot/shared';
 import { UsersRepository } from '@orangebot/shared';
 import { getDefaultRoomName } from '../utils/roomName.js';
+import { sendGameSelectMessage } from '../utils/gameSelect.js';
 
 /**
  * チャンネルを作成する
@@ -92,6 +93,8 @@ export async function createRoom(
     isLive: isLive,
     isPrivate: isPrivate,
   });
+
+  await sendGameSelectMessage(vc);
 
   await interaction.editReply({ content: 'お部屋を作りました！' });
 }

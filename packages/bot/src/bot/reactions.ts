@@ -8,10 +8,11 @@ import {
   User,
 } from 'discord.js';
 import { Logger } from '../common/logger.js';
-import { Users, UserSetting } from "@orangebot/shared";
-import { RoleRepository } from "@orangebot/shared";
-import { UsersRepository } from "@orangebot/shared";
-import { LogLevel } from "@orangebot/shared";
+import { Users, UserSetting } from '@orangebot/shared';
+import { RoleRepository } from '@orangebot/shared';
+import { UsersRepository } from '@orangebot/shared';
+import { LogLevel } from '@orangebot/shared';
+import { GAME_SELECT_TITLE, getPlayingGame, setVoiceChannelStatus } from './utils/gameSelect.js';
 
 /**
  * リアクション時の処理を行う
@@ -117,21 +118,71 @@ export const reactionSelector = async (
       }
       break;
     }
-    case 'ゲームの選択': {
-      if (reaction.message.channel.type === ChannelType.GuildText) {
-        await reaction.users.remove(user.id);
+    case GAME_SELECT_TITLE: {
+      const channel = reaction.message.channel;
+      const guild = reaction.message.guild;
+      if (channel.type !== ChannelType.GuildVoice || !guild) {
+        break;
+      }
+
+      await reaction.users.remove(user.id);
+
+      // 押した人のアクティビティからゲーム名を取得する
+      const game = getPlayingGame(guild, user.id);
+      if (!game) {
         await Logger.put({
-          guild_id: reaction.message.guild?.id,
-          channel_id: reaction.message.channel.id,
+          guild_id: guild.id,
+          channel_id: channel.id,
           user_id: user.id,
           level: LogLevel.INFO,
-          event: 'reaction-add',
-          message: [`game selected: ${user.displayName} | ${reaction.emoji.name}`],
+          event: 'game-select',
+          message: [`activity not found: ${user.displayName}`],
         });
+        await replyTemporary(reaction, 'プレイ中のゲームが見つからなかったよ…！');
+        break;
       }
+
+      try {
+        // await channel.setName(game);
+        await setVoiceChannelStatus(channel.id, game);
+      } catch (e) {
+        const err = e as Error;
+        await Logger.put({
+          guild_id: guild.id,
+          channel_id: channel.id,
+          user_id: user.id,
+          level: LogLevel.ERROR,
+          event: 'game-select',
+          message: [`set voice status failed: ${game}`, err.message],
+        });
+        await replyTemporary(reaction, 'ステータスの設定に失敗しちゃった…！');
+        break;
+      }
+
+      await Logger.put({
+        guild_id: guild.id,
+        channel_id: channel.id,
+        user_id: user.id,
+        level: LogLevel.INFO,
+        event: 'game-select',
+        message: [`set voice status: ${user.displayName} | ${game}`],
+      });
+      await replyTemporary(reaction, `ステータスを「${game}」に変更したよ！`);
       break;
     }
   }
+};
+
+/**
+ * リアクション元のメッセージに一時的な返信を行う
+ * @param reaction リアクション
+ * @param content 返信内容
+ */
+const replyTemporary = async (reaction: MessageReaction | PartialMessageReaction, content: string) => {
+  const message = await reaction.message.reply(content);
+  setTimeout(async () => {
+    await message.delete().catch(() => undefined);
+  }, 5000);
 };
 
 const registUser = async (
