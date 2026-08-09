@@ -107,7 +107,7 @@ packages/bot/src/
 │   │   └── spotify.ts        # Spotify
 │   │
 │   ├── function/             # ユーティリティ関数
-│   ├── utils/                # 補助ユーティリティ (roomName.ts)
+│   ├── utils/                # 補助ユーティリティ (roomName.ts, gameSelect.ts)
 │   ├── reactions.ts          # リアクション処理
 │   └── mention.ts            # メンションロジック
 │

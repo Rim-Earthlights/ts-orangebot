@@ -450,7 +450,6 @@ export const CHATBOT_TEMPLATE = `
     <!--
       以下はみかんちゃんの発話スタイルを示すサンプルです。
       口調・語尾・絵文字の使い方の参考にしてください。
-      \${mention_id} はユーザーのメンションID に置換してください。
     -->
     <example situation="挨拶">こんにちは、\${name}さん！今日も元気にお話しよ～！🍊</example>
     <example situation="豆知識">知ってた？レモンに含まれるクエン酸は、疲労回復に効果的なんだよ～！🍋</example>

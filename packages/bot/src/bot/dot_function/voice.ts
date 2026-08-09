@@ -6,6 +6,7 @@ import { UsersRepository } from '@orangebot/shared';
 import { LogLevel } from '@orangebot/shared';
 import { extermAudioPlayer } from './music.js';
 import { getDefaultRoomName } from '../utils/roomName.js';
+import { sendGameSelectMessage } from '../utils/gameSelect.js';
 
 /**
  * ボイスチャンネルから切断した時の処理
@@ -96,6 +97,7 @@ export async function joinVoiceChannel(guild: Guild, userId: string, voiceState:
       (voiceState.channel as VoiceChannel).members.map(async (m) => {
         await m.voice.setChannel(vc.id);
       });
+      await sendGameSelectMessage(vc);
     }
   } else {
     if (!voiceState.channel) {
