@@ -13,3 +13,4 @@ output/
 youtubeCookie.json
 *-player-script.js
 .cache/
+.pnpm-store/

@@ -1,0 +1,47 @@
+{
+  "name": "niconico-dl",
+  "version": "0.1.0",
+  "description": "youtube.js のように使える、ニコニコ動画のメタデータ取得 + ffmpeg ストリーム取得モジュール",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "niconico",
+    "nicovideo",
+    "downloader",
+    "hls",
+    "ffmpeg",
+    "stream"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "ffmpeg-static": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ffmpeg-static": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -24,6 +24,7 @@ import { Music, PlayerData } from '../../constant/music/music.js';
 import { LogLevel, MusicService, Playlist, PlaylistRepository } from '@orangebot/shared';
 import { extractPlaylistId, extractVideoId, getInnertube } from '../request/innertube.js';
 import { getPlaylistItems } from '../request/youtube.js';
+import { getNiconicoInfo, getNiconicoStream, isNiconicoUrl } from '../request/niconico.js';
 
 /**
  * コマンドの応答送信関数。
@@ -67,6 +68,11 @@ export async function add(
 
   if (playlistId) {
     await addYoutubeMusic(channel, 'playlist', url, false, loop, shuffle, reply);
+    return true;
+  }
+
+  if (isNiconicoUrl(url)) {
+    await addNiconicoMusic(channel, url, false, loop, shuffle);
     return true;
   }
 
@@ -269,6 +275,101 @@ export async function addYoutubeMusic(
     }
   }
   return false;
+}
+
+/**
+ * ニコニコ動画の情報を取得し、キューに追加する
+ * @param channel
+ * @param url watch URL または 動画ID
+ * @param interrupt
+ * @param loop
+ * @param shuffle
+ * @returns
+ */
+export async function addNiconicoMusic(
+  channel: VoiceBasedChannel,
+  url: string,
+  interrupt?: boolean,
+  loop?: boolean,
+  shuffle?: boolean
+): Promise<boolean> {
+  const musicService = new MusicService();
+  const p = await updateAudioPlayer(channel);
+  const status = p.player.state.status;
+
+  let info;
+  try {
+    info = await getNiconicoInfo(url);
+  } catch (e) {
+    await Logger.put({
+      guild_id: channel.guild?.id,
+      channel_id: channel.id,
+      user_id: undefined,
+      level: LogLevel.ERROR,
+      event: 'command|music-add',
+      message: [JSON.stringify((e as Error).message)],
+    });
+    const send = new EmbedBuilder()
+      .setColor('#ff0000')
+      .setTitle('エラー')
+      .setDescription('ニコニコ動画の情報を取得できなかった (削除・非公開・会員限定の可能性)');
+
+    (channel as VoiceChannel).send({ content: `ニコニコ動画を取得できなかった…`, embeds: [send] });
+    return false;
+  }
+
+  const title = info.title;
+  const videoUrl = `https://www.nicovideo.jp/watch/${info.id}`;
+  const thumbnail = info.thumbnails[0]?.url ?? '';
+
+  await musicService.addTrack(
+    channel.guild.id,
+    channel.id,
+    {
+      title: title,
+      url: videoUrl,
+      thumbnail: thumbnail,
+    },
+    !!interrupt
+  );
+  if (interrupt) {
+    return true;
+  }
+
+  const musics = await musicService.getQueue(channel.guild.id, channel.id);
+
+  if (status === AudioPlayerStatus.Playing) {
+    const addMusic = musics.find((m) => m.url === videoUrl);
+    const description = musics.map((m) => m.music_id + ': ' + m.title).join('\n');
+
+    if (description.length >= 4000) {
+      const sliced = musics.slice(0, 20);
+      const slicedDescription = sliced.map((m) => m.music_id + ': ' + m.title).join('\n');
+
+      const send = new EmbedBuilder()
+        .setColor('#cc66cc')
+        .setAuthor({ name: `追加: (${addMusic?.music_id}) ${title}` })
+        .setTitle('キュー(先頭の20曲のみ表示しています): ')
+        .setDescription(slicedDescription)
+        .setThumbnail(thumbnail);
+
+      (channel as VoiceChannel).send({ embeds: [send] });
+      return true;
+    }
+
+    const send = new EmbedBuilder()
+      .setColor('#cc66cc')
+      .setAuthor({ name: `追加: (${addMusic?.music_id}) ${title}` })
+      .setTitle(`キュー(全${musics.length}曲): `)
+      .setDescription(description ? description : 'none')
+      .setThumbnail(thumbnail);
+
+    (channel as VoiceChannel).send({ embeds: [send] });
+    return true;
+  }
+  await initPlayerInfo(channel, !!loop, !!shuffle);
+  await playMusic(channel);
+  return true;
 }
 
 /**
@@ -566,14 +667,20 @@ export async function playMusic(channel: VoiceBasedChannel) {
   try {
     const p = await updateAudioPlayer(channel);
 
-    const videoId = extractVideoId(playing.url);
-    if (!videoId) {
-      throw new Error(`動画IDを取得できない: ${playing.url}`);
-    }
+    let resource;
+    if (isNiconicoUrl(playing.url)) {
+      const { stream } = await getNiconicoStream(playing.url);
+      resource = createAudioResource(stream);
+    } else {
+      const videoId = extractVideoId(playing.url);
+      if (!videoId) {
+        throw new Error(`動画IDを取得できない: ${playing.url}`);
+      }
 
-    const innertube = await getInnertube();
-    const stream = await innertube.download(videoId, { type: 'audio', quality: 'best', client: 'TV' });
-    const resource = createAudioResource(Readable.fromWeb(stream as WebReadableStream<Uint8Array>));
+      const innertube = await getInnertube();
+      const stream = await innertube.download(videoId, { type: 'audio', quality: 'best', client: 'TV' });
+      resource = createAudioResource(Readable.fromWeb(stream as WebReadableStream<Uint8Array>));
+    }
 
     if (info?.silent === 0) {
       const slicedMusics = musics.slice(0, 4);
@@ -969,28 +1076,33 @@ export async function seek(channel: VoiceBasedChannel, seek: number, reply?: Rep
     return;
   }
 
-  const videoId = extractVideoId(playing.url);
-  if (!videoId) {
+  const isNiconico = isNiconicoUrl(playing.url);
+  if (!isNiconico && !extractVideoId(playing.url)) {
     return;
   }
 
   try {
     const p = await updateAudioPlayer(channel);
 
-    const innertube = await getInnertube();
-    const stream = await innertube.download(videoId, { type: 'audio', quality: 'best', client: 'TV' });
+    let sourceStream: Readable;
+    if (isNiconico) {
+      const { stream } = await getNiconicoStream(playing.url);
+      sourceStream = stream;
+    } else {
+      const videoId = extractVideoId(playing.url)!;
+      const innertube = await getInnertube();
+      const stream = await innertube.download(videoId, { type: 'audio', quality: 'best', client: 'TV' });
+      sourceStream = Readable.fromWeb(stream as WebReadableStream<Uint8Array>);
+    }
 
     // ffmpegで指定秒数まで読み飛ばしてPCMに変換する
     const transcoder = new prism.FFmpeg({
       args: ['-analyzeduration', '0', '-loglevel', '0', '-ss', String(seek), '-i', '-', '-f', 's16le', '-ar', '48000', '-ac', '2'],
     });
 
-    const resource = createAudioResource(
-      Readable.fromWeb(stream as WebReadableStream<Uint8Array>).pipe(transcoder),
-      {
-        inputType: StreamType.Raw,
-      }
-    );
+    const resource = createAudioResource(sourceStream.pipe(transcoder), {
+      inputType: StreamType.Raw,
+    });
 
     p.player.play(resource);
 
