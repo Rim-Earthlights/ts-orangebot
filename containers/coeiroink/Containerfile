@@ -1,0 +1,93 @@
+# COEIROINK Engine (CPU / Linux)
+#
+# COEIROINK には公式コンテナイメージがないため、公式サイトで配布されている
+# Linux CPU 版アーカイブからローカルでイメージをビルドする。
+#
+#   1. https://coeiroink.com/download から Linux CPU 版をダウンロード
+#      (例: COEIROINK_LINUX_CPU_v.2.13.0.zip)
+#   2. containers/coeiroink/archive/ に置く (.gitignore 済み)
+#   3. containers/coeiroink/build.sh を実行
+#
+# エンジン本体は 127.0.0.1:50032 にしかバインドしないため、コンテナ内で
+# socat を挟んで 0.0.0.0:50022 に中継する (entrypoint.sh 参照)。
+
+# ---- extract stage ------------------------------------------------------
+FROM docker.io/library/ubuntu:22.04 AS extract
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends unzip xz-utils \
+ && rm -rf /var/lib/apt/lists/*
+
+# archive/ には COEIROINK のアーカイブを 1 つだけ置くこと
+COPY archive/ /tmp/archive/
+
+RUN set -eu; \
+    mkdir -p /tmp/extract; \
+    found=0; \
+    for f in /tmp/archive/*; do \
+      [ -f "$f" ] || continue; \
+      case "$f" in \
+        *.zip)            unzip -q "$f" -d /tmp/extract; found=1 ;; \
+        *.tar.gz|*.tgz)   tar -xzf "$f" -C /tmp/extract;  found=1 ;; \
+        *.tar.xz)         tar -xJf "$f" -C /tmp/extract;  found=1 ;; \
+        *.tar)            tar -xf  "$f" -C /tmp/extract;  found=1 ;; \
+        *) echo "skip (unknown archive type): $f" >&2 ;; \
+      esac; \
+    done; \
+    if [ "$found" -eq 0 ]; then \
+      echo "ERROR: containers/coeiroink/archive/ に COEIROINK のアーカイブがありません" >&2; \
+      exit 1; \
+    fi
+
+# アーカイブ内の engine/engine を探し、その親を /opt/coeiroink に正規化する
+RUN set -eu; \
+    engine_bin="$(find /tmp/extract -type f -name engine -path '*/engine/engine' | head -n 1)"; \
+    if [ -z "$engine_bin" ]; then \
+      echo "ERROR: engine/engine が見つかりません。アーカイブの構成を確認してください:" >&2; \
+      find /tmp/extract -maxdepth 3 >&2; \
+      exit 1; \
+    fi; \
+    root="$(dirname "$(dirname "$engine_bin")")"; \
+    echo "COEIROINK root: $root"; \
+    mkdir -p /opt/coeiroink; \
+    cp -a "$root"/. /opt/coeiroink/; \
+    chmod +x /opt/coeiroink/engine/engine; \
+    # engine がバイナリと同階層の speaker_info を見に行く実装でも動くようにしておく
+    if [ -d /opt/coeiroink/speaker_info ] && [ ! -e /opt/coeiroink/engine/speaker_info ]; then \
+      ln -s ../speaker_info /opt/coeiroink/engine/speaker_info; \
+    fi
+
+# ---- runtime stage ------------------------------------------------------
+FROM docker.io/library/ubuntu:22.04
+
+# PyInstaller 製の engine / onnxruntime が必要とする共有ライブラリと、
+# 127.0.0.1 バインドを外に出すための socat
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      libgomp1 \
+      libsndfile1 \
+      libgl1 \
+      libglib2.0-0 \
+      socat \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=extract /opt/coeiroink /opt/coeiroink
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# 実行ユーザー (rootless podman から使うので固定 uid にしておく)
+RUN useradd --uid 1001 --create-home --shell /usr/sbin/nologin coeiroink \
+ && chown -R coeiroink:coeiroink /opt/coeiroink
+USER coeiroink
+
+WORKDIR /opt/coeiroink
+
+# エンジン実体のポート / 外向きの中継ポート
+ENV COEIROINK_ENGINE_PORT=50032 \
+    COEIROINK_BIND_PORT=50022
+
+EXPOSE 50022
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

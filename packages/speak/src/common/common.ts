@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { COEIROINK_URI, VOICEVOX_URI } from '../config/api.js';
 import { CoeiroSpeakersResponse, SpeakersResponse } from '../interface/audioResponse.js';
 
 export let SPEAKER_IDS: { uuid: string; styleId: number }[] = [];
@@ -9,8 +10,8 @@ export let SPEAKER_IDS: { uuid: string; styleId: number }[] = [];
  * @returns
  */
 export const findVoiceFromId = async (id: number): Promise<string | null> => {
-  const speakersUri = `http://127.0.0.1:50021/speakers`;
-  const coeiroUri = `http://127.0.0.1:50032/v1/speakers`;
+  const speakersUri = `${VOICEVOX_URI}/speakers`;
+  const coeiroUri = `${COEIROINK_URI}/v1/speakers`;
   const speakersResponse = await axios.get(speakersUri);
   const speakers = speakersResponse.data as SpeakersResponse[];
   const coeiroResponse = await axios.get(coeiroUri);
@@ -54,7 +55,7 @@ export const convertVoiceId = (id: number): number => {
 
 export const initializeCoeiroSpeakerIds = async () => {
   SPEAKER_IDS = [];
-  const coeiroUri = `http://127.0.0.1:50032/v1/speakers`;
+  const coeiroUri = `${COEIROINK_URI}/v1/speakers`;
   const coeiroResponse = await axios.get(coeiroUri);
   const coeiro = coeiroResponse.data as CoeiroSpeakersResponse[];
 

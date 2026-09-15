@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Express from 'express';
+import { COEIROINK_URI, VOICEVOX_URI } from '../config/api.js';
 import { CoeiroSpeakersResponse, SpeakersResponse } from '../interface/voicevox/voicevoxResponse';
 export const speakerRouter = Express.Router();
 
@@ -8,8 +9,8 @@ export const speakerRouter = Express.Router();
  * とりあえずjson返す
  */
 speakerRouter.get('/speakers', async (req: Express.Request, res: Express.Response) => {
-  const { data: v } = (await axios.get('http://127.0.0.1:50021/speakers')) as { data: SpeakersResponse[] };
-  const { data: c } = (await axios.get('http://127.0.0.1:50032/v1/speakers')) as { data: CoeiroSpeakersResponse[] };
+  const { data: v } = (await axios.get(`${VOICEVOX_URI}/speakers`)) as { data: SpeakersResponse[] };
+  const { data: c } = (await axios.get(`${COEIROINK_URI}/v1/speakers`)) as { data: CoeiroSpeakersResponse[] };
 
   const vSpeakers = v.map((vb) => {
     return {

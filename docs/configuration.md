@@ -24,6 +24,18 @@
 | `COMMAND_GUILD_ID` | string[] | コマンドを登録するギルド ID の配列 |
 | `TOKEN` | string | Discord Bot トークン |
 
+### API - 音声合成エンジン接続先
+
+| キー | 型 | 説明 |
+|---|---|---|
+| `VOICEVOX` | string | VOICEVOX エンジンの URL (既定: `http://127.0.0.1:50021/`) |
+| `COEIROINK` | string | COEIROINK エンジンの URL (既定: `http://127.0.0.1:50022/`) |
+
+既存の `config.ts` に `API` が無い場合は、従来ソースに決め打ちしていた
+`http://127.0.0.1:50021` / `http://127.0.0.1:50032` にフォールバックします
+(`packages/bot/src/config/api.ts`)。podman で起動する場合は `COEIROINK` を
+`http://127.0.0.1:50022/` に設定してください。
+
 ### GACHA - ガチャ設定
 
 | キー | 型 | 説明 |
@@ -111,7 +123,7 @@ LiteLLM プロキシを経由して利用します。利用可能なモデルの
 
 speak は 2 種類の設定ファイルを使います。どちらも gitignore されています。
 
-1. **共通設定** — `packages/speak/src/config/config.template.ts` をコピーして `config.ts` を作成し、DB (bot と共通) / OpenAI の設定を記入
+1. **共通設定** — `packages/speak/src/config/config.template.ts` をコピーして `config.ts` を作成し、DB (bot と共通) / OpenAI / `API` (音声合成エンジンの接続先) の設定を記入
 2. **インスタンス別設定** — `src/config/example.json.template` をコピーして `src/config/<name>.json` を作成し、起動引数で渡す
 
 インスタンス別 JSON の項目:
@@ -126,7 +138,26 @@ speak は 2 種類の設定ファイルを使います。どちらも gitignore 
 | `COMMAND.SPEAKER_CONFIG` | object | 読み上げ設定コマンド (`speaker-config` / `spcon` / `sp-reload`) |
 | `COMMAND.DISCONNECT` | string | 切断コマンド名 (`discon`) |
 
-また、音声合成のため [voicevox_engine](https://github.com/VOICEVOX/voicevox_engine) (port 50021)、COEIROINK を使う場合はそのエンジン (port 50032) をローカルで起動しておく必要があります。
+また、音声合成のため [voicevox_engine](https://github.com/VOICEVOX/voicevox_engine) (port 50021)、COEIROINK を使う場合はそのエンジン (port 50032) をローカルで起動しておく必要があります。接続先は共通設定の `API.VOICEVOX` / `API.COEIROINK` で変更できます。
+
+| キー | 型 | 説明 |
+|---|---|---|
+| `API.VOICEVOX` | string | VOICEVOX エンジンの URL (既定: `http://127.0.0.1:50021/`) |
+| `API.COEIROINK` | string | COEIROINK エンジンの URL (既定: `http://127.0.0.1:50022/`) |
+
+既存の `config.ts` に `API` が無い場合は `http://127.0.0.1:50021` / `http://127.0.0.1:50032` に
+フォールバックするため、そのままでも従来どおり動作します (`packages/speak/src/config/api.ts`)。
+
+podman で起動する場合は `containers/` に systemd (Quadlet) 用の一式があります。詳細は [containers/README.md](../containers/README.md) を参照してください。
+
+```sh
+./containers/coeiroink/build.sh   # COEIROINK は公式イメージがないのでローカルビルド
+./containers/install.sh --start
+```
+
+COEIROINK コンテナはホストの **50022** で公開されます (エンジン本体の 50032 をコンテナ内で中継)。
+bot / speak それぞれの `config.ts` で `API.COEIROINK` を `http://127.0.0.1:50022/` に設定してください
+(テンプレートから新規に作成した場合は既定でこの値です)。
 
 ## Web API エンドポイント
 

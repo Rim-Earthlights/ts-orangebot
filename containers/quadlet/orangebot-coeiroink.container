@@ -1,0 +1,39 @@
+# COEIROINK Engine (CPU)
+#
+# 事前に ./containers/coeiroink/build.sh でローカルイメージをビルドしておくこと
+# (COEIROINK には公式コンテナイメージがないため)。
+#
+# 設置方法: リポジトリルートで ./containers/install.sh
+# 起動:     systemctl --user start orangebot-coeiroink
+#
+# ホストの 127.0.0.1:50022 で待ち受ける。
+# エンジン本体はコンテナ内で 127.0.0.1:50032 にしかバインドしないため、
+# コンテナ内の socat が 50022 -> 50032 に中継している (entrypoint.sh)。
+[Unit]
+Description=COEIROINK Engine for OrangeBot (CPU)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName=orangebot-coeiroink
+Image=localhost/orangebot-coeiroink:latest
+PublishPort=127.0.0.1:50022:50022
+# 追加の話者を入れたい場合は speaker_info をホストから差し込む。
+# コンテナ内 uid 1001 で読むので、下の ExecStartPre も一緒に有効化すること。
+# Volume=%h/.local/share/orangebot-coeiroink/speaker_info:/opt/coeiroink/speaker_info:Z
+HealthCmd="curl -fsS http://127.0.0.1:50022/v1/speakers"
+HealthInterval=30s
+HealthStartPeriod=120s
+HealthRetries=5
+# unhealthy になったらコンテナを落として systemd に再起動させる
+HealthOnFailure=kill
+
+[Service]
+# speaker_info をホストから差し込む場合のみ有効化する
+# ExecStartPre=/usr/bin/mkdir -p %h/.local/share/orangebot-coeiroink/speaker_info
+# ExecStartPre=/usr/bin/podman unshare chown -R 1001:1001 %h/.local/share/orangebot-coeiroink
+Restart=always
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target
