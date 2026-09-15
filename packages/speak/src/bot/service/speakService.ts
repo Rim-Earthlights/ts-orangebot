@@ -16,6 +16,7 @@ import { Readable } from 'stream';
 import { LogLevel, Models, UsersRepository } from '@orangebot/shared';
 import { convertMessageWithoutEmoji, SPEAKER_IDS } from '../../common/common.js';
 import { Logger } from '../../common/logger.js';
+import { COEIROINK_URI, VOICEVOX_URI } from '../../config/api.js';
 import { AudioResponse } from '../../interface/audioResponse.js';
 
 export const Speaker = {
@@ -112,14 +113,14 @@ export async function initAudioPlayer(gid: string, channel: VoiceBasedChannel): 
  * @param id speaker_id
  */
 export const initialize = async (id: number): Promise<void> => {
-  const isInitializedUri = `http://127.0.0.1:50021/is_initialized_speaker`;
+  const isInitializedUri = `${VOICEVOX_URI}/is_initialized_speaker`;
 
   if (id < 1000) {
     const response = await axios.get(isInitializedUri + `?speaker=${id}`);
     const isInitialized = response.data as boolean;
 
     if (!isInitialized) {
-      await axios.post(`http://127.0.0.1:50021/initialize_speaker?speaker=${id}`);
+      await axios.post(`${VOICEVOX_URI}/initialize_speaker?speaker=${id}`);
     }
   }
 };
@@ -252,10 +253,10 @@ export async function speak(): Promise<void> {
  * @param flag
  */
 export const audioQuery = async (user: Models.Users, message: string): Promise<Buffer> => {
-  const audioQueryUri = `http://127.0.0.1:50021/audio_query`;
-  const synthesisUri = `http://127.0.0.1:50021/synthesis`;
+  const audioQueryUri = `${VOICEVOX_URI}/audio_query`;
+  const synthesisUri = `${VOICEVOX_URI}/synthesis`;
 
-  const coeiroSynthesisUri = `http://127.0.0.1:50032/v1/synthesis`;
+  const coeiroSynthesisUri = `${COEIROINK_URI}/v1/synthesis`;
 
   if (user.userSetting.voice_id < 1000) {
     const audioQueryResponse = await axios.post(

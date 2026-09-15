@@ -30,6 +30,12 @@ export const CONFIG = {
     // discord bot token
     TOKEN: '******.*********.****-*****-*****',
   },
+  // 音声合成エンジンの接続先
+  // 未設定の場合は VOICEVOX: 50021 / COEIROINK: 50022 にフォールバックする
+  API: {
+    VOICEVOX: 'http://127.0.0.1:50021/',
+    COEIROINK: 'http://127.0.0.1:50022/',
+  },
   GACHA: {
     PICKRATE: 1.0,
   },

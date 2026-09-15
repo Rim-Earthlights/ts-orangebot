@@ -1,0 +1,33 @@
+# VOICEVOX Engine (CPU)
+#
+# 設置方法: リポジトリルートで ./containers/install.sh
+# 起動:     systemctl --user start orangebot-voicevox
+#
+# ホストの 127.0.0.1:50021 で待ち受ける (bot / speak が決め打ちで叩くポート)。
+[Unit]
+Description=VOICEVOX Engine for OrangeBot (CPU)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName=orangebot-voicevox
+Image=docker.io/voicevox/voicevox_engine:cpu-amd64-ubuntu24.04-0.25.2
+PublishPort=127.0.0.1:50021:50021
+# ユーザー辞書 (.dict コマンドで登録した単語) / presets を永続化する。
+# コンテナはこのディレクトリを uid 1001 (user) で書くので、ExecStartPre で
+# rootless の subuid に chown している (下の [Service] 参照)。
+Volume=%h/.local/share/orangebot-voicevox:/home/user/.local/share/voicevox-engine:Z
+HealthCmd="curl -fsS http://127.0.0.1:50021/version"
+HealthInterval=30s
+HealthStartPeriod=60s
+HealthRetries=5
+
+[Service]
+ExecStartPre=/usr/bin/mkdir -p %h/.local/share/orangebot-voicevox
+ExecStartPre=/usr/bin/podman unshare chown -R 1001:1001 %h/.local/share/orangebot-voicevox
+Restart=always
+# 初回は音声ライブラリの読み込みに時間がかかる
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target

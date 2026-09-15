@@ -65,6 +65,9 @@ pnpm test               # 全パッケージのユニットテスト (vitest)
 pnpm test:integration   # インテグレーションテスト (要テスト用 DB)
 pnpm test:db:up         # テスト用 MariaDB を docker compose で起動
 pnpm test:db:down       # テスト用 MariaDB を停止・破棄
+pnpm tts:up             # VOICEVOX / COEIROINK コンテナを起動
+pnpm tts:down           # VOICEVOX / COEIROINK コンテナを停止
+pnpm tts:status         # VOICEVOX / COEIROINK コンテナの状態を表示
 ```
 
 Bot パッケージ単体での操作:

@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
-
-const VOICEVOX_URI = 'http://127.0.0.1:50021';
+import { VOICEVOX_URI } from '../../config/api.js';
 
 /** VOICEVOXユーザー辞書の単語情報 */
 interface UserDictWord {

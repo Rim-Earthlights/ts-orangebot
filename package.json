@@ -15,7 +15,10 @@
         "test": "pnpm -r test",
         "test:integration": "pnpm -r test:integration",
         "test:db:up": "docker compose -f docker-compose.test.yml up -d",
-        "test:db:down": "docker compose -f docker-compose.test.yml down -v"
+        "test:db:down": "docker compose -f docker-compose.test.yml down -v",
+        "tts:up": "systemctl --user start orangebot-voicevox orangebot-coeiroink",
+        "tts:down": "systemctl --user stop orangebot-voicevox orangebot-coeiroink",
+        "tts:status": "systemctl --user status --no-pager orangebot-voicevox orangebot-coeiroink || true"
     },
     "pnpm": {
         "onlyBuiltDependencies": [

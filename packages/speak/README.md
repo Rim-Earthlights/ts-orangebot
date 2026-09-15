@@ -8,9 +8,10 @@
 
 1. リポジトリルートで `pnpm install`
 2. MySQL (MariaDB) を起動し、データベースとユーザーを作成 (bot と共通)
-3. `cp src/config/config.template.ts src/config/config.ts` して DB / OpenAI 設定を記入
+3. `cp src/config/config.template.ts src/config/config.ts` して DB / OpenAI / 音声合成エンジン (`API`) の設定を記入
 4. `cp src/config/example.json.template src/config/<name>.json` してインスタンス別の TOKEN / APP_ID / NAME / PORT を記入
-5. [voicevox_engine](https://github.com/VOICEVOX/voicevox_engine) を起動 (port 50021)
+5. VOICEVOX / COEIROINK エンジンを起動
+   - podman で起動する場合は [containers/README.md](../../containers/README.md) を参照
 
 # Run
 

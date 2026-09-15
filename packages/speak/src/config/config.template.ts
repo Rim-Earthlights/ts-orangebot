@@ -20,6 +20,11 @@ export const CONFIG = {
   TOKEN: 'YOUR_BOT_TOKEN',
   APP_ID: 'YOUR_APP_ID',
   NAME: 'BOT_NAME',
+  PORT: 4100,
+  API: {
+    VOICEVOX: 'http://127.0.0.1:50021/',
+    COEIROINK: 'http://127.0.0.1:50022/',
+  },
   DB: {
     HOSTNAME: 'localhost',
     USERNAME: 'orange',
@@ -35,7 +40,6 @@ export const CONFIG = {
     KEY: 'OPENAI_API_KEY',
     DEFAULT_MODEL: LITELLM_MODEL.CLAUDE_4_6_SONNET,
   },
-  PORT: 4100,
   COMMAND: {
     SPEAK: {
       COMMAND_NAME: 'speak',

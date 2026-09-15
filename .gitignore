@@ -13,3 +13,7 @@ output/
 youtubeCookie.json
 *-player-script.js
 .cache/
+
+# COEIROINK の配布アーカイブ (公式サイトから手動DL)
+containers/coeiroink/archive/*
+!containers/coeiroink/archive/.gitkeep
