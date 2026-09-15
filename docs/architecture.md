@@ -53,7 +53,7 @@ bot → speak の HTTP API (`controllers/speak.controller.ts`):
 | POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す |
 | POST | `/speaker/discon` | 読み上げ Bot を切断する |
 
-使用状況は shared の `SpeakerRepository` (speaker テーブル) で guild × bot ユーザー単位に管理される。音声合成は VOICEVOX (port 50021) / COEIROINK (port 50032) のローカルエンジンを HTTP で呼び出す。
+使用状況は shared の `SpeakerRepository` (speaker テーブル) で guild × bot ユーザー単位に管理される。音声合成エンジンの接続先は bot / speak それぞれの `config.ts` にある `API.VOICEVOX` / `API.COEIROINK` で指定する (既定は `127.0.0.1:50021` / `127.0.0.1:50022`)。
 
 ## ディレクトリ構成 (`packages/bot/src`)
 
@@ -193,7 +193,7 @@ packages/bot/src/
 | YouTube Data API | プレイリスト取得・検索 | `YOUTUBE.KEY` |
 | OpenWeatherMap | 天気予報 | `FORECAST.KEY` |
 | Spotify | 歌詞連携・OAuth | Spotify OAuth 設定 |
-| VOICEVOX / COEIROINK | テキスト読み上げ (音声合成) | speak パッケージがローカルエンジン (50021 / 50032) を直接呼び出し |
+| VOICEVOX / COEIROINK | テキスト読み上げ (音声合成) | `API.VOICEVOX`, `API.COEIROINK` (既定: `127.0.0.1:50021`, `127.0.0.1:50022`) |
 | Rust ゲームサーバー (rcon) | `/rust whitelist add\|revoke` で whitelist を管理 (`rust.handler.ts` が `rcon` CLI を `execFile` で実行) | `~/rcon.yaml` (rcon CLI の設定ファイル) |
 
 ## ボイスチャンネルの E2EE (DAVE)

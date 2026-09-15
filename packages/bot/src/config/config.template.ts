@@ -31,7 +31,7 @@ export const CONFIG = {
     TOKEN: '******.*********.****-*****-*****',
   },
   // 音声合成エンジンの接続先
-  // 未設定の場合は VOICEVOX: 50021 / COEIROINK: 50032 にフォールバックする
+  // 未設定の場合は VOICEVOX: 50021 / COEIROINK: 50022 にフォールバックする
   API: {
     VOICEVOX: 'http://127.0.0.1:50021/',
     COEIROINK: 'http://127.0.0.1:50022/',

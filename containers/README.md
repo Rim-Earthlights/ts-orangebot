@@ -1,6 +1,6 @@
 # 音声エンジンの podman 起動 (Quadlet)
 
-読み上げ Bot (`packages/speak`) が使う音声合成エンジンを podman コンテナで動かすための一式。
+bot (`packages/bot`) と読み上げ Bot (`packages/speak`) が使う音声合成エンジンを podman コンテナで動かすための一式。
 systemd の user unit (Quadlet) として管理する。
 
 | エンジン | ホスト側ポート | コンテナ側 | イメージ |
@@ -129,10 +129,10 @@ COEIROINK v2 のエンジンは `127.0.0.1:50032` に固定でバインドし、
 `API` から読む (`packages/*/src/config/api.ts`):
 
 - VOICEVOX: `API.VOICEVOX` (既定 `http://127.0.0.1:50021/`) — このセットアップと一致
-- COEIROINK: `API.COEIROINK` — **このセットアップは 50022 で公開するため、
-  両パッケージの `config.ts` に `http://127.0.0.1:50022/` を設定すること**
-  (テンプレートから新規に作成した場合は既定でこの値。`API` キーが無い既存の
-  `config.ts` は従来どおり 50032 にフォールバックする)
+- COEIROINK: `API.COEIROINK` (既定 `http://127.0.0.1:50022/`) — このセットアップと一致
+
+`API` が無い既存の `config.ts` でも、各パッケージの `config/api.ts` が同じ既定値へ
+フォールバックする。
 
 ### GPU について
 
