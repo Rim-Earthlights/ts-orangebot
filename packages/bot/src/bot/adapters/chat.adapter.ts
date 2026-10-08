@@ -12,7 +12,7 @@ import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { getIdInfoMessage } from '../../constant/chat/chat.js';
 import { CHATBOT_TEMPLATE, DISCORD_CLIENT } from '../../constant/constants.js';
 import { ModelResponse } from '../../type/openai.js';
-import { ChatRole, ChatService, LiteLLMMode, LogLevel } from '@orangebot/shared';
+import { ChatRole, ChatService, LiteLLMMode, LogLevel, startTyping } from '@orangebot/shared';
 import { findTool, toolRegistry, ToolContext } from '../dot_function/chat_tools/index.js';
 import { processAttachments } from '../dot_function/chat_attachments.js';
 
@@ -145,6 +145,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     });
   }
 
+  const typing = startTyping(message.channel.isSendable() ? message.channel : null);
   try {
     const tools = toolRegistry.map((t) => t.definition);
     const toolCtx: ToolContext = {
@@ -173,6 +174,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
 
       if (assistantMsg.content && assistantMsg.content.trim().length > 0) {
         await replyChunked(message, assistantMsg.content);
+        typing.refresh();
       }
 
       for (const call of toolCalls) {
@@ -204,6 +206,8 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     }
 
     const completion = response.choices[0].message;
+
+    typing.stop();
 
     if (!completion.content) {
       const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`contentがnull`);
@@ -243,6 +247,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
       ],
     });
   } catch (e) {
+    typing.stop();
     console.error(e);
     await message.reply(`エラーが発生しました。\n\`\`\`\n${(e as Error).message}\n\`\`\``);
     return;

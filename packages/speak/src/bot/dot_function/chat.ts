@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { EmbedBuilder, Message } from 'discord.js';
 import { ChatCompletionContentPart } from 'openai/resources';
-import { ChatHistoryChannelType, ChatHistoryRepository, LogLevel, stripSystemMessages } from '@orangebot/shared';
+import { ChatHistoryChannelType, ChatHistoryRepository, LogLevel, startTyping, stripSystemMessages } from '@orangebot/shared';
 import { Logger } from '../../common/logger.js';
 import { LiteLLMModel } from '../../config/config.js';
 import { DISCORD_CLIENT } from '../../constant/constants.js';
@@ -66,11 +66,13 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
     message: [`Request:`, sendContent],
   });
 
+  const typing = startTyping(message.channel.isSendable() ? message.channel : null);
   try {
     const response = await openai.chat.completions.create({
       model: model,
       messages: llm.chat,
     });
+    typing.stop();
 
     const completion = response.choices[0].message;
 
@@ -127,6 +129,7 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
       ],
     });
   } catch (e) {
+    typing.stop();
     const error = e as Error;
     console.error(error);
 

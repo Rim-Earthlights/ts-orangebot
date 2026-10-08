@@ -8,6 +8,7 @@ export * from './constants/dice.js';
 export * from './constants/gacha.js';
 export * from './services/index.js';
 export * from './utils/chatHistory.js';
+export * from './utils/typing.js';
 
 // Models entry namespace - export both as namespace and as individual names
 export * as Models from './models/index.js';
