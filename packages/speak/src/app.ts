@@ -235,12 +235,12 @@ DISCORD_CLIENT.on('messageCreate', async (message: Message) => {
     message.content.includes(`<@${DISCORD_CLIENT.user?.id}>`) &&
     message.content.trimEnd() !== `<@${DISCORD_CLIENT.user?.id}>`
   ) {
-    await DotBotFunctions.Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
+    await DotBotFunctions.Chat.talk(message, message.content, CONFIG.LITELLM.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
     return;
   }
 
   if (message.channel.type === ChannelType.DM) {
-    await DotBotFunctions.Chat.talk(message, message.content, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
+    await DotBotFunctions.Chat.talk(message, message.content, CONFIG.LITELLM.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
     return;
   }
 

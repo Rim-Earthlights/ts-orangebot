@@ -21,15 +21,15 @@ import { processAttachments } from '../dot_function/chat_attachments.js';
  */
 export function createChatService(): ChatService {
   return new ChatService({
-    apiKey: CONFIG.OPENAI.KEY,
-    organization: CONFIG.OPENAI.ORG,
-    project: CONFIG.OPENAI.PROJECT,
-    baseURL: CONFIG.OPENAI.BASE_URL,
+    apiKey: CONFIG.LITELLM.KEY,
+    organization: CONFIG.LITELLM.ORG,
+    project: CONFIG.LITELLM.PROJECT,
+    baseURL: CONFIG.LITELLM.BASE_URL,
     systemTemplate: CHATBOT_TEMPLATE,
     models: {
-      default: CONFIG.OPENAI.DEFAULT_MODEL,
-      low: CONFIG.OPENAI.LOW_MODEL,
-      high: CONFIG.OPENAI.HIGH_MODEL,
+      default: CONFIG.LITELLM.DEFAULT_MODEL,
+      low: CONFIG.LITELLM.LOW_MODEL,
+      high: CONFIG.LITELLM.HIGH_MODEL,
     },
   });
 }
@@ -49,9 +49,9 @@ export async function setModel(message: Message, model: LiteLLMModel, mode: Lite
 }
 
 export async function getModel(message: Message) {
-  const response = await axios.get<ModelResponse>(`${CONFIG.OPENAI.BASE_URL}/models`, {
+  const response = await axios.get<ModelResponse>(`${CONFIG.LITELLM.BASE_URL}/models`, {
     headers: {
-      Authorization: `Bearer ${CONFIG.OPENAI.KEY}`,
+      Authorization: `Bearer ${CONFIG.LITELLM.KEY}`,
     },
   });
   const models = response.data.data;
@@ -256,9 +256,9 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
  */
 export async function speech(message: Message, chat: string) {
   const openai = new OpenAI({
-    organization: CONFIG.OPENAI.ORG,
-    project: CONFIG.OPENAI.PROJECT,
-    apiKey: CONFIG.OPENAI.KEY,
+    organization: CONFIG.LITELLM.ORG,
+    project: CONFIG.LITELLM.PROJECT,
+    apiKey: CONFIG.LITELLM.KEY,
     maxRetries: 3,
   });
   const response = await openai.audio.speech.create({
@@ -279,11 +279,11 @@ export async function speech(message: Message, chat: string) {
  */
 export async function generatePicture(message: Message<boolean>, chat: string) {
   const litellm = new OpenAI({
-    organization: CONFIG.OPENAI.ORG,
-    project: CONFIG.OPENAI.PROJECT,
-    apiKey: CONFIG.OPENAI.KEY,
+    organization: CONFIG.LITELLM.ORG,
+    project: CONFIG.LITELLM.PROJECT,
+    apiKey: CONFIG.LITELLM.KEY,
     maxRetries: 3,
-    baseURL: CONFIG.OPENAI.BASE_URL,
+    baseURL: CONFIG.LITELLM.BASE_URL,
   });
 
   const response = await litellm.images.generate({

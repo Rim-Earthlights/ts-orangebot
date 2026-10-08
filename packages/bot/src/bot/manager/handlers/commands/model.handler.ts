@@ -14,9 +14,9 @@ export class ModelHandler extends BaseMessageHandler {
     const dest = args[0];
     const model = args[1];
 
-    const defaultModel = CONFIG.OPENAI.DEFAULT_MODEL;
-    const lowModel = CONFIG.OPENAI.LOW_MODEL;
-    const highModel = CONFIG.OPENAI.HIGH_MODEL;
+    const defaultModel = CONFIG.LITELLM.DEFAULT_MODEL;
+    const lowModel = CONFIG.LITELLM.LOW_MODEL;
+    const highModel = CONFIG.LITELLM.HIGH_MODEL;
 
     if (dest == null || model == null) {
       const send = new EmbedBuilder()

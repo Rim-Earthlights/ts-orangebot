@@ -30,7 +30,7 @@ export async function getOpenAIToken() {
   },
     {
       headers: {
-        'Authorization': `Bearer ${CONFIG.OPENAI.KEY}`,
+        'Authorization': `Bearer ${CONFIG.LITELLM.KEY}`,
         'Content-Type': 'application/json',
       },
     }
