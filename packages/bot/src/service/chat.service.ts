@@ -24,7 +24,7 @@ export class InteractionChatService {
       return;
     }
 
-    const llm = createChatService().getOrCreateSession(id, CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT, isGuild);
+    const llm = createChatService().getOrCreateSession(id, CONFIG.LITELLM.DEFAULT_MODEL, LiteLLMMode.DEFAULT, isGuild);
 
     llm.chat.push({ role: role, content: content });
   }
@@ -32,11 +32,11 @@ export class InteractionChatService {
 
 export async function setModel(dest: 'default' | 'g3' | 'g4', model: LiteLLMModel) {
   if (dest === 'default') {
-    CONFIG.OPENAI.DEFAULT_MODEL = model;
+    CONFIG.LITELLM.DEFAULT_MODEL = model;
   } else if (dest === 'g3') {
-    CONFIG.OPENAI.LOW_MODEL = model;
+    CONFIG.LITELLM.LOW_MODEL = model;
   } else if (dest === 'g4') {
-    CONFIG.OPENAI.HIGH_MODEL = model;
+    CONFIG.LITELLM.HIGH_MODEL = model;
   }
 }
 

@@ -33,7 +33,7 @@ export const CONFIG = {
     PORT: 3306,
     FLUSH: false,
   },
-  OPENAI: {
+  LITELLM: {
     BASE_URL: 'https://localhost:4001/v1',
     ORG: 'OPENAI_ORG_ID',
     PROJECT: 'OPENAI_PROJECT_ID',

@@ -55,9 +55,9 @@ function getIdInfo(interaction: ChatInputCommandInteraction<CacheType>) {
 }
 
 export async function showModelList(interaction: ChatInputCommandInteraction<CacheType>) {
-  const response = await axios.get<ModelResponse>(`${CONFIG.OPENAI.BASE_URL}/models`, {
+  const response = await axios.get<ModelResponse>(`${CONFIG.LITELLM.BASE_URL}/models`, {
     headers: {
-      Authorization: `Bearer ${CONFIG.OPENAI.KEY}`,
+      Authorization: `Bearer ${CONFIG.LITELLM.KEY}`,
     },
   });
   const models = response.data.data;

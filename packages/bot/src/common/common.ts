@@ -66,10 +66,10 @@ export function switchFunctionByAPIKey() {
   if (CONFIG.YOUTUBE.KEY) {
     ENABLE_FUNCTION.find((f) => f.name === functionNames.YOUTUBE)!.enable = true;
   }
-  if (CONFIG.OPENAI.KEY) {
+  if (CONFIG.LITELLM.KEY) {
     ENABLE_FUNCTION.find((f) => f.name === functionNames.GPT)!.enable = true;
   }
-  if (CONFIG.OPENAI.ACCESSTOKEN) {
+  if (CONFIG.LITELLM.ACCESSTOKEN) {
     ENABLE_FUNCTION.find((f) => f.name === functionNames.GPT_WITHOUT_KEY)!.enable = true;
   }
 }

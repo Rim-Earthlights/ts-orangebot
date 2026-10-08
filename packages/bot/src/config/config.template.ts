@@ -58,7 +58,7 @@ export const CONFIG = {
   // OpenAI > https://platform.openai.com/
   // TOKEN:
   // GET > https://chat.openai.com/api/auth/session and find accessToken
-  OPENAI: {
+  LITELLM: {
     // base url
     BASE_URL: 'https://api.openai.com/v1',
     /// org id / project id (optional)

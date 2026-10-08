@@ -20,7 +20,7 @@ export async function commandSelector(message: Message) {
   content.shift();
   switch (command) {
     case CONFIG.NAME: {
-      await DotBotFunctions.Chat.talk(message, content.join(' '), CONFIG.OPENAI.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
+      await DotBotFunctions.Chat.talk(message, content.join(' '), CONFIG.LITELLM.DEFAULT_MODEL, LiteLLMMode.DEFAULT);
       break;
     }
     // case CONFIG.COMMAND.SPEAK.COMMAND_NAME: {

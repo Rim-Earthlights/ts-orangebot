@@ -8,9 +8,9 @@ export const llmList = { llm: [] as LiteLLM[] };
 
 export async function initalize(id: string, model: LiteLLMModel, mode: LiteLLMMode, isGuild: boolean) {
   const openai = new OpenAI({
-    organization: CONFIG.OPENAI.ORG,
-    project: CONFIG.OPENAI.PROJECT,
-    apiKey: CONFIG.OPENAI.KEY,
+    organization: CONFIG.LITELLM.ORG,
+    project: CONFIG.LITELLM.PROJECT,
+    apiKey: CONFIG.LITELLM.KEY,
     maxRetries: 3,
     baseURL: 'http://localhost:4001',
   });
