@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, EmbedBuilder, Interaction } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { getRndNumber } from '../../common/common.js';
 
 export async function rollHideDice(interaction: ChatInputCommandInteraction<CacheType>, num: number, max: number) {

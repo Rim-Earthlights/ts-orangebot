@@ -106,9 +106,11 @@ export async function updateRoomSettings(channel: VoiceChannel, users: User[]) {
   for (const user of users) {
     const p = permission.find((p) => p.id === user.id);
     if (p) {
-      p.allow.has(PermissionsBitField.Flags.ViewChannel)
-        ? p.allow.remove([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect])
-        : p.allow.add([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect]);
+      if (p.allow.has(PermissionsBitField.Flags.ViewChannel)) {
+        p.allow.remove([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect]);
+      } else {
+        p.allow.add([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.Connect]);
+      }
     }
   }
   return;

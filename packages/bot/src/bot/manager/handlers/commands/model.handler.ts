@@ -2,7 +2,6 @@ import { EmbedBuilder, Message } from 'discord.js';
 import { Logger } from '../../../../common/logger.js';
 import { CONFIG, LiteLLMModel } from '../../../../config/config.js';
 import * as ChatService from '../../../../service/chat.service.js';
-import * as DotBotFunctions from '../../../dot_function/index.js';
 import { BaseMessageHandler } from '../../message.handler.js';
 
 export class ModelHandler extends BaseMessageHandler {

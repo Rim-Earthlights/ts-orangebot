@@ -14,7 +14,7 @@ export class LyricsHandler extends BaseInteractionHandler {
 
   async execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
     await interaction.deferReply();
-    let query = interaction.options.getString('query');
+    const query = interaction.options.getString('query');
     if (!query) {
       const userRepository = new UsersRepository();
       const userInfo = await userRepository.getByUid(interaction.user.id);
@@ -193,10 +193,6 @@ export class LyricsHandler extends BaseInteractionHandler {
       // 4: first line
 
       const songName = song.querySelector('td:nth-child(1) > a > span')?.textContent;
-      const songArtist = song.querySelector('td:nth-child(2) > a')?.textContent;
-      const lyricist = song.querySelector('td:nth-child(3) > a')?.textContent;
-      const arranger = song.querySelector('td:nth-child(4) > a')?.textContent;
-      const firstLine = song.querySelector('td:nth-child(5) > span')?.textContent;
 
       if (songName?.includes(name)) {
         const songUrl = song.querySelector('td:nth-child(1) > a')?.getAttribute('href');

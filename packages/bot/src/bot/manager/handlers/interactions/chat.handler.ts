@@ -1,7 +1,6 @@
 import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
-import { CONFIG } from '../../../../config/config.js';
 import { LiteLLMMode } from '../../../../constant/chat/chat.js';
 import { functionNames } from '../../../../constant/constants.js';
 import { isEnableFunction } from '../../../../common/common.js';

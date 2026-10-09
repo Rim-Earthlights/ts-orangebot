@@ -6,7 +6,6 @@ import { Message } from 'discord.js';
  * @param message 受け取ったメッセージング情報
  * @param args 引数
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function debug(message: Message, args?: string[]) {
   return;
 }

@@ -14,8 +14,8 @@ export type OpenAISessionResponse = {
   input_audio_transcription: {
     model: string
   },
-  turn_detection: any,
-  tools: any[],
+  turn_detection: unknown,
+  tools: unknown[],
   tool_choice: string,
   temperature: number,
   max_response_output_tokens: number,

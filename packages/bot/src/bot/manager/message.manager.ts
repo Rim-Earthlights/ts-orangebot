@@ -31,7 +31,7 @@ export class MessageManager {
   constructor(message: Message) {
     this.logger = new Logger();
     this.message = message;
-    const content = message.content.replace('.', '').replace(/　/g, ' ').trimEnd().split(' ');
+    const content = message.content.replace('.', '').replace(/\u3000/g, ' ').trimEnd().split(' ');
     this.command = content[0];
     this.args = content.slice(1);
 

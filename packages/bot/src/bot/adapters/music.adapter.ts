@@ -662,7 +662,7 @@ export async function extermAudioPlayer(gid: string, cid: string): Promise<boole
       connection.destroy();
     }
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

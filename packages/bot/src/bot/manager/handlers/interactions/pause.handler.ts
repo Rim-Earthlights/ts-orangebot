@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 

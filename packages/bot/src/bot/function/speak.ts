@@ -136,12 +136,12 @@ export async function forceCall(guildId: string, channelId: string, userId: stri
     return;
   }
   if (speaker.user_id === LEMON_SPEAKER_ID) {
-    const response = await axios.post(SPEAKER_LEMON_URI, {
+    await axios.post(SPEAKER_LEMON_URI, {
       guildId: guildId,
       channelId: channelId,
     });
   } else if (speaker.user_id === LIME_SPEAKER_ID) {
-    const response = await axios.post(SPEAKER_LIME_URI, {
+    await axios.post(SPEAKER_LIME_URI, {
       guildId: guildId,
       channelId: channelId,
     });
