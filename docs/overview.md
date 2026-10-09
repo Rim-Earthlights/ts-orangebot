@@ -13,17 +13,17 @@ OrangeBot-TS は、Orange Server 向けの多機能 Discord Bot です。TypeScr
 | Web サーバー | Express v5 |
 | ORM | TypeORM v0.3 |
 | データベース | MariaDB |
-| AI | OpenAI API (LiteLLM プロキシ経由) |
+| AI | LiteLLM プロキシ (openai SDK で接続) |
 | 音楽再生 | @discordjs/voice / youtubei.js (Innertube) |
-| 読み上げ (TTS) | VOICEVOX / COEIROINK (`packages/speak`) |
+| 読み上げ (TTS) | VOICEVOX / COEIROINK (`packages/speak`)。エンジンは podman Quadlet で起動 (`containers/`) |
 | スケジューラ | node-cron |
 
 ## 主要機能
 
-- **ボイスチャンネル管理** - ロビーに参加すると自動でルームを作成、退出時に自動削除
+- **ボイスチャンネル管理** - ロビーに参加すると自動でルームを作成、退出時に自動削除。作成時に「ゲームの選択」メッセージを投稿し、🎮 リアクションで VC ステータスにプレイ中のゲーム名を設定できる
 - **ガチャシステム** - 毎日補充される抽選回数 (30 未満なら +10) でアイテムを引く
 - **音楽再生** - YouTube の検索・再生 (youtubei.js)、プレイリスト管理、ループ・シャッフル
-- **AI チャット** - LiteLLM プロキシ経由で複数の LLM モデル (GPT-4, Claude 等) を利用。Tool Calling により天気・ユーザーアクティビティ等のコンテキストを自動取得
+- **AI チャット** - LiteLLM プロキシ経由で複数の LLM モデル (GPT / Claude 等。使用モデルは `config.ts` の `LITELLM.*_MODEL` で指定) を利用。Tool Calling により天気・ユーザーアクティビティ等のコンテキストを自動取得。応答待ちの間は「入力中...」を表示
 - **天気予報** - OpenWeatherMap API による地域別天気予報
 - **ゲーム** - ダイス、チンチロリン、チーム分け、ITO 等
 - **読み上げ (TTS)** - 専用の読み上げ Bot (`packages/speak`) を HTTP で呼び出してテキストを読み上げ。VOICEVOX / COEIROINK 対応
@@ -34,11 +34,10 @@ OrangeBot-TS は、Orange Server 向けの多機能 Discord Bot です。TypeScr
 `packages/bot/src/app.ts` がメインのエントリーポイントです。起動時に以下を行います:
 
 1. Express サーバーのセットアップ (Helmet, CORS, EJS テンプレート)
-2. TypeORM による MariaDB 接続 (`synchronize: false`、スキーマはマイグレーションで管理)
-3. ガチャアイテムのメモリロード
+2. TypeORM による MariaDB 接続を開始 (`synchronize: false`、スキーマはマイグレーションで管理)。接続完了後にガチャアイテムをメモリロード
+3. Express の listen 開始
 4. Discord Bot ログイン・イベントハンドラ登録
-5. スラッシュコマンドの登録
-6. Cron ジョブの初期化
+5. `ready` イベント内で Cron ジョブの初期化 → スラッシュコマンドの登録
 
 読み上げ Bot のエントリーポイントは `packages/speak/src/app.ts` です。インスタンス別の JSON 設定 (`src/config/<name>.json`) を引数に取り、Express サーバー起動 → MariaDB 接続 (bot と同一 DB、`synchronize: false`) → Discord ログイン → 読み上げ用スラッシュコマンド登録を行います。インスタンスごとに別の Discord トークン / ポートで複数起動できます (例: lemon=4100, lime=4101)。
 
@@ -61,13 +60,22 @@ pnpm dev                # Bot を nodemon で開発モード起動 (事前に sh
 pnpm dev:speak          # 読み上げ Bot を開発モード起動 (src/config/dev.json を使用。事前に shared のビルドが必要)
 pnpm lint               # Bot に対して ESLint
 pnpm smoke-test         # Bot の起動疎通確認 (事前に shared のビルドが必要)
-pnpm test               # 全パッケージのユニットテスト (vitest)
+pnpm test               # ユニットテスト (vitest)。現状テストがあるのは shared のみ (bot は passWithNoTests、speak は test スクリプトなし)
 pnpm test:integration   # インテグレーションテスト (要テスト用 DB)
 pnpm test:db:up         # テスト用 MariaDB を docker compose で起動
 pnpm test:db:down       # テスト用 MariaDB を停止・破棄
-pnpm tts:up             # VOICEVOX / COEIROINK コンテナを起動
-pnpm tts:down           # VOICEVOX / COEIROINK コンテナを停止
-pnpm tts:status         # VOICEVOX / COEIROINK コンテナの状態を表示
+pnpm tts:up             # VOICEVOX / COEIROINK の systemd user unit を起動 (要: 事前の Quadlet 設置)
+pnpm tts:down           # VOICEVOX / COEIROINK の systemd user unit を停止
+pnpm tts:status         # VOICEVOX / COEIROINK の systemd user unit の状態を表示
+```
+
+`tts:*` は `systemctl --user` で `orangebot-voicevox` / `orangebot-coeiroink` を操作します。初回は `containers/install.sh` で Quadlet ユニットを設置し、COEIROINK を使う場合は `containers/coeiroink/build.sh` でイメージをローカルビルドしておく必要があります。手順は [containers/README.md](../containers/README.md) を参照してください。
+
+本番起動用の `start.sh` は `git pull` → `pnpm install` → `pnpm run build` の後、プロセスが落ちても自動で再起動します:
+
+```bash
+./start.sh bot            # メインの bot
+./start.sh speak lemon    # 読み上げ bot (src/config/lemon.json)
 ```
 
 Bot パッケージ単体での操作:
