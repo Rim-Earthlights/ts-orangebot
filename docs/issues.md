@@ -28,11 +28,11 @@
 - **状況**: Vitest 導入済み。ルートに `pnpm test` / `pnpm test:integration`、`packages/shared/test/` にサービス・リポジトリのユニットテストとインテグレーションテスト (`migration.test.ts` / `repository.test.ts` 等) が存在する
 - **残課題**: `packages/bot` のテストは 0 件 (`vitest.config.ts` の `passWithNoTests: true` で通過しているだけ)。`packages/speak` には `test` スクリプト自体が無い。ハンドラ・アダプタ層のテスト作成から着手が必要
 
-### 5. `/accept` に権限チェックがない
+### 5. `/accept` に権限チェックがない (解決済み)
 
 - **場所**: `packages/bot/src/bot/manager/handlers/interactions/accept.handler.ts`
 - **問題**: ADMIN / OWNER 判定が無く、任意のメンバーが任意のユーザーに `member` ロールを付与できる。Bot 内のヘルプ (`chat_tools/commands.ts`) では「OWNER向け」と案内されており、意図と実装が食い違っている
-- **対策**: `mute` / `timeout` 等と同様に、実行者の `UsersType` を確認してから処理する
+- **状況**: `user-type` / `term` と同様に、実行者が OWNER でなければ拒否するよう修正済み
 
 ---
 
@@ -82,13 +82,13 @@
 - **問題**: `Logger.put()` (静的メソッド)、インスタンスメソッド `.info()` / `.error()`、素の `console.log` / `console.error` が混在
 - **対策**: ログ方式を統一し、構造化ログ (Winston, Pino 等) の導入を検討
 
-### 13. 登録済みだが動作しないコマンド
+### 13. 登録済みだが動作しないコマンド (解決済み)
 
 - **場所**: `packages/bot/src/constant/slashCommands.ts`, `packages/bot/src/bot/manager/interaction.manager.ts`, `packages/speak/src/app.ts`, `packages/speak/src/bot/commands.ts`
 - **問題**:
   - `/ai start` / `/ai stop` はスラッシュコマンドとして登録されているが、`interaction.manager.ts` に `'ai'` のハンドラが無く「コマンドが見つかりませんでした。」になる
   - speak の `/spcon` は DM コマンドとしてのみ登録されているが、ハンドラが `deferReply()` 後に `if (!interaction.guild) return;` で抜けるため、DM では応答が返らない
-- **対策**: `/ai` はハンドラを実装するか登録を削除する。`/spcon` はギルドコマンドとして登録するか、DM でも処理できるようにする
+- **状況**: `/ai` は仮実装 (`function/vchat.ts`) 向けだったため、スラッシュコマンドの登録を削除。`/spcon` はギルド判定を外し DM でも応答するよう修正済み
 
 ---
 
@@ -149,11 +149,11 @@
 
 - **場所**: `packages/bot/src/config/config.template.ts`, `packages/speak/src/config/config.template.ts`, `packages/bot/src/controller/spotifyRouter.ts`, `packages/bot/src/bot/request/`, `packages/bot/src/bot/manager/interaction.manager.ts`
 - **問題**:
-  - 設定キー `FLUSH` はどこからも読まれておらず、設定しても効果がない。`COMMON.DEV` / `COMMON.USER` / `DISCORD.COMMAND_GUILD_ID` / `GACHA.PICKRATE` / `NICONICO.*` も同様に未参照
+  - 設定キー `COMMON.DEV` / `COMMON.USER` / `DISCORD.COMMAND_GUILD_ID` / `GACHA.PICKRATE` / `NICONICO.*` はどこからも読まれておらず、設定しても効果がない (未使用だった `FLUSH` はテンプレートから削除済み)
   - `spotifyRouter.ts` は `routers.ts` に登録されておらず到達不能
   - `bot/request/openai.ts` / `bot/request/spotify.ts` は空ファイル
   - `interaction.manager.ts` の `dall` / `custom` ハンドラは対応するスラッシュコマンド定義が無く呼び出されない。`commands/chat.handler.ts` の `g3` / `g4` ケースも `message.manager.ts` に登録されていない
-- **対策**: 使う予定が無ければ削除する。`FLUSH` を残す場合は `createDataSource` の `dropSchema` に接続する
+- **対策**: 使う予定が無ければ削除する
 
 ---
 
@@ -161,6 +161,6 @@
 
 | 優先度 | 件数 | 主な領域 |
 |---|---|---|
-| Critical | 5 (うち #2 は解決済み、#3 #4 は部分解決) | 認証・権限、DB安全性、非同期処理、テスト |
-| High | 8 | セキュリティ、エラーハンドリング、運用、動作しないコマンド |
+| Critical | 5 (うち #2 #5 は解決済み、#3 #4 は部分解決) | 認証・権限、DB安全性、非同期処理、テスト |
+| High | 8 (うち #13 は解決済み) | セキュリティ、エラーハンドリング、運用、動作しないコマンド |
 | Medium | 8 | アーキテクチャ、コード品質、依存関係、デッドコード |

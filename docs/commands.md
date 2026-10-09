@@ -17,7 +17,7 @@
 | `/term <command>` | サーバー上でコマンドを実行 (OWNER のみ) |
 | `/rust whitelist add <url_or_id>` | Rust whitelist.allow を付与 (利用規約同意済みユーザー) |
 | `/rust whitelist revoke <url_or_id>` | Rust whitelist.allow を剥奪 (利用規約同意済みユーザー) |
-| `/accept <user>` | ユーザーのルール同意を承認し、メンバーロールを付与。※ 既知の問題: 現状は権限チェックがなく誰でも実行できる (docs/issues.md 参照) |
+| `/accept <user>` | ユーザーのルール同意を承認し、メンバーロールを付与 (OWNER のみ) |
 
 #### ユーティリティ
 
@@ -63,8 +63,6 @@
 | コマンド | 説明 |
 |---|---|
 | `/chat <text>` | みかんと会話 |
-| `/ai start` | AI 会話を開始。※ 現状未動作: コマンド登録のみでハンドラが未実装 (docs/issues.md 参照) |
-| `/ai stop` | AI 会話を停止。※ 現状未動作 (同上) |
 | `/memory` | メモリ機能の切り替え |
 | `/pause` | チャットを一時停止 (10分後自動再開) |
 | `/resume` | チャットを再開 |
@@ -251,6 +249,6 @@
 |---|---|
 | `/delete [last]` | LLM とのチャット履歴を削除 |
 | `/revert [uuid]` | 最新のチャット履歴を復元 (uuid 指定でその履歴を復元)。※ speak には `/history` が無いため、Bot の説明文にある「uuid は /history から取得」は現状使えない |
-| `/spcon <voice_id> [speed] [pitch] [intonation]` | 読み上げの声・スピード・ピッチ・抑揚を設定。※ 現状未動作: DM ではギルドが無いため応答せず終了する (docs/issues.md 参照)。ドットコマンド `.spcon` は動作する |
+| `/spcon <voice_id> [speed] [pitch] [intonation]` | 読み上げの声・スピード・ピッチ・抑揚を設定 |
 | `/model-list` | LLM モデル一覧を表示 |
 | `/model-set <model>` | LLM モデルを設定 |
