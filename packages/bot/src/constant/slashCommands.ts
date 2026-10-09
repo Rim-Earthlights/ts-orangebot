@@ -133,11 +133,6 @@ export const SERVER_SLASH_COMMANDS = [
     .setName('ito')
     .setDescription('itoのダイスを振ります')
     .addNumberOption((option) => option.setName('round').setDescription('ラウンド数').setRequired(true)),
-  new SlashCommandBuilder()
-    .setName('ai')
-    .setDescription('AIと会話します')
-    .addSubcommand((sc) => sc.setName('start').setDescription('会話を開始します'))
-    .addSubcommand((sc) => sc.setName('stop').setDescription('会話を停止します')),
   new SlashCommandBuilder().setName('memory').setDescription('メモリ機能を切り替えます'),
   new SlashCommandBuilder().setName('speak').setDescription('読み上げボットを呼び出します'),
   new SlashCommandBuilder().setName('discon').setDescription('読み上げボットを切断します'),

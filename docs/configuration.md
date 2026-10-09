@@ -88,7 +88,6 @@
 | `DATABASE` | string | DB 名 |
 | `PASSWORD` | string | DB パスワード |
 | `PORT` | number | DB ポート番号 |
-| `FLUSH` | boolean | (未使用) 以前は起動時にスキーマをリセットするフラグだったが、現在はどこからも参照されない。スキーマはマイグレーションで管理 (`docs/database.md`) |
 
 ## 対応 AI モデル (LiteLLM)
 

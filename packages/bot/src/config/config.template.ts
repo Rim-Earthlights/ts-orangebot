@@ -86,6 +86,5 @@ export const CONFIG = {
     DATABASE: 'database',
     PASSWORD: 'password',
     PORT: 3306,
-    FLUSH: false,
   },
 };
