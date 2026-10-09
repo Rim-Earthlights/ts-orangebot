@@ -27,11 +27,8 @@ export class TimeoutHandler extends BaseInteractionHandler {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const user = interaction.options.getUser('user')!;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const time = interaction.options.getNumber('time')!;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const reason = interaction.options.getString('reason')!;
     const member = guild.members.cache.find((member) => member.id === user.id);
 

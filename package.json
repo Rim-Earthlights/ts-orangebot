@@ -20,13 +20,6 @@
         "tts:down": "systemctl --user stop orangebot-voicevox orangebot-coeiroink",
         "tts:status": "systemctl --user status --no-pager orangebot-voicevox orangebot-coeiroink || true"
     },
-    "pnpm": {
-        "onlyBuiltDependencies": [
-            "@discordjs/opus",
-            "ffmpeg-static",
-            "sharp"
-        ]
-    },
     "devDependencies": {
         "license-checker": "^25.0.1"
     }

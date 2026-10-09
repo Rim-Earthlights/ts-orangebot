@@ -79,6 +79,7 @@ export class RoomHandler extends BaseInteractionHandler {
         await interaction.deferReply();
         const limit = interaction.options.getNumber('limit') ?? 99;
         await BotFunctions.Room.setLimit(interaction, limit);
+        break;
       }
       case 'lock': {
         await interaction.deferReply();
