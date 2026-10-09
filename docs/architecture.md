@@ -7,7 +7,7 @@ pnpm workspace により以下のパッケージで構成されています。
 ```
 packages/
 ├── bot/        # Discord Bot 本体 (Express + Discord.js)
-├── shared/     # 共有層: TypeORM エンティティ / リポジトリ / DataSource ファクトリ / 共通型 (LoggerPort, DTO)
+├── shared/     # 共有層: TypeORM エンティティ / リポジトリ / サービス層 / DataSource ファクトリ / 共通型 (LoggerPort, DTO)
 └── speak/      # 読み上げ Bot (VOICEVOX / COEIROINK)。bot から HTTP で呼び出される
 ```
 
@@ -19,8 +19,14 @@ packages/shared/src/
 ├── models/         # 17 個の TypeORM エンティティ
 ├── repository/     # 13 個のリポジトリ (Logger は LoggerPort 経由で注入)
 ├── migrations/     # TypeORM マイグレーション (Phase 2-1 以降で synchronize: false に切替)
-└── types/          # LogData / LogLevel / LoggerPort / MusicAddItem DTO
+├── services/       # Discord 非依存のサービス層 (Chat / Dice / Gacha / Music / Photo / Room / User の 7 個)
+├── utils/          # chatHistory.ts / typing.ts (startTyping: LLM 応答待ち中に 8 秒ごと sendTyping を再送)
+├── constants/      # dice.ts / gacha.ts
+├── common/         # random.ts
+└── types/          # chat / gacha / log (LogData / LogLevel / LoggerPort) / music (MusicAddItem DTO) / user
 ```
+
+これらはすべて `packages/shared/src/index.ts` から再エクスポートされる。
 
 bot / speak は `@orangebot/shared` 経由でこれらにアクセスし、起動時に `createDataSource(...)` で DataSource を初期化する。`packages/bot/src/common/logger.ts` がモジュール読み込み時に `setLogger()` で自身を shared に登録するため、shared 内のリポジトリから `getLogger().put(...)` で bot 側 Logger を呼び出せる。
 
@@ -38,12 +44,15 @@ packages/speak/src/
 │   ├── function/             # スラッシュコマンド向けロジック
 │   └── service/              # chatService (LLM セッション) / speakService (音声合成・再生)
 ├── controllers/              # speak.controller (bot から呼ばれる HTTP API)
-├── config/                   # config.template.ts (DB/OpenAI 共通) + example.json.template (インスタンス別)
-├── common/                   # logger / VOICEVOX・COEIROINK のスピーカー ID 解決
-├── constant/                 # 定数 (DISCORD_CLIENT 等)
+├── config/                   # config.template.ts (DB/LiteLLM 共通) + api.ts (音声合成エンジンの接続先解決) + example.json.template (インスタンス別 JSON の雛形。例: lemon.json / lime.json、gitignore 対象)
+├── common/                   # logger / webWrapper / VOICEVOX・COEIROINK のスピーカー ID 解決
+├── constant/                 # 定数 (DISCORD_CLIENT、キャラクターのシステムプロンプト CHATBOT_LEMON_TEMPLATE / CHATBOT_LIME_TEMPLATE) / voiceType.ts
 ├── interface/                # 音声合成 API のレスポンス型
+├── type/                     # 型定義
 └── job/                      # Cron ジョブ (アイドル LLM セッションの破棄)
 ```
+
+speak の LLM チャット (`bot/dot_function/chat.ts`) も shared の `startTyping()` で応答待ちの間「入力中...」を表示する。
 
 bot → speak の HTTP API (`controllers/speak.controller.ts`):
 
@@ -53,7 +62,9 @@ bot → speak の HTTP API (`controllers/speak.controller.ts`):
 | POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す |
 | POST | `/speaker/discon` | 読み上げ Bot を切断する |
 
-使用状況は shared の `SpeakerRepository` (speaker テーブル) で guild × bot ユーザー単位に管理される。音声合成エンジンの接続先は bot / speak それぞれの `config.ts` にある `API.VOICEVOX` / `API.COEIROINK` で指定する (既定は `127.0.0.1:50021` / `127.0.0.1:50022`)。
+使用状況は shared の `SpeakerRepository` (speaker テーブル) で guild × bot ユーザー単位に管理される。音声合成エンジンの接続先は bot / speak それぞれの `config/api.ts` で解決する。`config.ts` の `API.VOICEVOX` / `API.COEIROINK` を参照し、`API` が未設定 (既存の config.ts など) の場合は `127.0.0.1:50021` / `127.0.0.1:50022` にフォールバックする (末尾の `/` は除去)。
+
+エンジン本体は podman コンテナとして systemd user unit (Quadlet) で動かす。ユニット定義・COEIROINK のイメージビルド手順は `containers/` (`containers/README.md`) を参照。
 
 ## ディレクトリ構成 (`packages/bot/src`)
 
@@ -70,14 +81,15 @@ packages/bot/src/
 │   │   └── room.adapter.ts        # ルーム管理 (RoomService + チャンネル操作)
 │   │
 │   ├── dot_function/         # ドットコマンド (`.xxx`) のビジネスロジック
-│   │   ├── chat.ts                # AI チャット (adapters/chat.adapter.ts への再エクスポート)
+│   │   ├── chat.ts                # AI チャット (adapters/chat.adapter.ts への再エクスポート)。LLM クライアントは chat.adapter.ts 内で openai SDK を使って生成
 │   │   ├── chat_attachments.ts    # 添付ファイル処理
 │   │   ├── chat_tools/            # Tool Calling 用ツール群
 │   │   │   ├── index.ts
 │   │   │   ├── types.ts
 │   │   │   ├── commands.ts        # Bot コマンド一覧取得
 │   │   │   ├── userActivity.ts    # ユーザーアクティビティ取得
-│   │   │   └── weather.ts         # 天気取得
+│   │   │   ├── weather.ts         # 天気取得 (地域名)
+│   │   │   └── weatherByCoordinates.ts # 天気取得 (緯度経度)
 │   │   ├── dice.ts                # ダイス / ゲーム
 │   │   ├── forecast.ts            # 天気予報
 │   │   ├── gacha.ts               # ガチャ (抽選は shared の GachaService)
@@ -101,19 +113,19 @@ packages/bot/src/
 │   │       └── interactions/       # スラッシュコマンドハンドラ (29 ファイル。rust.handler.ts 等)
 │   │
 │   ├── request/              # 外部 API クライアント
-│   │   ├── openai.ts         # OpenAI / LiteLLM
 │   │   ├── innertube.ts      # youtubei.js (Innertube) — 音楽再生用ストリーム取得
 │   │   ├── youtube.ts        # YouTube Data API
-│   │   └── spotify.ts        # Spotify
+│   │   ├── openai.ts         # (空ファイル。未使用)
+│   │   └── spotify.ts        # (空ファイル。未使用)
 │   │
-│   ├── function/             # ユーティリティ関数
-│   ├── utils/                # 補助ユーティリティ (roomName.ts, gameSelect.ts)
+│   ├── function/             # スラッシュコマンド向けロジック (chat / dice / dict / gacha / room / speak / vchat※仮実装)
+│   ├── utils/                # 補助ユーティリティ (roomName.ts, gameSelect.ts: ルーム作成時の「ゲームの選択」メッセージ)
 │   ├── reactions.ts          # リアクション処理
 │   └── mention.ts            # メンションロジック
 │
-├── controller/               # Express ルートハンドラ (8 ルーター)
-├── config/                   # 設定ファイル
-├── constant/                 # 定数・定義
+├── controller/               # Express ルートハンドラ (8 ルーター。spotifyRouter は routers.ts に未登録)
+├── config/                   # config.template.ts (→ config.ts) / api.ts (音声合成エンジンの接続先解決)
+├── constant/                 # 定数・定義 (slashCommands.ts、ヘルプ文言、システムプロンプト CHATBOT_TEMPLATE 等)
 ├── job/                      # Cron ジョブ
 ├── common/                   # 共通ユーティリティ (logger.ts は shared に setLogger 登録)
 ├── service/                  # 追加サービス
@@ -131,7 +143,7 @@ packages/bot/src/
 ```
 ユーザーがメッセージ送信
   → app.ts (messageCreate イベント)
-    → MessageManager.execute()
+    → MessageManager.handle()
       → コマンド名で Map からハンドラを検索
         → Handler.execute(message, command, args)
           → dot_function 内のビジネスロジックを呼び出し
@@ -142,7 +154,7 @@ packages/bot/src/
 ```
 ユーザーがスラッシュコマンド実行
   → app.ts (interactionCreate イベント)
-    → InteractionManager.execute()
+    → InteractionManager.handle()
       → コマンド名で Map からハンドラを検索
         → Handler.execute(interaction)
 ```
@@ -153,7 +165,8 @@ packages/bot/src/
 ユーザーがボイスチャンネルに参加/退出
   → app.ts (voiceStateUpdate イベント)
     → joinVoiceChannel() / leftVoiceChannel() (dot_function/voice.ts)
-      → ロビーに参加 → 自動ルーム作成
+      → ロビーに参加 → 自動ルーム作成 → 「ゲームの選択」メッセージを投稿 (utils/gameSelect.ts)
+      → 🎮 リアクション → VC ステータスにプレイ中のゲーム名を設定 (reactions.ts)
       → ルームが空に → 自動削除 (is_autodelete が有効の場合)
 ```
 
@@ -188,7 +201,7 @@ packages/bot/src/
 
 | サービス | 用途 | 設定キー |
 |---|---|---|
-| OpenAI / LiteLLM | AI チャット (複数モデル対応) | `OPENAI.KEY`, `OPENAI.BASE_URL` |
+| LiteLLM (openai SDK) | AI チャット (複数モデル対応) | `LITELLM.KEY`, `LITELLM.BASE_URL`, `LITELLM.DEFAULT_MODEL` / `LOW_MODEL` / `HIGH_MODEL` (旧 `OPENAI.*`) |
 | YouTube (Innertube / youtubei.js) | 音楽再生のストリーム取得・検索 | `YOUTUBE.COOKIE` (ログイン Cookie, 任意) |
 | YouTube Data API | プレイリスト取得・検索 | `YOUTUBE.KEY` |
 | OpenWeatherMap | 天気予報 | `FORECAST.KEY` |
@@ -199,6 +212,17 @@ packages/bot/src/
 ## ボイスチャンネルの E2EE (DAVE)
 
 Discord のボイスチャンネル E2EE (DAVE プロトコル) には `@discordjs/voice` v0.19 + `@snazzah/davey` で対応している (bot の音楽再生・speak の読み上げ共通)。音楽再生はかつての play-dl / ytdl-core / discord-player-plus から youtubei.js (Innertube) に移行済み。
+
+## AI チャットのシステムプロンプト
+
+キャラクター設定のシステムプロンプトは定数として持つ。
+
+| パッケージ | 定数 | 場所 |
+|---|---|---|
+| bot (みかん) | `CHATBOT_TEMPLATE` | `packages/bot/src/constant/constants.ts` |
+| speak (れもん / らいむ) | `CHATBOT_LEMON_TEMPLATE` / `CHATBOT_LIME_TEMPLATE` | `packages/speak/src/constant/constants.ts` |
+
+いずれもプロンプト内に `CONFIG.LITELLM.DEFAULT_MODEL` (動作中のモデル名) を埋め込んでいる。
 
 ## Cron ジョブ
 

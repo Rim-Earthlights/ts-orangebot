@@ -6,22 +6,24 @@
 
 ## 設定項目
 
+> 「(未使用)」と記載したキーはテンプレートに残っているものの、現在のコードからは参照されていません。値を設定しても動作は変わりません。
+
 ### COMMON - 共通設定
 
 | キー | 型 | 説明 |
 |---|---|---|
-| `DEV` | boolean | 開発モードフラグ |
+| `DEV` | boolean | 開発モードフラグ (未使用) |
 | `HOSTNAME` | string | ホスト名 |
 | `PORT` | number | ポート番号 |
 | `HOST_URL` | string | ホスト URL |
-| `USER` | string | ユーザー名 |
+| `USER` | string | ユーザー名 (未使用) |
 
 ### DISCORD - Discord 設定
 
 | キー | 型 | 説明 |
 |---|---|---|
 | `APP_ID` | string | Discord アプリケーション ID |
-| `COMMAND_GUILD_ID` | string[] | コマンドを登録するギルド ID の配列 |
+| `COMMAND_GUILD_ID` | string[] | コマンドを登録するギルド ID の配列 (未使用。スラッシュコマンドは参加中の全ギルドに登録される) |
 | `TOKEN` | string | Discord Bot トークン |
 
 ### API - 音声合成エンジン接続先
@@ -39,7 +41,7 @@
 
 | キー | 型 | 説明 |
 |---|---|---|
-| `PICKRATE` | number | ガチャの排出率 |
+| `PICKRATE` | number | ガチャの排出率 (未使用) |
 
 ### FORECAST - 天気予報設定
 
@@ -54,26 +56,28 @@
 | `KEY` | string | Google Cloud API キー (YouTube Data API) |
 | `COOKIE` | string | youtubei.js 用のログイン済み Cookie (音楽再生。任意) |
 
-### OPENAI - AI チャット設定
+### LITELLM - AI チャット設定
+
+> 旧名は `OPENAI` です。既存の `config.ts` を使っている場合は `OPENAI:` を `LITELLM:` にリネームしてください (リネームしないとビルドが通りません)。
 
 | キー | 型 | 説明 |
 |---|---|---|
 | `BASE_URL` | string | LiteLLM プロキシの URL |
-| `ORG` | string \| undefined | OpenAI Organization ID |
-| `PROJECT` | string \| undefined | OpenAI Project ID |
+| `ORG` | string \| undefined | Organization ID (任意) |
+| `PROJECT` | string \| undefined | Project ID (任意) |
 | `KEY` | string | API キー |
 | `DEFAULT_MODEL` | LiteLLMModel | デフォルトモデル |
-| `LOW_MODEL` | LiteLLMModel | 軽量モデル (low) |
-| `HIGH_MODEL` | LiteLLMModel | 高性能モデル (high) |
+| `LOW_MODEL` | LiteLLMModel | 軽量モデル (`.model g3` / DM `/model low`) |
+| `HIGH_MODEL` | LiteLLMModel | 高性能モデル (`.model g4` / DM `/model high`) |
 | `ACCESSTOKEN` | string | アクセストークン |
 
-### NICONICO - ニコニコ動画設定
+### NICONICO - ニコニコ動画設定 (未使用)
 
 | キー | 型 | 説明 |
 |---|---|---|
-| `ENABLE` | boolean | 有効フラグ |
-| `MAIL` | string | ログインメール |
-| `PASSWORD` | string | ログインパスワード |
+| `ENABLE` | boolean | 有効フラグ (未使用) |
+| `MAIL` | string | ログインメール (未使用) |
+| `PASSWORD` | string | ログインパスワード (未使用) |
 
 ### DB - データベース設定
 
@@ -84,7 +88,7 @@
 | `DATABASE` | string | DB 名 |
 | `PASSWORD` | string | DB パスワード |
 | `PORT` | number | DB ポート番号 |
-| `FLUSH` | boolean | 起動時にスキーマをリセット |
+| `FLUSH` | boolean | (未使用) 以前は起動時にスキーマをリセットするフラグだったが、現在はどこからも参照されない。スキーマはマイグレーションで管理 (`docs/database.md`) |
 
 ## 対応 AI モデル (LiteLLM)
 
@@ -122,8 +126,20 @@ LiteLLM プロキシを経由して利用します。利用可能なモデルの
 
 speak は 2 種類の設定ファイルを使います。どちらも gitignore されています。
 
-1. **共通設定** — `packages/speak/src/config/config.template.ts` をコピーして `config.ts` を作成し、DB (bot と共通) / OpenAI / `API` (音声合成エンジンの接続先) の設定を記入
+1. **共通設定** — `packages/speak/src/config/config.template.ts` をコピーして `config.ts` を作成し、`DB` (bot と共通) / `LITELLM` / `API` (音声合成エンジンの接続先) の設定を記入。テンプレート内の `TOKEN` / `APP_ID` / `NAME` / `PORT` / `COMMAND` は起動時にインスタンス別 JSON の値で上書きされるため、プレースホルダのままでよい
 2. **インスタンス別設定** — `src/config/example.json.template` をコピーして `src/config/<name>.json` を作成し、起動引数で渡す
+
+`pnpm dev:speak` は `src/config/dev.json` を読み込むので、開発時は `example.json.template` をコピーして `dev.json` を作成してください。本番は `./start.sh speak <name>` (`src/config/<name>.json`) で起動します。
+
+speak の `LITELLM` 項目:
+
+| キー | 型 | 説明 |
+|---|---|---|
+| `BASE_URL` | string | LiteLLM プロキシの URL |
+| `ORG` | string | Organization ID (任意) |
+| `PROJECT` | string | Project ID (任意) |
+| `KEY` | string | API キー |
+| `DEFAULT_MODEL` | LITELLM_MODEL | 使用モデル (既定: `LITELLM_MODEL.CLAUDE_4_6_SONNET`) |
 
 インスタンス別 JSON の項目:
 
@@ -133,7 +149,7 @@ speak は 2 種類の設定ファイルを使います。どちらも gitignore 
 | `APP_ID` | string | Discord アプリケーション ID |
 | `NAME` | string | Bot 名 (`.{NAME} <text>` で LLM チャットにも使用) |
 | `PORT` | number | HTTP サーバーのポート (例: lemon=4100, lime=4101) |
-| `COMMAND.SPEAK` | object | 読み上げ呼出コマンド名・スリープ時間 |
+| `COMMAND.SPEAK` | object | 読み上げ呼出コマンド名 (`COMMAND_NAME`)・スリープ時間 (`SLEEP_TIME`)。型定義 `CommandConfig` には `SLASH_COMMAND_NAME` もあるが、テンプレートには無くコードからも参照されない |
 | `COMMAND.SPEAKER_CONFIG` | object | 読み上げ設定コマンド (`speaker-config` / `spcon` / `sp-reload`) |
 | `COMMAND.DISCONNECT` | string | 切断コマンド名 (`discon`) |
 

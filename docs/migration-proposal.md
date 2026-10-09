@@ -1,15 +1,13 @@
 # 次フェーズ移行提案: モノレポ化 + API サーバー / フロントエンド新設
 
-> **進捗ステータス (2026-06 時点)**:
-> - **Phase 1-1 (パッケージマネージャ移行): 完了** — pnpm + workspace へ移行済み、未使用依存 (`@sequelize/core` / `fs` / `kysely` / `sqlite3` / `pg` / `pg-hstore`) も削除済み
-> - **Phase 1-2 (モノレポ構成・ワークスペース設定): 完了** — `packages/bot` / `packages/shared` の骨格と `pnpm-workspace.yaml` / `tsconfig.base.json` / smoke-test スクリプトが存在
-> - **Phase 1-3 (shared への切り出し): 完了** — モデル17個・リポジトリ13個・DataSource ファクトリ・Logger ポート (`getLogger`/`setLogger`)・`MusicAddItem` DTO を `@orangebot/shared` に集約。`bot/model/` と `bot/type/types.ts` は削除し、bot 全ファイルが `@orangebot/shared` 経由でアクセスする状態。`RoomRepository.init()` と `ChatHistoryRepository.getLatestByChannelId()` の Discord 依存は bot 側 (app.ts / revert.handler) に押し戻し済み
-> - **Phase 1-4 (ビルド・開発環境整備): 完了** — ルート/bot の `pnpm` スクリプトに `predev` / `presmoke-test` を追加して shared を先にビルド、TypeORM マイグレーション基盤 (`packages/shared/scripts/data-source-cli.ts` + `migration:*` scripts + `src/migrations/`) を整備。`synchronize: false` への切り替えは Phase 2-1 で実施
+> **進捗ステータス (2026-10 時点)**:
+> - **Phase 1 (モノレポ基盤構築): 完了** — 1-1 〜 1-4 すべて完了。詳細は「4. 移行フェーズ」の Phase 1 節を参照
 > - **計画外の追加: `packages/speak` (2026-06)** — 別リポジトリだった speak-voicevox を読み上げ Bot として monorepo に統合。DB 層は `@orangebot/shared` を再利用し、bot からは HTTP (`/speaker/call` 等) で呼び出す。本提案の Phase 構成には影響しない
-> - **Phase 2-1 (テスト基盤 + 純粋ロジックの移動): 完了** — Vitest を shared / bot に導入 (`pnpm test`)、テスト用 MariaDB コンテナ (`docker-compose.test.yml` + `pnpm test:db:up`) を整備。`synchronize: false` へ切り替え、初期マイグレーション `InitialSchema` を生成し、マイグレーションの正しさをインテグレーションテストで検証 (詳細は `docs/database.md`)。dice / photo サービスと乱数ユーティリティ・ダイス定数を `@orangebot/shared` (`services/` `common/` `constants/`) に移動し、ユニットテストを作成
-> - **Phase 2-2 (DB 依存サービスの切り出し): 完了** — `GachaService` (抽選・通常ガチャ・拡張ガチャ・プレゼント管理・おみくじ) と `UserService` (権限チェック・ガチャ回数リセット・登録/削除/復元) を `@orangebot/shared` に新設。入出力は `types/gacha.ts` / `types/user.ts` の DTO で定義し、リポジトリはコンストラクタ注入でモック可能。ユニットテスト (リポジトリモック) + リポジトリ層のインテグレーションテスト (テスト用 DB) を整備。bot の `dot_function/gacha.ts` / `function/gacha.ts` はサービス呼び出しに置き換え (Embed 整形は bot 側に残置)
-> - **Phase 2-3 (Discord 密結合ロジックの抽出 + アダプター層): 完了** — `ChatService` (LLM セッション管理・履歴永続化・モデル解決)、`RoomService` (ルーム DB 管理・チーム分け)、`MusicService` (キュー・再生設定・プレイリスト管理) を `@orangebot/shared` に新設し、Phase 2 の全サービス切り出しが完了。bot 側に `bot/adapters/` (chat / music / room) を新設して Discord 固有処理 (Embed 整形・音声接続・チャンネル操作) を分離し、旧 `dot_function/{chat,music,room}.ts` はアダプターへの再エクスポートに変更。`llmList` グローバル状態は ChatService のセッションストアに統合。サービス層のユニットテスト一式を整備 (unit 98件 + integration 16件)
-> Phase 2 (サービス層の整備) はこれで完了。次の作業は Phase 3 (API サーバー新設) から。
+> - **計画外の追加: TTS エンジンのコンテナ化 (2026-10)** — VOICEVOX / COEIROINK を podman Quadlet (`containers/quadlet/`) で systemd ユーザーサービスとして起動 (`pnpm tts:up`)。Phase 5 の Docker Compose 開発環境とは別物
+> - **Phase 2 (サービス層の整備): サービス切り出しは完了、一部の付帯項目は未着手** — 2-1 〜 2-3 のサービス切り出し・アダプター層・テストは完了 (shared のテスト: unit 98件 + integration 16件)。一方、Phase 2 で対応するとしていた「DB 同時アクセスの排他制御」と「エラー型の共通化」(6章) は未着手。bot 側のテストも 0 件
+> - **Phase 3 〜 5: 未着手** — `packages/api` / `packages/front` / `docker-compose.yml` / CI (`.github/`) はいずれも未作成
+>
+> 次の作業は Phase 2 の残項目の消化、または Phase 3 (API サーバー新設)。
 
 ## 1. 背景と目的
 
@@ -22,7 +20,7 @@ OrangeBot-TS は Discord Bot 単体として動作しており、Express サー�
 - HTTP エンドポイントに認証がない
 - ビジネスロジックが Discord.js と密結合しており、Web からの再利用が困難 (Phase 2-3 のサービス/アダプター層整備で大幅に緩和)
 - ~~サービス層が未整備~~ → Phase 2 で `@orangebot/shared` の `services/` に 7 サービスを整備済み
-- ~~テストがゼロ~~ → Phase 2-1 で Vitest を導入済み (ユニット + インテグレーション)
+- ~~テストがゼロ~~ → Phase 2-1 で Vitest を導入済み (ユニット + インテグレーション)。ただしテストがあるのは shared のみで、bot / speak は 0 件
 - Express コントローラが EJS テンプレートに直結し、API として使えない
 
 ### 目的
@@ -76,9 +74,9 @@ ts-orangebot/
 │   ├── bot/                        ← Discord Bot (既存ベース)
 │   │   ├── src/
 │   │   │   ├── app.ts             ← Bot エントリーポイント (Express 分離)
-│   │   │   ├── handlers/          ← コマンドハンドラ
-│   │   │   ├── managers/          ← メッセージ/インタラクション管理
-│   │   │   └── adapters/          ← shared サービスと Discord の橋渡し
+│   │   │   └── bot/
+│   │   │       ├── manager/       ← メッセージ/インタラクション管理 (handlers/ にコマンドハンドラ)
+│   │   │       └── adapters/      ← shared サービスと Discord の橋渡し ✅ 作成済み
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
@@ -104,7 +102,7 @@ ts-orangebot/
 ├── package.json                    ← ワークスペースルート
 ├── pnpm-workspace.yaml             ← pnpm ワークスペース定義
 ├── tsconfig.base.json              ← 共通 TypeScript 設定
-└── docker-compose.yml              ← 開発環境 (★ 新規)
+└── docker-compose.yml              ← 開発環境 (★ 新規・未作成。現状はテスト用の docker-compose.test.yml のみ)
 ```
 
 ### 技術選定
@@ -122,141 +120,33 @@ ts-orangebot/
 | バリデーション | なし | **zod** (`fastify-type-provider-zod` で Fastify と統合。shared の DTO バリデーションにも統一的に使用) |
 | フロントエンド | EJS テンプレート | **Vue 3 + Vuetify 3** (Vite / Composition API + Material Design コンポーネントにより管理画面を高速に構築) |
 | テスト | なし | **Vitest** ✅ 導入済み (Phase 2-1) |
-| コンテナ | なし | **Docker Compose** (開発環境) ※ テスト用 DB (`docker-compose.test.yml`) は導入済み |
+| コンテナ | なし | **Docker Compose** (開発環境) ※ テスト用 DB (`docker-compose.test.yml`) と TTS エンジン (podman Quadlet, `containers/`) は導入済み。開発環境の `docker-compose.yml` は未作成 |
 
 ---
 
 ## 4. 移行フェーズ
 
-### Phase 1: モノレポ基盤構築
+### Phase 1: モノレポ基盤構築 ✅ 完了
 
-Phase 1 は対応範囲が広いため、以下の 4 つのサブフェーズに分割する。
-各サブフェーズ完了時に Bot の動作確認を行い、問題があれば次に進まない。
+各サブフェーズ完了時に smoke test (`pnpm smoke-test`) で Bot の動作確認を行う方針で進めた。
 
----
+| サブフェーズ | 結果 | 主な決定事項 |
+|---|---|---|
+| 1-1 パッケージマネージャ移行 | Yarn → pnpm + workspace。未使用依存 (`@sequelize/core` / `fs` / `kysely` / `sqlite3` / `pg` / `pg-hstore`) を削除 | TypeORM・ネイティブモジュール対策として `.npmrc` に `shamefully-hoist=true` を暫定設定 |
+| 1-2 モノレポ構成 | `pnpm-workspace.yaml` / `tsconfig.base.json` / `packages/bot` / `packages/shared` / smoke-test スクリプトを作成 | smoke test は DB 接続だけでなくハンドラ登録漏れも検出する |
+| 1-3 shared への切り出し | モデル17個・リポジトリ13個・DataSource ファクトリ・Logger ポート (`getLogger` / `setLogger`)・DTO を `@orangebot/shared` に集約 | bot は workspace パッケージ `@orangebot/shared` を import する (path alias は使わない)。Discord 依存のあるリポジトリ処理は bot 側に押し戻す |
+| 1-4 ビルド・開発環境整備 | `predev` / `presmoke-test` で shared を先にビルド。TypeORM マイグレーション基盤 (`packages/shared/scripts/data-source-cli.ts` + `migration:*` + `src/migrations/`) を整備 | shared は他パッケージに依存しない。`synchronize: false` への切り替えはテスト基盤導入後 (2-1) に行う |
 
-#### Phase 1-1: パッケージマネージャ移行 ✅ 完了
+**計画との差分・残項目**:
 
-**目的**: Yarn から pnpm に移行し、ワークスペースの基盤を作る
-
-**作業内容**:
-
-1. pnpm のインストール・設定
-2. `yarn.lock` → `pnpm-lock.yaml` への移行
-3. ルート `package.json` の scripts を pnpm 向けに調整
-4. 未使用依存パッケージの削除
-   - `@sequelize/core` (TypeORM を使用しており未使用)
-   - `fs` (0.0.1-security) (Node.js ネイティブで代替)
-   - `kysely` (未使用の代替クエリビルダ)
-   - `sqlite3`, `pg`, `pg-hstore` (MariaDB を使用しており不要)
-5. 動作確認: `pnpm install` → `pnpm build` → Bot 起動
-
-**成果物**:
-- pnpm でビルド・起動ができる状態
-- 未使用依存の削除
-
-**リスク**:
-- phantom dependency (Yarn で暗黙的に解決されていた依存) の顕在化 → `pnpm install` 時にエラーで検出できるため、都度対応
-- pnpm の厳密な依存解決により TypeORM やネイティブモジュールが動作しない場合がある → `.npmrc` に `shamefully-hoist=true` を設定して解消し、段階的に strict モードへ移行する
+- ルートの `dev` / `lint` は提案の `pnpm -r dev` / `pnpm -r lint` ではなく、`--filter @orangebot/bot` で bot のみを対象にしている (speak は `pnpm dev:speak`)。`build` / `clean` / `test` は `pnpm -r`
+- `shamefully-hoist=true` は解除されておらず、strict モードへの移行は未着手。shared が `mysql2` を宣言せずに動いている等の phantom dependency が残っている (`docs/issues.md` 参照)
 
 ---
 
-#### Phase 1-2: モノレポ構成・ワークスペース設定 ✅ 完了
-
-**目的**: pnpm ワークスペースを有効にし、パッケージの骨格を作る
-
-**作業内容**:
-
-1. `pnpm-workspace.yaml` 作成
-   ```yaml
-   packages:
-     - 'packages/*'
-   ```
-2. `tsconfig.base.json` 作成 (共通コンパイラオプション)
-3. `packages/bot/` ディレクトリ作成
-   - `package.json`, `tsconfig.json` を作成
-4. `packages/shared/` ディレクトリ作成
-   - `package.json`, `tsconfig.json` を作成
-5. 既存の `src/` を `packages/bot/src/` に移動
-   - ルートの `tsconfig.json` を `packages/bot/tsconfig.json` として調整
-   - ビルドスクリプトの動作確認
-6. smoke test スクリプトの作成
-   - Bot の起動 → DB 接続 → Discord Gateway 接続 → コマンドハンドラ登録 → 正常シャットダウンを確認するスクリプト
-   - DB 接続だけでなく、import パス変更によるハンドラ登録漏れも検出できるようにする
-   - 以降の全フェーズでデグレ検出に使用する
-
-**成果物**:
-- モノレポのディレクトリ構造が確立
-- `packages/bot` で既存と同じビルド・起動ができる
-- smoke test スクリプトが動作する
-
-**リスク**:
-- パス解決の変更によるビルドエラー → tsconfig の `paths` / `rootDir` を慎重に調整
-
----
-
-#### Phase 1-3: shared パッケージへのモデル・リポジトリ切り出し ✅ 完了
-
-**目的**: TypeORM エンティティとリポジトリ層を shared パッケージに移動する
-
-**現状**: `packages/shared/src/index.ts` はプレースホルダのみ。`packages/bot` から `@orangebot/shared` を依存登録している状態 (実体は未参照)。
-
-**作業内容**:
-
-1. DB 設定の移動 (最初に移動することで、後続の移動時に循環参照を防ぐ)
-   - `src/model/typeorm/` → `packages/shared/src/config/`
-   - TypeORM DataSource を shared から export
-2. モデル層の移動
-   - `src/model/models/` → `packages/shared/src/models/`
-3. リポジトリ層の移動
-   - `src/model/repository/` → `packages/shared/src/repository/`
-4. 共有型定義の整理
-   - `packages/shared/src/types/` に DTO・共通型を配置
-5. `packages/bot` から `@shared/*` への import パス変更
-   - TypeScript path aliases の設定
-6. 動作確認: Bot が shared 経由で DB アクセスできること
-
-**成果物**:
-- shared パッケージにモデル・リポジトリ・DB 設定が集約
-- Bot は `@shared/*` 経由でこれらを利用
-
-**リスク**:
-- import パス変更による不整合 → DB 設定 → エンティティ → リポジトリの順に 1 ファイルずつ移動し、移動のたびに smoke test を実行して検証する
-- TypeORM DataSource の初期化順序 → shared 側で DataSource インスタンスを export し、各パッケージの起動時に `initialize()` を呼び出す形に統一する
-
----
-
-#### Phase 1-4: ビルド・開発環境の整備
-
-**目的**: モノレポとしての開発体験を整える
-
-**作業内容**:
-
-1. ルート `package.json` に共通スクリプトを定義
-   - `pnpm -r build`, `pnpm -r dev`, `pnpm -r lint` 等
-2. shared → bot のビルド順序を設定
-   - shared のビルドが先に走るよう `workspace:` プロトコルで依存定義
-3. マイグレーション運用の準備
-   - TypeORM マイグレーション生成・実行の手順を整備
-   - `synchronize: false` への切り替えは Phase 2-1 (Vitest 導入後) に行う。テスト基盤がない状態での切り替えはマイグレーションの正しさを検証できないため
-4. `.gitignore`, `.npmrc` 等のルート設定ファイル調整
-5. 最終動作確認: クリーンな状態から `pnpm install` → `pnpm build` → Bot 起動
-
-**成果物**:
-- モノレポ構成で一貫したビルド・開発フローが確立
-- マイグレーション運用の手順が整備されている (`synchronize: false` 切り替えは Phase 2-1 で実施)
-
-**リスク**:
-- ビルド順序の循環依存 → shared は他パッケージに依存しない設計を徹底
-
----
-
-### Phase 2: サービス層の整備
+### Phase 2: サービス層の整備 ✅ サービス切り出し完了 (付帯項目は一部未着手)
 
 **目的**: ビジネスロジックを Discord 非依存のサービスとして切り出す
-
-Phase 2 は対応範囲が広いため、以下の 3 つのサブフェーズに分割する。
-各サブフェーズ完了時に smoke test + ユニットテストを実行し、問題があれば次に進まない。
 
 **切り出し対象の判断基準**:
 
@@ -264,80 +154,20 @@ Phase 2 は対応範囲が広いため、以下の 3 つのサブフェーズに
 |---|---|
 | 純粋な計算・抽選ロジック | → shared/services に移動 |
 | DB 操作 (CRUD) | → shared/repository のまま |
-| Discord メッセージ送信・フォーマット | → bot/adapters に残す |
-| Discord イベント処理 | → bot/handlers に残す |
+| Discord メッセージ送信・フォーマット | → `packages/bot/src/bot/adapters/` に残す |
+| Discord イベント処理 | → `packages/bot/src/bot/manager/handlers/` に残す |
 
----
+| サブフェーズ | 結果 |
+|---|---|
+| 2-1 テスト基盤 + 純粋ロジック | Vitest を shared / bot に導入、テスト用 MariaDB コンテナ (`docker-compose.test.yml` + `pnpm test:db:up`) を整備。`synchronize: false` に切り替え、初期マイグレーション `InitialSchema` を生成してインテグレーションテストで検証 (詳細は `docs/database.md`)。`DiceService` / `PhotoService`・乱数ユーティリティ・定数を shared (`services/` `common/` `constants/`) に移動 |
+| 2-2 DB 依存サービス | `GachaService` / `UserService` を新設。入出力は `types/gacha.ts` / `types/user.ts` の DTO、リポジトリはコンストラクタ注入でモック可能。ユニットテスト + リポジトリ層のインテグレーションテストを整備 |
+| 2-3 Discord 密結合ロジック + アダプター層 | `ChatService` / `RoomService` / `MusicService` を新設。bot 側に `bot/adapters/` (chat / music / room) を作り、旧 `dot_function/{chat,music,room}.ts` はアダプターへの再エクスポートに変更。`llmList` グローバル状態は ChatService のセッションストアに統合 |
 
-#### Phase 2-1: テスト基盤 + 純粋ロジックの移動 ✅ 完了
+**未着手の残項目**:
 
-**目的**: Vitest を導入し、Discord 非依存の純粋ロジックから着手する
-
-**作業内容**:
-
-1. テスト基盤構築
-   - Vitest 導入・設定
-   - shared / bot 両パッケージのテスト実行環境を整備
-   - テスト用 DB コンテナ (Docker) のセットアップ (インテグレーションテスト用)
-2. `synchronize: false` への切り替え
-   - Phase 1-4 で準備したマイグレーション手順に基づき切り替え
-   - マイグレーションの正しさをテストで検証
-3. 純粋ロジックの移動
-   - `dice.service.ts` - ダイスロジック (既存をそのまま移動)
-   - `photo.service.ts` - 写真サービス (既存をそのまま移動)
-4. 移動したサービスのユニットテスト作成
-5. Bot 側で import パスを変更し、smoke test で動作確認
-
-**成果物**:
-- Vitest によるテスト実行環境 + テスト用 DB コンテナ
-- `synchronize: false` への切り替え完了
-- 純粋ロジックのサービス化 + ユニットテスト
-
----
-
-#### Phase 2-2: DB 依存サービスの切り出し ✅ 完了
-
-**目的**: DB アクセスを伴うビジネスロジックをサービスとして切り出す
-
-**作業内容**:
-
-1. サービスクラスの新規作成
-   - `user.service.ts` - ユーザー管理ロジック
-   - `gacha.service.ts` - ガチャ抽選ロジック (dot_function/gacha.ts から抽出)
-2. DTO (Data Transfer Object) の定義
-   - サービスの入出力を型安全な DTO で定義
-   - Discord の Message / Interaction に依存しない I/F
-3. テスト作成
-   - ユニットテスト (リポジトリ層をモックしてサービスロジックを検証)
-   - インテグレーションテスト (テスト用 DB に対してリポジトリ層自体の動作を検証)
-4. smoke test で動作確認
-
-**成果物**:
-- DB 依存サービスの切り出し + DTO 定義
-- ユニットテスト + リポジトリ層のインテグレーションテスト
-
----
-
-#### Phase 2-3: Discord 密結合ロジックの抽出 + アダプター層 ✅ 完了
-
-**目的**: Discord.js に密結合したロジックからビジネスロジックを抽出し、アダプター層を整備する
-
-**作業内容**:
-
-1. ロジック抽出・サービス化
-   - `chat.service.ts` - チャット管理ロジック
-   - `room.service.ts` - ルーム管理ロジック
-   - `music.service.ts` - 音楽キュー管理ロジック
-2. Bot 側にアダプター層を作成
-   - `packages/bot/src/adapters/` で Discord.js ↔ サービス層を橋渡し
-   - ハンドラからサービスを呼び出し、結果を EmbedBuilder 等で整形
-3. ユニットテスト作成
-4. smoke test + 手動での Bot 動作確認
-
-**成果物**:
-- Discord 非依存のサービス層 (全サービス完了)
-- Bot のアダプター層
-- サービス層のユニットテスト一式
+- DB 同時アクセスの排他制御 (トランザクション / `@VersionColumn` / `SELECT ... FOR UPDATE`) — 6章参照
+- ドメインエラー型の共通化 (`NotFoundError` 等) — 6章参照
+- bot 側 (ハンドラ・アダプタ層) のテスト。現状 0 件で `passWithNoTests` により通過している
 
 ---
 
@@ -511,6 +341,7 @@ Phase 3 (API サーバー) ── Phase 4 (フロントエンド) ← 並行開�
 
 - Bot と API が同時に書き込む可能性のある操作（ガチャ抽選、ユーザー更新等）では、リポジトリ層でトランザクションを使用し、楽観的ロック (`@VersionColumn`) または `SELECT ... FOR UPDATE` による排他制御を行う
 - 具体的な対象はサービス層整備 (Phase 2) で洗い出し、リポジトリ層のメソッド単位で対応する
+- **状況: 未着手** — リポジトリ層にトランザクション・`@VersionColumn`・ロックの使用箇所はまだ無い。API サーバー (Phase 3) で書き込み経路が増える前に対応する
 
 ### 段階的な旧コード除去
 
@@ -518,13 +349,14 @@ Phase 3 (API サーバー) ── Phase 4 (フロントエンド) ← 並行開�
 - API サーバーで全機能をカバーした後に除去
 - 削除前に旧エンドポイントの利用状況を確認
 
-### Logger の設計 (Phase 1-3 で対応)
+### Logger の設計 (Phase 1-3 で対応) ✅ 対応済み
 
 リポジトリ層の再利用性評価で「Logger 依存を除けばほぼそのまま」とあるように、Logger の扱いは早期に決める必要がある。
 
 - shared パッケージに Logger インターフェース (抽象) を定義
 - 各パッケージ (bot, api) で具体的な Logger 実装を注入 (DI)
 - Phase 5 の「構造化ログの統一」と整合性を持たせる
+- **状況**: shared に `LoggerPort` (`types/log.ts`) と `getLogger` / `setLogger` を定義し、bot / speak が起動時に実装を注入している
 
 ### 環境変数の管理方針
 
@@ -533,18 +365,20 @@ Bot・API・Front で異なる環境変数が必要になるため、以下の�
 - 各パッケージに `.env.example` を配置し、必要な環境変数を明示
 - shared パッケージに共通の環境変数 (DB 接続情報等) を定義
 - パッケージ固有の環境変数 (Discord トークン、JWT シークレット等) は各パッケージで管理
+- **状況: 未着手** — `.env.example` はまだどのパッケージにも無い。現状 bot / speak の設定は `config.ts` (テンプレートからコピー) で管理し、環境変数を読むのはマイグレーション CLI (`DB_*`) とインテグレーションテスト (`TEST_DB_*`) のみ
 
-### エラー型の共通化 (Phase 2 で対応)
+### エラー型の共通化 (Phase 2 で対応予定 — 未着手)
 
 サービス層が投げるエラーの型を早期に統一する:
 
 - shared パッケージにドメインエラー型 (例: `NotFoundError`, `ValidationError`, `ConflictError`) を定義
 - サービス層はこれらの共通エラーを throw し、各パッケージ (bot の Embed 変換、API の HTTP ステータスマッピング) で適切に変換
 - Phase 3 の API エラーレスポンス (`{ error: { code, message, details } }`) への変換が容易になる
+- **状況**: shared にドメインエラー型はまだ定義されていない。Phase 3 着手前に用意する
 
 ### 未使用依存の整理
 
-Phase 1-1 で以下を整理 (詳細は Phase 1-1 の作業内容を参照):
+Phase 1-1 で以下を削除済み:
 
 | パッケージ | 対応 |
 |---|---|
@@ -552,6 +386,8 @@ Phase 1-1 で以下を整理 (詳細は Phase 1-1 の作業内容を参照):
 | `fs` (0.0.1-security) | 削除 (Node.js ネイティブで代替) |
 | `kysely` | 削除 (未使用の代替クエリビルダ) |
 | `sqlite3`, `pg`, `pg-hstore` | 削除 (MariaDB を使用しており不要) |
+
+その後も未使用依存 (`passport*`, `mariadb`, 一部の `@types/*` 等) が残っている。現状の一覧は `docs/issues.md` を参照。
 
 ---
 
@@ -561,11 +397,12 @@ Phase 1-1 で以下を整理 (詳細は Phase 1-1 の作業内容を参照):
 |---|---|
 | 1-1 | pnpm でビルド・起動ができ、未使用依存が削除されている |
 | 1-2 | モノレポ構成で `packages/bot` のビルド・起動ができ、smoke test が通る |
-| 1-3 | shared パッケージにモデル・リポジトリが移動し、Bot が `@shared/*` 経由で動作する (smoke test で検証) |
+| 1-3 | shared パッケージにモデル・リポジトリが移動し、Bot が `@orangebot/shared` 経由で動作する (smoke test で検証) |
 | 1-4 | クリーン状態からワンコマンドでビルド・起動でき、マイグレーション運用の手順が整備されている |
 | 2-1 | Vitest が動作し、`synchronize: false` に切り替え済みで、純粋ロジック (dice, photo) のユニットテストが通る |
 | 2-2 | DB 依存サービス (user, gacha) が DTO ベースの I/F で動作し、ユニットテスト + リポジトリ層のインテグレーションテストが通る |
 | 2-3 | 全サービスの切り出しが完了し、Bot が adapters 経由で動作する (全テスト通過) |
+| 2 (付帯) | 排他制御が必要な書き込み操作がトランザクション化され、ドメインエラー型が shared に定義されている |
 | 3 | Fastify API の全エンドポイントが認証付きで動作し、テストが通る |
 | 4 | Vue + Vuetify フロントエンドから API 経由で主要機能が操作できる |
 | 5 | Docker Compose で全サービスが起動し、CI が通る |
