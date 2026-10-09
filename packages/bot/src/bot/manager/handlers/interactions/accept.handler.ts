@@ -2,11 +2,8 @@ import { CacheType, ChatInputCommandInteraction, ChannelType, MessageFlags } fro
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { checkUserType } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
-import { LogLevel } from "@orangebot/shared";
-import { RoleRepository } from "@orangebot/shared";
-import { UsersRepository } from "@orangebot/shared";
-import { Users, UsersType } from "@orangebot/shared";
-import { UserSetting } from "@orangebot/shared";
+import { UsersType } from '@orangebot/shared';
+import { acceptMember } from '../../../utils/memberAccept.js';
 
 export class AcceptHandler extends BaseInteractionHandler {
   constructor(logger?: Logger) {
@@ -38,65 +35,12 @@ export class AcceptHandler extends BaseInteractionHandler {
         return;
       }
 
-      const roleRepository = new RoleRepository();
-
-      const r = await roleRepository.getRoleByName(interaction.guild.id, 'member');
-      if (!r) {
-        console.error('role not found');
+      const result = await acceptMember(u, interaction.channel.id);
+      if (result === 'role-not-found') {
         return;
       }
-      const userRole = u?.roles.cache.find((role) => role.id === r.role_id);
 
-      await Logger.put({
-        guild_id: interaction.guild.id,
-        channel_id: interaction.channel.id,
-        user_id: user.id,
-        level: LogLevel.INFO,
-        event: 'role-check',
-        message: [u?.roles.cache.map((role) => role.name).join(',')],
-      });
-      if (!userRole) {
-        // add user role
-        await u?.roles.add(r.role_id);
-      }
-
-      // register user
-      const userRepository = new UsersRepository();
-      const userSetting = await userRepository.getUserSetting(user.id);
-      if (!userSetting) {
-        const saveUserSetting: Partial<UserSetting> = {
-          user_id: user.id,
-        };
-        await userRepository.saveUserSetting(saveUserSetting);
-      }
-
-      const userEntity = await userRepository.get(interaction.guild.id, user.id);
-      if (!userEntity) {
-        const saveUser: Partial<Users> = {
-          id: user.id,
-          guild_id: interaction.guild.id,
-          user_name: user.displayName,
-          pick_left: 10,
-          voice_channel_data: [
-            {
-              gid: interaction.guild.id,
-              date: new Date(),
-            },
-          ],
-        };
-        await userRepository.save(saveUser);
-      }
-
-      const name = u?.roles.cache.find((role) => role.name === 'member')?.name;
-      await Logger.put({
-        guild_id: interaction.guild.id,
-        channel_id: interaction.channel.id,
-        user_id: user.id,
-        level: LogLevel.INFO,
-        event: 'add-role',
-        message: name ? [name] : undefined,
-      });
-
+      const name = u.roles.cache.find((role) => role.name === 'member')?.name;
       const message = await interaction.reply({
         content: `add role: ${name}`,
         flags: MessageFlags.Ephemeral,
