@@ -31,7 +31,6 @@ export const CONFIG = {
     DATABASE: 'orangebot',
     PASSWORD: 'PASSWORD',
     PORT: 3306,
-    FLUSH: false,
   },
   LITELLM: {
     BASE_URL: 'https://localhost:4001/v1',

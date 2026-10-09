@@ -1,5 +1,6 @@
 import { CacheType, ChatInputCommandInteraction, ChannelType, MessageFlags } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
+import { checkUserType } from '../../../../common/common.js';
 import { Logger } from '../../../../common/logger.js';
 import { LogLevel } from "@orangebot/shared";
 import { RoleRepository } from "@orangebot/shared";
@@ -14,6 +15,10 @@ export class AcceptHandler extends BaseInteractionHandler {
 
   async execute(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
     if (!interaction.guild) {
+      return;
+    }
+    if (!(await checkUserType(interaction.guild.id, interaction.user.id, UsersType.OWNER))) {
+      await interaction.reply({ content: 'このコマンドを実行する権限がありません。', flags: MessageFlags.Ephemeral });
       return;
     }
     if (interaction.channel?.type === ChannelType.GuildText || interaction.channel?.type === ChannelType.GuildVoice) {

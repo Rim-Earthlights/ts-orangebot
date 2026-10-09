@@ -125,9 +125,6 @@ export async function interactionSelector(interaction: ChatInputCommandInteracti
     case CONFIG.COMMAND.SPEAKER_CONFIG.COMMAND_NAME:
     case CONFIG.COMMAND.SPEAKER_CONFIG.COMMAND_NAME_SHORT: {
       await interaction.deferReply();
-      if (!interaction.guild) {
-        return;
-      }
       const usersRepository = new UsersRepository();
       const userSetting = await usersRepository.getUserSetting(interaction.user.id);
 
