@@ -119,7 +119,7 @@ packages/bot/src/
 │   │   └── spotify.ts        # (空ファイル。未使用)
 │   │
 │   ├── function/             # スラッシュコマンド向けロジック (chat / dice / dict / gacha / room / speak / vchat※仮実装)
-│   ├── utils/                # 補助ユーティリティ (roomName.ts, gameSelect.ts: ルーム作成時の「ゲームの選択」メッセージ)
+│   ├── utils/                # 補助ユーティリティ (roomName.ts, gameSelect.ts: ルーム作成時の「ゲームの選択」メッセージ, memberAccept.ts: ルール同意リアクションと /accept 共通のロール付与・ユーザー登録)
 │   ├── reactions.ts          # リアクション処理
 │   └── mention.ts            # メンションロジック
 │
