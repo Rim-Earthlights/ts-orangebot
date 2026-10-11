@@ -85,6 +85,25 @@
         .tool-result-content {
             margin-top: 4px;
         }
+        .reasoning-box {
+            border: 1px dashed #ffb74d;
+            border-radius: 8px;
+            background-color: #fffaf3;
+            padding: 6px 12px;
+            margin-bottom: 8px;
+        }
+        .reasoning-box summary {
+            font-size: 0.85em;
+            color: #8d6e63;
+            cursor: pointer;
+        }
+        .reasoning-box pre {
+            margin: 6px 0 0;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 0.85em;
+            color: #5d4037;
+        }
         .image-content {
             max-width: 100%;
             height: auto;
@@ -183,6 +202,23 @@
                             } else { %><pre><%= formattedTool %></pre><% }
                         %></div>
                     <% } else { %>
+
+                    <%
+                        // LiteLLM の reasoning_content を優先し、なければ thinking_blocks の本文を連結する
+                        const reasoningText = message.reasoning_content
+                            || (Array.isArray(message.thinking_blocks)
+                                ? message.thinking_blocks.filter((b) => b && b.type === 'thinking').map((b) => b.thinking).join('\n\n')
+                                : '');
+                        const hasRedacted = Array.isArray(message.thinking_blocks)
+                            && message.thinking_blocks.some((b) => b && b.type === 'redacted_thinking');
+                    %>
+                    <% if (reasoningText || hasRedacted) { %>
+                        <details class="reasoning-box">
+                            <summary>💭 思考</summary>
+                            <% if (reasoningText) { %><pre><%= reasoningText %></pre><% } %>
+                            <% if (hasRedacted) { %><small class="text-muted d-block mt-1">一部の思考は非公開 (redacted) です</small><% } %>
+                        </details>
+                    <% } %>
 
                     <div class="message-content"><%
                         if (typeof message.content === 'string') { %><%- message.content.replace(/\n/g, '<br>') %><%
