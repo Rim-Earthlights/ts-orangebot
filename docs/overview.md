@@ -58,7 +58,7 @@ pnpm build              # 全パッケージをビルド (pnpm -r build, shared 
 pnpm clean              # 全パッケージの dist を削除
 pnpm dev                # Bot を nodemon で開発モード起動 (事前に shared のビルドが必要)
 pnpm dev:speak          # 読み上げ Bot を開発モード起動 (src/config/dev.json を使用。事前に shared のビルドが必要)
-pnpm lint               # Bot に対して ESLint
+pnpm lint               # 全パッケージに対して ESLint
 pnpm smoke-test         # Bot の起動疎通確認 (事前に shared のビルドが必要)
 pnpm test               # ユニットテスト (vitest)。現状テストがあるのは shared のみ (bot は passWithNoTests、speak は test スクリプトなし)
 pnpm test:integration   # インテグレーションテスト (要テスト用 DB)
