@@ -128,7 +128,7 @@ speak は 2 種類の設定ファイルを使います。どちらも gitignore 
 1. **共通設定** — `packages/speak/src/config/config.template.ts` をコピーして `config.ts` を作成し、`DB` (bot と共通) / `LITELLM` / `API` (音声合成エンジンの接続先) の設定を記入。テンプレート内の `TOKEN` / `APP_ID` / `NAME` / `PORT` / `COMMAND` は起動時にインスタンス別 JSON の値で上書きされるため、プレースホルダのままでよい
 2. **インスタンス別設定** — `src/config/example.json.template` をコピーして `src/config/<name>.json` を作成し、起動引数で渡す
 
-`pnpm dev:speak` は `src/config/dev.json` を読み込むので、開発時は `example.json.template` をコピーして `dev.json` を作成してください。本番は `./start.sh speak <name>` (`src/config/<name>.json`) で起動します。
+`pnpm dev:speak` は `src/config/dev.json` を読み込むので、開発時は `example.json.template` をコピーして `dev.json` を作成してください。本番は systemd の `orangebot-speak@<name>` ユニット (`src/config/<name>.json`) で起動します ([systemd/README.md](../systemd/README.md) 参照)。
 
 speak の `LITELLM` 項目:
 
