@@ -170,3 +170,19 @@ describe('runShutdownSteps', () => {
     expect(failed).toEqual(['discord']);
   });
 });
+
+describe('stopAcceptingHandlers', () => {
+  it('呼んだ後は withErrorLog で包んだハンドラを実行しない', async () => {
+    // モジュール内の状態を変えるため、他のテストに影響しないよう読み込み直したものを使う
+    vi.resetModules();
+    const fresh = await import('../../src/common/process.js');
+    const handler = vi.fn();
+    const wrapped = fresh.withErrorLog('event', handler);
+
+    fresh.stopAcceptingHandlers();
+    await wrapped();
+
+    expect(handler).not.toHaveBeenCalled();
+    await expect(fresh.waitForPendingHandlers(0)).resolves.toBe(true);
+  });
+});
