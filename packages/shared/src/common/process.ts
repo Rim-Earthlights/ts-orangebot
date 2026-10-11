@@ -172,8 +172,11 @@ export function registerGracefulShutdown(steps: ShutdownStep[], timeoutMs = 10_0
     const failed = await runShutdownSteps(steps);
     process.exit(failed.length === 0 ? 0 : 1);
   };
-  process.once('SIGTERM', shutdown);
-  process.once('SIGINT', shutdown);
+  // once ではなく on にする。systemd (KillMode=control-group) や端末の Ctrl+C はプロセスグループ全体に
+  // シグナルを送るため、pnpm 経由で起動すると pnpm からの転送分と合わせて同じシグナルが 2 回届く。
+  // once だと 2 回目で既定の動作 (即時終了) になり、終了処理が途中で打ち切られる
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 
 /**
