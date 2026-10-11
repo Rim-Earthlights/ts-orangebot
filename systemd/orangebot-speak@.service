@@ -1,0 +1,30 @@
+# 読み上げ bot (packages/speak) のインスタンス
+#
+# インスタンス名が設定ファイル名になる:
+#   orangebot-speak@lemon -> packages/speak/src/config/lemon.json
+#
+# 設置方法: リポジトリルートで ./systemd/install.sh
+# 起動:     systemctl --user start orangebot-speak@lemon
+#
+# 作業ディレクトリと PATH は install.sh が
+# drop-in (~/.config/systemd/user/orangebot-speak@.service.d/env.conf) に書き出す
+# (ExecStart の pnpm は systemd が PATH を見ないため /usr/bin/env 経由で探す)。
+# ビルドは行わないので、更新時は手動で git pull → pnpm install → pnpm build → restart する。
+[Unit]
+Description=OrangeBot speak (%i)
+After=network-online.target orangebot-voicevox.service orangebot-coeiroink.service
+# user manager では network-online.target を待てないが、つながらず落ちても Restart で再試行する
+Wants=network-online.target
+# DB 未起動などで落ちても再起動し続ける (起動失敗で諦めない)
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env pnpm start src/config/%i.json
+Restart=always
+RestartSec=5
+# アプリ側の終了処理は 10 秒でタイムアウトする
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

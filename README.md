@@ -25,12 +25,12 @@ pnpm workspace によるモノレポ構成です (`packages/bot` / `packages/sha
    - `config.ts` を編集 (詳細は [docs/configuration.md](docs/configuration.md))
 5. マイグレーションを適用: `pnpm --filter @orangebot/shared migration:run` (`packages/shared/.env` に DB 接続情報が必要。[docs/database.md](docs/database.md) 参照)
 6. `pnpm dev` で開発モード起動 (nodemon)
-7. 本番は `pnpm build` 後に `./start.sh bot` (落ちたら自動再起動)
+7. 本番は `pnpm build` 後に systemd の user unit で起動する (落ちたら自動再起動・マシン再起動後も自動起動)。セットアップと更新手順は [systemd/README.md](systemd/README.md) を参照
 
 読み上げ Bot (`packages/speak`) を使う場合:
 
 - `packages/speak/src/config/config.template.ts` を `config.ts` にコピーして編集し、インスタンス別 JSON (`example.json.template` 参照) を用意する
-- `./start.sh speak <name>` (例: `./start.sh speak lemon` → `src/config/lemon.json`)
+- 本番は `orangebot-speak@<name>` ユニットで起動する (例: `orangebot-speak@lemon` → `src/config/lemon.json`。[systemd/README.md](systemd/README.md) 参照)
 - 音声合成エンジン (VOICEVOX / COEIROINK) は podman Quadlet で動かす。セットアップは [containers/README.md](containers/README.md) を参照 (設置後は `pnpm tts:up` / `tts:down` / `tts:status` で操作)
 
 # config.ts について
