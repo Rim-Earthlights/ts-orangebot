@@ -22,7 +22,7 @@ export async function logError(event: string, error: unknown): Promise<void> {
  * @param event イベント名
  * @param error 発生した例外
  */
-async function logErrorAndExit(event: string, error: unknown): Promise<void> {
+export async function logErrorAndExit(event: string, error: unknown): Promise<void> {
   setTimeout(() => process.exit(1), 5_000).unref();
   await logError(event, error);
   process.exit(1);
@@ -30,6 +30,16 @@ async function logErrorAndExit(event: string, error: unknown): Promise<void> {
 
 // withErrorLog で包んだハンドラのうち、実行中のものの数 (終了処理で完了を待つために使う)
 let pendingHandlers = 0;
+// false になったら withErrorLog で包んだハンドラは新しく実行しない (終了処理中に新しい処理を始めないため)
+let acceptingHandlers = true;
+
+/**
+ * withErrorLog で包んだハンドラを以後実行しないようにする (終了処理の最初に呼ぶ)
+ * Discord クライアントなどを止める前に新しい処理の受け付けだけを止め、実行中のハンドラが最後まで動けるようにする
+ */
+export function stopAcceptingHandlers(): void {
+  acceptingHandlers = false;
+}
 
 /**
  * イベントハンドラを try/catch で包み、例外が発生してもプロセスを落とさずログに残す
@@ -41,6 +51,9 @@ export function withErrorLog<A extends unknown[]>(
   handler: (...args: A) => unknown
 ): (...args: A) => Promise<void> {
   return async (...args: A) => {
+    if (!acceptingHandlers) {
+      return;
+    }
     pendingHandlers++;
     try {
       await handler(...args);

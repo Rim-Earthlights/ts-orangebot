@@ -31,8 +31,10 @@ import {
   exitOnError,
   findMissingConfig,
   logError,
+  logErrorAndExit,
   registerGracefulShutdown,
   registerUnhandledRejectionHandler,
+  stopAcceptingHandlers,
   waitForPendingHandlers,
   withErrorLog,
 } from '@orangebot/shared';
@@ -137,6 +139,8 @@ await dataSource
 
 // launch server.
 const server = app.listen(port, hostName);
+// ポートが使用中などで待ち受けられなければ動作できないため終了する
+server.on('error', (e) => logErrorAndExit('http-server', e));
 
 /**
  * =======================
@@ -150,10 +154,7 @@ const dmCommands = DM_SLASH_COMMANDS.map((command) => command.toJSON());
 const rest = new REST({ version: '10' }).setToken(CONFIG.DISCORD.TOKEN);
 
 // ログインできなければ Bot として動作できないため終了する
-DISCORD_CLIENT.login(CONFIG.DISCORD.TOKEN).catch(async (e) => {
-  await logError('discord-login', e);
-  process.exit(1);
-});
+DISCORD_CLIENT.login(CONFIG.DISCORD.TOKEN).catch((e) => logErrorAndExit('discord-login', e));
 
 /**
  * bot初回読み込み
@@ -221,8 +222,7 @@ DISCORD_CLIENT.once(
                   event: 'reg-command|add',
                   message: ['successfully add command.'],
                 })
-            )
-            .catch((e) => logError('reg-command', e));
+            );
         })
       )
     );
@@ -539,12 +539,14 @@ DISCORD_CLIENT.on('error', (e) => logError('discord-client-error', e));
 /**
  * 終了処理 (SIGTERM / SIGINT)
  */
-// 新しい処理を受け付けるものから止め、実行中のハンドラが終わるのを待ってから DB 接続を閉じる
+// 新しい処理の受け付けを止め、実行中のハンドラが終わるのを待ってから Discord クライアント・DB 接続を閉じる
+// (Discord クライアントを先に閉じると REST のトークンが消え、実行中のハンドラの返信が失敗する)
 registerGracefulShutdown([
+  { name: 'handlers', run: () => stopAcceptingHandlers() },
   { name: 'jobs', run: () => stopJobs() },
   { name: 'http-server', run: () => closeHttpServer(server, 3_000) },
+  { name: 'pending-handlers', run: () => waitForPendingHandlers(3_000) },
   { name: 'voice-connections', run: () => getVoiceConnections().forEach((connection) => connection.destroy()) },
   { name: 'discord-client', run: () => DISCORD_CLIENT.destroy() },
-  { name: 'pending-handlers', run: () => waitForPendingHandlers(3_000) },
   { name: 'data-source', run: () => dataSource.destroy() },
 ]);
