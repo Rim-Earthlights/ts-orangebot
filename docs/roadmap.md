@@ -10,9 +10,9 @@
 | Phase 2 サービス層 | サービス切り出しは完了。排他制御・エラー型共通化・bot のテストが残り |
 | Phase 3〜5 (API / front / Docker・CI) | 未着手 |
 | ビルド (`pnpm build`) | 通る。ただし `config.ts` は gitignore 対象のため、新規 clone では `config.template.ts` をコピーしないと失敗する |
-| lint (`pnpm lint`) | 通る。ただし対象は bot のみ (shared / speak は対象外) |
-| テスト | shared のユニット 105 件は通る。インテグレーション 16 件はテスト用 DB (`pnpm test:db:up`) が必要。bot / speak は 0 件 |
-| CI | 無し (`.github/` が存在しない) |
+| lint (`pnpm lint`) | 通る。対象は全パッケージ (Step 0 で拡大) |
+| テスト | shared のユニット 111 件・インテグレーション 16 件 (テスト用 DB が必要) が通る。bot / speak は 0 件 |
+| CI | GitHub Actions で build / lint / unit / integration を実行 (Step 0 で追加) |
 
 ## 2. 基本方針
 
@@ -23,14 +23,14 @@
 
 ## 3. 作業順序
 
-### Step 0: 作業基盤 — 以降の変更を安全にする
+### Step 0: 作業基盤 — 以降の変更を安全にする ✅ 完了
 
 | 作業 | 内容 |
 |---|---|
 | CI の追加 | GitHub Actions で install → テンプレートから `config.ts` を生成 → build → lint → unit test |
 | lint 対象の拡大 | shared / speak も `pnpm lint` の対象にする (違反が多ければ別 PR で修正) |
 
-### Step 1: 安定性の底上げ — 小さく効果が大きい (bot の `app.ts` 中心)
+### Step 1: 安定性の底上げ — 小さく効果が大きい (bot の `app.ts` 中心) ✅ 完了
 
 | 課題 | 内容 |
 |---|---|
@@ -39,7 +39,7 @@
 | #11 終了処理 | `SIGTERM` / `SIGINT` で `dataSource.destroy()` と `client.destroy()` を実行する |
 | #17 設定検証 | 起動時に必須の設定値 (Discord Token、DB 接続情報など) を確認し、不足していれば分かりやすいエラーで終了する |
 
-speak の `app.ts` にも同じ問題があれば、同じ方針で対応する。
+speak の `app.ts` にも同じ対応を入れた。共通処理は `@orangebot/shared` の `common/process.ts` にまとめている。
 
 ### Step 2: 掃除 — 不要物を減らして後続作業を楽にする
 

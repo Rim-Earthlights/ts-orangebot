@@ -4,6 +4,7 @@ export * from './types/index.js';
 export * from './config/index.js';
 export * from './repository/index.js';
 export * from './common/random.js';
+export * from './common/process.js';
 export * from './constants/dice.js';
 export * from './constants/gacha.js';
 export * from './services/index.js';

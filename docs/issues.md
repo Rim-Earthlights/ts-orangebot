@@ -16,13 +16,14 @@
 - **場所**: `packages/shared/src/config/datasource.ts` (`createDataSource`)
 - **状況**: デフォルトが `synchronize: config.synchronize ?? false` に切り替え済みで、スキーマはマイグレーションで管理される。環境別の設定切り替えが無い点は #20 として残る
 
-### 3. 非同期処理の未 await (Promise の握りつぶし) — 部分的に解決
+### 3. 非同期処理の未 await (Promise の握りつぶし) (解決済み)
 
-- **場所**: `packages/bot/src/app.ts` の ready イベント内
-- **問題**: ユーザーの softDelete / DM チャンネル作成ループは `Promise.all()` で待機するよう修正済み。一方、サーバー登録ループ (`// サーバー登録` の `DISCORD_CLIENT.guilds.cache.map(async ...)`) とコマンド登録ループ (`// コマンド登録` の `guilds.map(async ...)`) は依然として await されていない
-- **対策**: 残りのループも `Promise.all()` で非同期処理を正しく待機する
+- **場所**: `packages/bot/src/app.ts` / `packages/speak/src/app.ts` の ready イベント内
+- **状況**: サーバー登録・コマンド登録・DM 用コマンド登録・読み上げ Bot 登録のループをすべて `Promise.all()` で待機するよう修正済み。ギルドごとの処理は `withErrorLog` で包み、1 ギルドの失敗が他のギルドや後続処理を止めないようにしている
 
 ### 4. テストが存在しない (shared は解決済み — Phase 2 / bot は未着手)
+
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) で build / lint / ユニットテスト / インテグレーションテストを実行する
 
 - **場所**: プロジェクト全体
 - **状況**: Vitest 導入済み。ルートに `pnpm test` / `pnpm test:integration`、`packages/shared/test/` にサービス・リポジトリのユニットテストとインテグレーションテスト (`migration.test.ts` / `repository.test.ts` 等) が存在する
@@ -46,11 +47,10 @@
   - `dot_function/speak.ts` と `function/speak.ts` の両方に、読み上げ Bot のユーザー ID (`LEMON_SPEAKER_ID` / `LIME_SPEAKER_ID`) と呼出先 URI (`http://127.0.0.1:4100` 等) が重複してハードコードされている
 - **対策**: 設定ファイルまたは DB のギルド設定に移動。speak 呼び出しの定数は 1 箇所に集約する
 
-### 7. イベントハンドラに try/catch がない
+### 7. イベントハンドラに try/catch がない (解決済み)
 
-- **場所**: `packages/bot/src/app.ts` (`messageCreate` / `interactionCreate` / `voiceStateUpdate` 等)
-- **問題**: ハンドラ内で例外が発生するとイベント処理全体が停止し、Bot が無応答になる可能性。また DB 初期化失敗時もログ出力のみで起動を継続する
-- **対策**: 各イベントハンドラのトップレベルに try/catch を追加し、DB 初期化失敗時は終了する
+- **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts`
+- **状況**: すべてのイベントハンドラを `withErrorLog` (`@orangebot/shared`) で包み、例外は ERROR ログに残してプロセスを継続する。Discord クライアントの `error` イベントと、catch されなかった Promise の reject もログに残す。DB 初期化や Discord へのログインに失敗した場合はプロセスを終了する
 
 ### 8. エンドポイントの入力値バリデーションがない
 
@@ -70,11 +70,10 @@
 - **問題**: MariaDB のプール設定がデフォルトのまま。並行リクエスト増加時にコネクション枯渇の恐れ
 - **対策**: `poolSize`, `maxConnections`, `minConnections` を明示的に設定
 
-### 11. グレースフルシャットダウンが未実装
+### 11. グレースフルシャットダウンが未実装 (解決済み)
 
-- **場所**: `packages/bot/src/app.ts`
-- **問題**: プロセス終了時に DB 接続や Discord クライアントの後処理がない
-- **対策**: `SIGTERM` / `SIGINT` ハンドラで `dataSource.destroy()` と `client.destroy()` を実行
+- **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts`
+- **状況**: `SIGTERM` / `SIGINT` を受けると、HTTP サーバー → ボイス接続 → Discord クライアント → DB 接続の順に後処理してから終了する (`registerGracefulShutdown`)。10 秒以内に終わらなければ強制終了する
 
 ### 12. ログ出力が不統一
 
@@ -121,11 +120,10 @@
   - `prettier` / `nodemon` / `ts-node` / `typescript` / `@types/*` が `dependencies` に置かれている
 - **対策**: 未使用依存を削除し、shared に `mysql2` を追加、開発用ツールは `devDependencies` に移す。その上で `shamefully-hoist` の解除を検討する
 
-### 17. 設定値のバリデーションがない
+### 17. 設定値のバリデーションがない (解決済み)
 
-- **場所**: `packages/bot/src/app.ts` 起動時
-- **問題**: 必須の設定値 (Discord Token, DB接続情報等) が未設定でも起動を試みて不明瞭なエラーになる
-- **対策**: 起動時に設定値をチェックし、不足があれば明確なエラーメッセージで終了
+- **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts` 起動時
+- **状況**: Discord Token / App ID / DB 接続情報 (speak は PORT も) が空の場合、不足しているキー名を表示して終了する (`findMissingConfig`)。値の形式 (テンプレートのままのプレースホルダー等) までは検査していない
 
 ### 18. ソフトデリートのカスケードがない
 
@@ -161,6 +159,6 @@
 
 | 優先度 | 件数 | 主な領域 |
 |---|---|---|
-| Critical | 5 (うち #2 #5 は解決済み、#3 #4 は部分解決) | 認証・権限、DB安全性、非同期処理、テスト |
-| High | 8 (うち #13 は解決済み) | セキュリティ、エラーハンドリング、運用、動作しないコマンド |
-| Medium | 8 | アーキテクチャ、コード品質、依存関係、デッドコード |
+| Critical | 5 (うち #2 #3 #5 は解決済み、#4 は部分解決) | 認証・権限、DB安全性、非同期処理、テスト |
+| High | 8 (うち #7 #11 #13 は解決済み) | セキュリティ、エラーハンドリング、運用、動作しないコマンド |
+| Medium | 8 (うち #17 は解決済み) | アーキテクチャ、コード品質、依存関係、デッドコード |
