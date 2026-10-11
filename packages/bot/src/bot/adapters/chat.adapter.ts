@@ -12,7 +12,15 @@ import { CONFIG, LiteLLMModel } from '../../config/config.js';
 import { getIdInfoMessage } from '../../constant/chat/chat.js';
 import { CHATBOT_TEMPLATE, DISCORD_CLIENT } from '../../constant/constants.js';
 import { ModelResponse } from '../../type/openai.js';
-import { ChatRole, ChatService, LiteLLMMode, LogLevel, startTyping } from '@orangebot/shared';
+import {
+  ChatRole,
+  ChatService,
+  extractReasoning,
+  LiteLLMMode,
+  LogLevel,
+  startTyping,
+  stripReasoning,
+} from '@orangebot/shared';
 import { findTool, toolRegistry, ToolContext } from '../dot_function/chat_tools/index.js';
 import { processAttachments } from '../dot_function/chat_attachments.js';
 
@@ -156,7 +164,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
 
     let response = await openai.chat.completions.create({
       model: llm.model,
-      messages: llm.chat,
+      messages: stripReasoning(llm.chat),
       tools: tools.length > 0 ? tools : undefined,
     });
 
@@ -170,6 +178,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
         role: ChatRole.ASSISTANT,
         content: assistantMsg.content ?? '',
         tool_calls: toolCalls,
+        ...extractReasoning(assistantMsg),
       });
 
       if (assistantMsg.content && assistantMsg.content.trim().length > 0) {
@@ -200,7 +209,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
 
       response = await openai.chat.completions.create({
         model: llm.model,
-        messages: llm.chat,
+        messages: stripReasoning(llm.chat),
         tools: tools.length > 0 ? tools : undefined,
       });
     }
@@ -215,7 +224,7 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
       return;
     }
 
-    llm.chat.push({ role: ChatRole.ASSISTANT, content: completion.content });
+    llm.chat.push({ role: ChatRole.ASSISTANT, content: completion.content, ...extractReasoning(completion) });
     chatService.touchSession(id);
 
     await replyChunked(message, completion.content);
