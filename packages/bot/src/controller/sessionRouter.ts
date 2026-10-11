@@ -2,14 +2,16 @@ import axios from 'axios';
 import Express from 'express';
 import { CONFIG } from '../config/config.js';
 import { CHATBOT_TEMPLATE } from '../constant/constants.js';
+import { localOnly } from './middleware/localOnly.js';
 
 export const sessionRouter = Express.Router();
 
 /**
  * /session POST
  * OpenAI用のtokenを取得する
+ * サーバーの API キーでセッションを発行する (費用が発生する) ため、同じマシン上からのリクエストに限定する
  */
-sessionRouter.get('/session', async (req: Express.Request, res: Express.Response) => {
+sessionRouter.get('/session', localOnly, async (req: Express.Request, res: Express.Response) => {
   const token = await getOpenAIToken();
   res.status(200).send({ token });
 });

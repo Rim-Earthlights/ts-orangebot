@@ -10,6 +10,8 @@
   - `/chat/history` でチャット履歴の取得・削除が認証なしで可能
   - `/gacha`, `/music` 等も同様
 - **対策**: JWT やAPIキー検証等の認証ミドルウェアを全エンドポイントに追加
+- **方針**: 現行のエンドポイントはユーザーが結果や履歴を見るために外部から使われているため、現行の Express には認証を足さない。認証 (Discord OAuth2 等) はフロントエンドと API を分離する Phase 3 / 4 で作る
+- **暫定措置**: 閲覧以外の操作をする `POST /message` と `GET /session` (サーバーの API キーで OpenAI のセッションを発行する) は、同じマシン上からのリクエストだけを受け付ける (`controller/middleware/localOnly.ts`。リバースプロキシ経由は外部扱い)。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンから使われているため対象外
 
 ### 2. `synchronize: true` が本番環境でも有効 (解決済み — Phase 2-1)
 
@@ -27,7 +29,7 @@
 
 - **場所**: プロジェクト全体
 - **状況**: Vitest 導入済み。ルートに `pnpm test` / `pnpm test:integration`、`packages/shared/test/` にサービス・リポジトリのユニットテストとインテグレーションテスト (`migration.test.ts` / `repository.test.ts` 等) が存在する
-- **残課題**: `packages/bot` のテストは 0 件 (`vitest.config.ts` の `passWithNoTests: true` で通過しているだけ)。`packages/speak` には `test` スクリプト自体が無い。ハンドラ・アダプタ層のテスト作成から着手が必要
+- **残課題**: `packages/bot` のテストは `localOnly` ミドルウェアの 3 件のみ。`packages/speak` には `test` スクリプト自体が無い。ハンドラ・アダプタ層のテスト作成から着手が必要
 
 ### 5. `/accept` に権限チェックがない (解決済み)
 
@@ -143,15 +145,15 @@
 - **問題**: `NODE_ENV` による設定の切り替え機構がなく、開発/本番で同じ設定が適用される (ローカルの `config.ts` で `NODE_ENV` をハードコードしている)
 - **対策**: 環境変数ベースの設定切り替えを実装
 
-### 21. 未使用の設定キー・デッドコード
+### 21. 未使用の設定キー・デッドコード (解決済み)
 
-- **場所**: `packages/bot/src/config/config.template.ts`, `packages/speak/src/config/config.template.ts`, `packages/bot/src/controller/spotifyRouter.ts`, `packages/bot/src/bot/request/`, `packages/bot/src/bot/manager/interaction.manager.ts`
-- **問題**:
-  - 設定キー `COMMON.DEV` / `COMMON.USER` / `DISCORD.COMMAND_GUILD_ID` / `GACHA.PICKRATE` / `NICONICO.*` はどこからも読まれておらず、設定しても効果がない (未使用だった `FLUSH` はテンプレートから削除済み)
-  - `spotifyRouter.ts` は `routers.ts` に登録されておらず到達不能
-  - `bot/request/openai.ts` / `bot/request/spotify.ts` は空ファイル
-  - `interaction.manager.ts` の `dall` / `custom` ハンドラは対応するスラッシュコマンド定義が無く呼び出されない。`commands/chat.handler.ts` の `g3` / `g4` ケースも `message.manager.ts` に登録されていない
-- **対策**: 使う予定が無ければ削除する
+- **場所**: `packages/bot/src/config/config.template.ts`, `packages/bot/src/controller/`, `packages/bot/src/bot/request/`, `packages/bot/src/bot/manager/`
+- **状況**: 以下を削除済み
+  - どこからも読まれていない設定キー `COMMON.DEV` / `COMMON.USER` / `DISCORD.COMMAND_GUILD_ID` / `GACHA.PICKRATE` / `NICONICO.*` (ローカルの `config.ts` に残っていても動作に影響は無い)
+  - `routers.ts` に登録されていなかった `spotifyRouter.ts` と、その型定義 `controller/types/spotify.ts`
+  - 空ファイル `bot/request/openai.ts` / `bot/request/spotify.ts`
+  - スラッシュコマンド定義の無い `interaction.manager.ts` の `dall` / `custom` ハンドラ (ドットコマンドの `.dall` は残している) と、`/help` の `/dall` の記載
+  - `message.manager.ts` に登録されていない `commands/chat.handler.ts` の `g3` / `g4` ケース
 
 ---
 
@@ -161,4 +163,4 @@
 |---|---|---|
 | Critical | 5 (うち #2 #3 #5 は解決済み、#4 は部分解決) | 認証・権限、DB安全性、非同期処理、テスト |
 | High | 8 (うち #7 #11 #13 は解決済み) | セキュリティ、エラーハンドリング、運用、動作しないコマンド |
-| Medium | 8 (うち #17 は解決済み) | アーキテクチャ、コード品質、依存関係、デッドコード |
+| Medium | 8 (うち #17 #21 は解決済み) | アーキテクチャ、コード品質、依存関係、デッドコード |

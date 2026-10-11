@@ -269,10 +269,6 @@ export const HELP_COMMANDS_INTERACTIONS = [
         value: 'ダイスを振ります',
       },
       {
-        name: '/dall',
-        value: 'ボイスチャンネルにいる全員で1d100を振ります',
-      },
-      {
         name: '/chat [メッセージ]',
         value: 'みかんちゃんとおしゃべりします',
       },

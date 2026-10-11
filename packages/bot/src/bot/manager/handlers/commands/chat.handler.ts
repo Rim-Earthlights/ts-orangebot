@@ -34,14 +34,6 @@ export class ChatHandler extends BaseMessageHandler {
         await DotBotFunctions.Chat.talk(message, chat, LiteLLMMode.DEFAULT);
         break;
       }
-      case 'g3': {
-        await DotBotFunctions.Chat.talk(message, chat, LiteLLMMode.DEFAULT);
-        break;
-      }
-      case 'g4': {
-        await DotBotFunctions.Chat.talk(message, chat, LiteLLMMode.DEFAULT);
-        break;
-      }
     }
   }
 }

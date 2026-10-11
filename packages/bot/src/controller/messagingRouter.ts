@@ -3,18 +3,20 @@ import { TextChannel } from 'discord.js';
 import { DISCORD_CLIENT } from '../constant/constants.js';
 import { Logger } from '../common/logger.js';
 import { LogLevel } from "@orangebot/shared";
+import { localOnly } from './middleware/localOnly.js';
 
 export const messagingRouter = Express.Router();
 
 /**
  * /message POST
  * botへ直接メッセージを送信させる
+ * 任意のチャンネル/ユーザーに送信できるため、同じマシン上からのリクエストに限定する
  *
  * @param req.body.channel 指定チャンネルID
  * @param req.body.user User ID
  * @param req.body.message 送信メッセージ
  */
-messagingRouter.post('/message', async (req: Express.Request, res: Express.Response) => {
+messagingRouter.post('/message', localOnly, async (req: Express.Request, res: Express.Response) => {
   if (!req.body.channel && !req.body.user) {
     res.status(500).send({ result: false, message: 'user or channel is required.' });
     return;

@@ -62,9 +62,7 @@ export class InteractionManager {
     this.handlers.set('dict', new DictHandler(this.logger));
 
     // Dice commands
-    const diceHandler = new DiceHandler(this.logger);
-    this.handlers.set('dice', diceHandler);
-    this.handlers.set('dall', diceHandler);
+    this.handlers.set('dice', new DiceHandler(this.logger));
 
     // Gacha commands
     const gachaHandler = new GachaHandler(this.logger);
@@ -76,7 +74,6 @@ export class InteractionManager {
     const roomHandler = new RoomHandler(this.logger);
     this.handlers.set('room', roomHandler);
     this.handlers.set('rn', roomHandler);
-    this.handlers.set('custom', roomHandler);
 
     // ITO game commands
     const itoHandler = new ItoHandler(this.logger);
