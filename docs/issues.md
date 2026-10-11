@@ -11,7 +11,8 @@
   - `/gacha`, `/music` 等も同様
 - **対策**: JWT やAPIキー検証等の認証ミドルウェアを全エンドポイントに追加
 - **方針**: 現行のエンドポイントはユーザーが結果や履歴を見るために外部から使われているため、現行の Express には認証を足さない。認証 (Discord OAuth2 等) はフロントエンドと API を分離する Phase 3 / 4 で作る
-- **暫定措置**: 閲覧以外の操作をする `POST /message` と `GET /session` (サーバーの API キーで OpenAI のセッションを発行する) は、同じマシン上からのリクエストだけを受け付ける (`controller/middleware/localOnly.ts`。リバースプロキシ経由は外部扱い)。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンから使われているため対象外
+- **暫定措置**: 閲覧以外の操作をする `POST /message` と `GET /session` (サーバーの API キーで OpenAI のセッションを発行する) は、同じマシン上からのリクエストだけを受け付ける (`controller/middleware/localOnly.ts`。リバースプロキシ経由は外部扱い)。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンから使われているため対象外。speak の `POST /speaker/call` / `POST /speaker/discon` (bot からだけ呼ばれる) も同様に制限する
+- **既知の制約**: 判定は「接続元がループバックで、`X-Forwarded-For` / `X-Real-IP` / `Forwarded` ヘッダが無い」ことによる。同じマシン上のリバースプロキシやトンネルがこれらのヘッダを付けずに転送すると外部からのリクエストも通ってしまうため、プロキシ側で必ずヘッダを付けること。根本対策は Phase 3 / 4 の認証
 
 ### 2. `synchronize: true` が本番環境でも有効 (解決済み — Phase 2-1)
 
@@ -21,7 +22,7 @@
 ### 3. 非同期処理の未 await (Promise の握りつぶし) (解決済み)
 
 - **場所**: `packages/bot/src/app.ts` / `packages/speak/src/app.ts` の ready イベント内
-- **状況**: サーバー登録・コマンド登録・DM 用コマンド登録・読み上げ Bot 登録のループをすべて `Promise.all()` で待機するよう修正済み。ギルドごとの処理は `withErrorLog` で包み、1 ギルドの失敗が他のギルドや後続処理を止めないようにしている
+- **状況**: サーバー登録・コマンド登録・DM 用コマンド登録・読み上げ Bot 登録のループをすべて `Promise.all()` で待機するよう修正済み。ギルドごとの処理は `withErrorLog` で包み、1 ギルドの失敗が他のギルドや後続処理を止めないようにしている。ready 全体は `exitOnError` で包み、ギルド単位以外の処理 (cron 登録・COEIROINK の話者取得など) が失敗したら、中途半端な状態で動き続けないよう終了する。コマンド登録の失敗も ERROR ログに残す
 
 ### 4. テストが存在しない (shared は解決済み — Phase 2 / bot は未着手)
 
@@ -29,7 +30,7 @@
 
 - **場所**: プロジェクト全体
 - **状況**: Vitest 導入済み。ルートに `pnpm test` / `pnpm test:integration`、`packages/shared/test/` にサービス・リポジトリのユニットテストとインテグレーションテスト (`migration.test.ts` / `repository.test.ts` 等) が存在する
-- **残課題**: `packages/bot` のテストは `localOnly` ミドルウェアの 3 件のみ。`packages/speak` には `test` スクリプト自体が無い。ハンドラ・アダプタ層のテスト作成から着手が必要
+- **残課題**: `packages/bot` のテストは 0 件 (`localOnly` の判定処理は shared に移し、テストも shared 側に移した)。`packages/speak` には `test` スクリプト自体が無い。ハンドラ・アダプタ層のテスト作成から着手が必要
 
 ### 5. `/accept` に権限チェックがない (解決済み)
 
@@ -52,7 +53,7 @@
 ### 7. イベントハンドラに try/catch がない (解決済み)
 
 - **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts`
-- **状況**: すべてのイベントハンドラを `withErrorLog` (`@orangebot/shared`) で包み、例外は ERROR ログに残してプロセスを継続する。Discord クライアントの `error` イベントと、catch されなかった Promise の reject もログに残す。DB 初期化や Discord へのログインに失敗した場合はプロセスを終了する
+- **状況**: すべてのイベントハンドラと cron・読み上げのタイマー処理を `withErrorLog` (`@orangebot/shared`) で包み、例外は ERROR ログに残してプロセスを継続する。Discord クライアントの `error` イベントもログに残す。catch されなかった Promise の reject はログに残してから終了する (Node.js の既定と同じ)。DB 初期化・Discord へのログイン・ready の起動処理に失敗した場合もプロセスを終了するため、systemd 等のプロセス管理による自動再起動を前提とする。`logError` は DB へのログ保存に失敗しても原因が残るよう、先に標準エラーへスタックを出す
 
 ### 8. エンドポイントの入力値バリデーションがない
 
@@ -75,7 +76,7 @@
 ### 11. グレースフルシャットダウンが未実装 (解決済み)
 
 - **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts`
-- **状況**: `SIGTERM` / `SIGINT` を受けると、HTTP サーバー → ボイス接続 → Discord クライアント → DB 接続の順に後処理してから終了する (`registerGracefulShutdown`)。10 秒以内に終わらなければ強制終了する
+- **状況**: `SIGTERM` / `SIGINT` を受けると、cron (と speak の読み上げタイマー) → HTTP サーバー (処理中のリクエストは 3 秒まで待つ) → ボイス接続 → Discord クライアント → 実行中のハンドラの完了待ち (3 秒まで) → DB 接続の順に後処理してから終了する (`registerGracefulShutdown`)。10 秒以内に終わらなければ強制終了する
 
 ### 12. ログ出力が不統一
 
@@ -125,7 +126,7 @@
 ### 17. 設定値のバリデーションがない (解決済み)
 
 - **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts` 起動時
-- **状況**: Discord Token / App ID / DB 接続情報 (speak は PORT も) が空の場合、不足しているキー名を表示して終了する (`findMissingConfig`)。値の形式 (テンプレートのままのプレースホルダー等) までは検査していない
+- **状況**: Discord Token / App ID / DB 接続情報 (speak は PORT も) が空、またはテンプレートの仮の値 (`*****` / `YOUR_...`) のままの場合、該当するキー名を表示して終了する (`findMissingConfig`)。それ以外の値の形式までは検査していない
 
 ### 18. ソフトデリートのカスケードがない
 

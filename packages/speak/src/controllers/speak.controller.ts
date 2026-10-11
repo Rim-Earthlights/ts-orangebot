@@ -3,6 +3,7 @@ import express from 'express';
 import { disconnect } from '../bot/dot_function/speak.js';
 import { getAudioPlayer, initAudioPlayer } from '../bot/service/speakService.js';
 import { DISCORD_CLIENT } from '../constant/constants.js';
+import { localOnly } from './middleware/localOnly.js';
 
 export const speakerController = express.Router();
 
@@ -36,7 +37,7 @@ speakerController.get('/speaker/status/:guildId', async (req, res) => {
  * @param req
  * @param res
  */
-speakerController.post('/speaker/call', async (req, res) => {
+speakerController.post('/speaker/call', localOnly, async (req, res) => {
   const { guildId, channelId } = req.body;
   if (!guildId || !channelId) {
     res.status(400).send('Guild ID and Channel ID are required');
@@ -85,7 +86,7 @@ speakerController.post('/speaker/call', async (req, res) => {
  * @param req
  * @param res
  */
-speakerController.post('/speaker/discon', async (req, res) => {
+speakerController.post('/speaker/discon', localOnly, async (req, res) => {
   const { guildId, channelId } = req.body;
   if (!guildId || !channelId) {
     res.status(400).send('Guild ID and Channel ID are required');

@@ -18,7 +18,7 @@ import { LiteLLMMode } from './constant/chat/chat.js';
 import { COORDINATION_ID, DISCORD_CLIENT } from './constant/constants.js';
 import { GACHA_LIST } from './constant/gacha/gachaList.js';
 import { DM_SLASH_COMMANDS, SERVER_SLASH_COMMANDS } from './constant/slashCommands.js';
-import { initJob } from './job/job.js';
+import { initJob, stopJobs } from './job/job.js';
 import {
   GuildRepository,
   ItemRepository,
@@ -26,11 +26,14 @@ import {
   Models,
   RoomRepository,
   UsersRepository,
+  closeHttpServer,
   createDataSource,
+  exitOnError,
   findMissingConfig,
   logError,
   registerGracefulShutdown,
-  registerUnhandledRejectionLogger,
+  registerUnhandledRejectionHandler,
+  waitForPendingHandlers,
   withErrorLog,
 } from '@orangebot/shared';
 import { routers } from './routers.js';
@@ -50,11 +53,13 @@ const missingConfig = findMissingConfig({
   'DB.DATABASE': CONFIG.DB.DATABASE,
 });
 if (missingConfig.length > 0) {
-  console.error(`必須の設定値が未設定です: ${missingConfig.join(', ')} (src/config/config.ts を確認してください)`);
+  console.error(
+    `必須の設定値が未設定またはテンプレートのままです: ${missingConfig.join(', ')} (src/config/config.ts を確認してください)`
+  );
   process.exit(1);
 }
 
-registerUnhandledRejectionLogger();
+registerUnhandledRejectionHandler();
 
 /**
  * =======================
@@ -155,7 +160,8 @@ DISCORD_CLIENT.login(CONFIG.DISCORD.TOKEN).catch(async (e) => {
  */
 DISCORD_CLIENT.once(
   'ready',
-  withErrorLog('ready', async () => {
+  // 起動処理が失敗したら中途半端な状態で動き続けないよう終了する (ギルドごとの処理の失敗はログに残して続行する)
+  exitOnError('ready', async () => {
     // APIキーによって有効無効を切り替える
     switchFunctionByAPIKey();
 
@@ -216,7 +222,7 @@ DISCORD_CLIENT.once(
                   message: ['successfully add command.'],
                 })
             )
-            .catch(console.error);
+            .catch((e) => logError('reg-command', e));
         })
       )
     );
@@ -234,7 +240,7 @@ DISCORD_CLIENT.once(
           message: ['successfully add command to DM.'],
         });
       })
-      .catch(console.error);
+      .catch((e) => logError('reg-command', e));
 
     // ギルドに在籍していないユーザーを softDelete し、在籍ユーザーへ DM チャンネルを作成
     const userRepository = new UsersRepository();
@@ -533,9 +539,12 @@ DISCORD_CLIENT.on('error', (e) => logError('discord-client-error', e));
 /**
  * 終了処理 (SIGTERM / SIGINT)
  */
+// 新しい処理を受け付けるものから止め、実行中のハンドラが終わるのを待ってから DB 接続を閉じる
 registerGracefulShutdown([
-  { name: 'http-server', run: () => new Promise<void>((resolve) => server.close(() => resolve())) },
+  { name: 'jobs', run: () => stopJobs() },
+  { name: 'http-server', run: () => closeHttpServer(server, 3_000) },
   { name: 'voice-connections', run: () => getVoiceConnections().forEach((connection) => connection.destroy()) },
   { name: 'discord-client', run: () => DISCORD_CLIENT.destroy() },
+  { name: 'pending-handlers', run: () => waitForPendingHandlers(3_000) },
   { name: 'data-source', run: () => dataSource.destroy() },
 ]);
