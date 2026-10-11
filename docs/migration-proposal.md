@@ -139,7 +139,7 @@ ts-orangebot/
 
 **計画との差分・残項目**:
 
-- ルートの `dev` / `lint` は提案の `pnpm -r dev` / `pnpm -r lint` ではなく、`--filter @orangebot/bot` で bot のみを対象にしている (speak は `pnpm dev:speak`)。`build` / `clean` / `test` は `pnpm -r`
+- ルートの `dev` は提案の `pnpm -r dev` ではなく、`--filter @orangebot/bot` で bot のみを対象にしている (speak は `pnpm dev:speak`)。`lint` はルートの `eslint.config.mjs` で全パッケージを対象にする。`build` / `clean` / `test` は `pnpm -r`
 - `shamefully-hoist=true` は解除されておらず、strict モードへの移行は未着手。shared が `mysql2` を宣言せずに動いている等の phantom dependency が残っている (`docs/issues.md` 参照)
 
 ---

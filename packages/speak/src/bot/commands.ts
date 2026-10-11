@@ -15,7 +15,7 @@ export async function commandSelector(message: Message) {
   if (!message.guild) {
     return;
   }
-  const content = message.content.replace('.', '').replace(/　/g, ' ').trimEnd().split(' ');
+  const content = message.content.replace('.', '').replace(/\u3000/g, ' ').trimEnd().split(' ');
   const command = content[0];
   content.shift();
   switch (command) {

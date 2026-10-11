@@ -19,7 +19,7 @@ export async function talk(message: Message, content: string, model: LiteLLMMode
     ChatService.llmList.llm.push(llm);
   }
   const openai = llm.openai;
-  let weather = undefined;
+  const weather = undefined;
 
   const user = message.mentions.users.map((u) => {
     return {

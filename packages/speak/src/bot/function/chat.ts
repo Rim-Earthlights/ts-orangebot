@@ -70,7 +70,7 @@ export async function showModelList(interaction: ChatInputCommandInteraction<Cac
 }
 
 export async function setModel(interaction: ChatInputCommandInteraction<CacheType>, model: string) {
-  const { id, isGuild } = getIdInfo(interaction);
+  const { isGuild } = getIdInfo(interaction);
 
   let gpt = llmList.llm.find((c) => c.id === interaction.user.id);
   if (!gpt) {

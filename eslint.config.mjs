@@ -5,7 +5,7 @@ import prettier from 'eslint-config-prettier/flat';
 // no-undef は TypeScript の型チェックに任せる (flat/recommended で .ts に対して無効化される) ため globals は指定しない
 export default [
   {
-    ignores: ['dist/**', 'public/**', 'views/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', 'packages/bot/public/**', 'packages/bot/views/**'],
   },
   js.configs.recommended,
   ...tsPlugin.configs['flat/recommended'],

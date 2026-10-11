@@ -6,11 +6,6 @@ import { DISCORD_CLIENT } from '../constant/constants.js';
 
 export const speakerController = express.Router();
 
-interface SpeakerInitRequest {
-  guildId: string;
-  channelId: string;
-}
-
 /**
  * 読み上げbotの使用状況を取得する
  * @param req

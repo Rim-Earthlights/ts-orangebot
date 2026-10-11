@@ -1,4 +1,4 @@
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
 import * as Models from '../models/index.js';
 import { getDataSource } from '../config/datasource.js';
 import { stripSystemMessages } from '../utils/chatHistory.js';
@@ -64,7 +64,7 @@ export class ChatHistoryRepository {
    * @returns Promise<ChatHistory[]>
    */
   public async getAll(limit: number = 50, offset: number = 0, channelId?: string): Promise<Models.ChatHistory[]> {
-    const whereCondition: any = {};
+    const whereCondition: FindOptionsWhere<Models.ChatHistory> = {};
 
     if (channelId && channelId.trim() !== '' && channelId !== 'all') {
       whereCondition.channel_id = channelId;
