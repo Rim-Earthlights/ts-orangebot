@@ -71,7 +71,7 @@ export class SpeakerRepository {
         await this.repository.save(speaker);
         return true;
       }
-    } catch (err) {
+    } catch {
       return false;
     }
   }

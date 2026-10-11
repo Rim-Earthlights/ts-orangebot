@@ -3,7 +3,6 @@ import {
   ChannelType,
   Message,
   REST,
-  RESTPostAPIChatInputApplicationCommandsJSONBody,
   Routes,
   SlashCommandBuilder,
   VoiceBasedChannel,
@@ -93,8 +92,8 @@ dataSource
  * =======================
  */
 
-let commands: RESTPostAPIChatInputApplicationCommandsJSONBody[];
-
+// ギルドコマンドは現在登録を止めている (登録処理は body: [] を送る)。再開時に使うため定義は残す
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const serverCommands = [
   new SlashCommandBuilder().setName(CONFIG.COMMAND.SPEAK.COMMAND_NAME).setDescription('読み上げを呼び出す'),
 ].map((command) => command.toJSON());

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: build / lint / unit test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # config.ts は gitignore 対象のため、型チェック用にテンプレートから生成する
+      - name: Generate config from templates
+        run: |
+          cp packages/bot/src/config/config.template.ts packages/bot/src/config/config.ts
+          cp packages/speak/src/config/config.template.ts packages/speak/src/config/config.ts
+      - run: pnpm build
+      - run: pnpm lint
+      - run: pnpm test
+
+  integration:
+    name: integration test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Start test DB
+        run: docker compose -f docker-compose.test.yml up -d --wait
+      - run: pnpm test:integration
+      - name: Stop test DB
+        if: always()
+        run: pnpm test:db:down

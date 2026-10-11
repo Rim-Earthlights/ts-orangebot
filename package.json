@@ -10,7 +10,7 @@
         "clean": "pnpm -r clean",
         "dev": "pnpm --filter @orangebot/bot dev",
         "dev:speak": "pnpm --filter @orangebot/speak dev",
-        "lint": "pnpm --filter @orangebot/bot lint",
+        "lint": "eslint packages",
         "smoke-test": "pnpm --filter @orangebot/bot smoke-test",
         "test": "pnpm -r test",
         "test:integration": "pnpm -r test:integration",
@@ -21,6 +21,11 @@
         "tts:status": "systemctl --user status --no-pager orangebot-voicevox orangebot-coeiroink || true"
     },
     "devDependencies": {
+        "@eslint/js": "^9.39.5",
+        "@typescript-eslint/eslint-plugin": "^8.71.1",
+        "@typescript-eslint/parser": "^8.71.1",
+        "eslint": "^9.39.5",
+        "eslint-config-prettier": "^10.1.8",
         "license-checker": "^25.0.1"
     }
 }
