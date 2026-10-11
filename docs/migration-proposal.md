@@ -20,7 +20,7 @@ OrangeBot-TS は Discord Bot 単体として動作しており、Express サー�
 - HTTP エンドポイントに認証がない
 - ビジネスロジックが Discord.js と密結合しており、Web からの再利用が困難 (Phase 2-3 のサービス/アダプター層整備で大幅に緩和)
 - ~~サービス層が未整備~~ → Phase 2 で `@orangebot/shared` の `services/` に 7 サービスを整備済み
-- ~~テストがゼロ~~ → Phase 2-1 で Vitest を導入済み (ユニット + インテグレーション)。ただしテストがあるのは shared のみで、bot / speak は 0 件
+- ~~テストがゼロ~~ → Phase 2-1 で Vitest を導入済み (ユニット + インテグレーション)。ただしテストはほぼ shared のみで、bot は 3 件、speak は 0 件
 - Express コントローラが EJS テンプレートに直結し、API として使えない
 
 ### 目的

@@ -15,18 +15,14 @@ export enum LiteLLMModel {
 export const CONFIG = {
   // common settings
   COMMON: {
-    DEV: true,
     HOSTNAME: '0.0.0.0',
     PORT: 4000,
     HOST_URL: 'http://example.com',
-    USER: 'webUser',
   },
   // discord app settings
   DISCORD: {
     // your discord bot app id
     APP_ID: '*******************',
-    // register command
-    COMMAND_GUILD_ID: ['*******************'],
     // discord bot token
     TOKEN: '******.*********.****-*****-*****',
   },
@@ -35,9 +31,6 @@ export const CONFIG = {
   API: {
     VOICEVOX: 'http://127.0.0.1:50021/',
     COEIROINK: 'http://127.0.0.1:50022/',
-  },
-  GACHA: {
-    PICKRATE: 1.0,
   },
   // OpenWeatherMap API KEY
   // OpenWeatherMap; see: https://openweathermap.org/
@@ -74,11 +67,6 @@ export const CONFIG = {
     HIGH_MODEL: LiteLLMModel.GPT_4_1,
     // if disabled, still empty.
     ACCESSTOKEN: '',
-  },
-  NICONICO: {
-    ENABLE: true,
-    MAIL: '',
-    PASSWORD: '',
   },
   DB: {
     HOSTNAME: '127.0.0.1',

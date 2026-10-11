@@ -11,7 +11,7 @@
 | Phase 3〜5 (API / front / Docker・CI) | 未着手 |
 | ビルド (`pnpm build`) | 通る。ただし `config.ts` は gitignore 対象のため、新規 clone では `config.template.ts` をコピーしないと失敗する |
 | lint (`pnpm lint`) | 通る。対象は全パッケージ (Step 0 で拡大) |
-| テスト | shared のユニット 111 件・インテグレーション 16 件 (テスト用 DB が必要) が通る。bot / speak は 0 件 |
+| テスト | shared のユニット 111 件・インテグレーション 16 件 (テスト用 DB が必要) が通る。bot は 3 件、speak は 0 件 |
 | CI | GitHub Actions で build / lint / unit / integration を実行 (Step 0 で追加) |
 
 ## 2. 基本方針
@@ -45,7 +45,7 @@ speak の `app.ts` にも同じ対応を入れた。共通処理は `@orangebot/
 
 | 課題 | 内容 |
 |---|---|
-| #21 デッドコード | 空ファイル (`bot/request/openai.ts`, `spotify.ts`)、未登録の `spotifyRouter.ts`、未使用の設定キー、呼ばれないハンドラ (`dall` / `custom` / `g3` / `g4`) を削除する |
+| #21 デッドコード ✅ | 空ファイル (`bot/request/openai.ts`, `spotify.ts`)、未登録の `spotifyRouter.ts`、未使用の設定キー、呼ばれないハンドラ (`dall` / `custom` / `g3` / `g4`) を削除する |
 | #16 依存関係 | 未使用依存を削除し、shared に `mysql2` を追加し、開発用ツールを `devDependencies` へ移す。その後 `shamefully-hoist` の解除を試す |
 
 ### Step 3: 設定の集約
@@ -76,10 +76,5 @@ speak の `app.ts` にも同じ対応を入れた。共通処理は `@orangebot/
 - **CI** — GitHub Actions を使う (Step 0 で導入済み)
 - **HTTP エンドポイント (#1) の扱い** — 外部から利用中のため、現行の Express に暫定の認証は入れない。認証はフロントエンドと API を分離する Phase 3 / 4 で作る (Step 5 参照)
 
-## 5. 未決事項
-
-- **デッドコードの扱い** — `dall` / `custom` / `g3` / `g4` / `spotifyRouter` を今後使う予定があるか
-- **閲覧用でないエンドポイントの扱い** — 現行の HTTP サーバーには、結果や履歴の閲覧以外の操作をするエンドポイントもある。Phase 3 までの間、これらだけ `127.0.0.1` からのアクセスに限定するか
-  - `POST /message` — 任意のチャンネルに Bot としてメッセージを送れる
-  - `DELETE /chat/history/:uuid` — チャット履歴を削除できる
-  - `GET /session` — サーバーの API キーで OpenAI Realtime のセッションを発行する (費用が発生する)
+- **デッドコード (#21)** — 使う予定が無いため削除する (Step 2 で削除済み)
+- **閲覧用でないエンドポイント** — Phase 3 までの間、`POST /message` と `GET /session` は同じマシン上からのリクエストだけを受け付ける。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンが使っているため制限しない

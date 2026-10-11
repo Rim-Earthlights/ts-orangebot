@@ -1,4 +1,4 @@
-import { CacheType, ChatInputCommandInteraction, EmbedBuilder, MessageFlags, VoiceChannel } from 'discord.js';
+import { CacheType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { BaseInteractionHandler } from '../../interaction.handler.js';
 import { Logger } from '../../../../common/logger.js';
 import * as BotFunctions from '../../../function/index.js';
@@ -15,10 +15,6 @@ export class DiceHandler extends BaseInteractionHandler {
         await this.handleDice(interaction);
         break;
       }
-      case 'dall': {
-        await this.handleDiceAll(interaction);
-        break;
-      }
     }
   }
 
@@ -27,29 +23,5 @@ export class DiceHandler extends BaseInteractionHandler {
     const num = interaction.options.getNumber('num') ?? 1;
     const max = interaction.options.getNumber('max') ?? 100;
     await BotFunctions.Dice.rollHideDice(interaction, num, max);
-  }
-
-  private async handleDiceAll(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
-    await interaction.deferReply();
-    const voiceChannel = interaction.channel as VoiceChannel;
-    if (!voiceChannel) {
-      return;
-    }
-    const members = voiceChannel.members;
-    const diceMessages = members.map((member) => {
-      return {
-        member: member,
-        dice: Math.floor(Math.random() * 100) + 1,
-      };
-    });
-    const diceMessage = diceMessages;
-    await interaction.editReply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor('#0099ff')
-          .setTitle('ダイス結果')
-          .setDescription(diceMessage.map((m) => `${m.member.user.displayName}: ${m.dice}`).join('\n')),
-      ],
-    });
   }
 }
