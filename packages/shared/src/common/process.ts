@@ -1,18 +1,35 @@
 import { getLogger, LogLevel } from '../types/log.js';
 
 /**
- * 例外を ERROR レベルでログに残す。ログ出力自体が失敗した場合は標準エラーに出す
+ * 例外を標準エラーに出し、ERROR レベルでログにも残す
+ * (各アプリの Logger は DB への保存に失敗しても例外を投げないため、DB が落ちていても原因が残るよう先に標準エラーへ出す)
  * @param event イベント名
  * @param error 発生した例外
  */
 export async function logError(event: string, error: unknown): Promise<void> {
   const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
+  console.error(`[error] ${event}`, message);
   try {
     await getLogger().put({ level: LogLevel.ERROR, event, message: [message] });
   } catch (e) {
-    console.error(`[error] ${event}`, message, e);
+    console.error(`[error] ${event} のログ出力に失敗しました`, e);
   }
 }
+
+/**
+ * 例外をログに残してからプロセスを終了する
+ * (DB が応答しないなどでログ出力が終わらなくても、一定時間後には必ず終了する)
+ * @param event イベント名
+ * @param error 発生した例外
+ */
+async function logErrorAndExit(event: string, error: unknown): Promise<void> {
+  setTimeout(() => process.exit(1), 5_000).unref();
+  await logError(event, error);
+  process.exit(1);
+}
+
+// withErrorLog で包んだハンドラのうち、実行中のものの数 (終了処理で完了を待つために使う)
+let pendingHandlers = 0;
 
 /**
  * イベントハンドラを try/catch で包み、例外が発生してもプロセスを落とさずログに残す
@@ -24,16 +41,59 @@ export function withErrorLog<A extends unknown[]>(
   handler: (...args: A) => unknown
 ): (...args: A) => Promise<void> {
   return async (...args: A) => {
+    pendingHandlers++;
     try {
       await handler(...args);
     } catch (e) {
       await logError(event, e);
+    } finally {
+      pendingHandlers--;
     }
   };
 }
 
 /**
- * 必須の設定値のうち、未設定 (undefined / null / 空文字 / NaN) のキー名を返す
+ * withErrorLog で包んだ実行中のハンドラが終わるまで待つ。時間内に終わらなければ待つのをやめる
+ * @param timeoutMs 待つ時間の上限
+ * @param intervalMs 確認する間隔
+ * @returns 時間内にすべて終わったら true
+ */
+export async function waitForPendingHandlers(timeoutMs: number, intervalMs = 50): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (pendingHandlers > 0) {
+    if (Date.now() >= deadline) {
+      console.warn(`実行中のハンドラが ${timeoutMs}ms 以内に終わりませんでした (残り ${pendingHandlers} 件)`);
+      return false;
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return true;
+}
+
+/**
+ * 起動に欠かせない処理を包み、例外が発生したらログに残してプロセスを終了する
+ * (中途半端に初期化されたまま動き続けないようにし、プロセス管理側の再起動に任せる)
+ * @param event ログに出すイベント名
+ * @param handler 元のハンドラ
+ */
+export function exitOnError<A extends unknown[]>(
+  event: string,
+  handler: (...args: A) => unknown
+): (...args: A) => Promise<void> {
+  return async (...args: A) => {
+    try {
+      await handler(...args);
+    } catch (e) {
+      await logErrorAndExit(event, e);
+    }
+  };
+}
+
+// 設定テンプレートの仮の値 ('*****' や 'YOUR_BOT_TOKEN' など)
+const PLACEHOLDER_PATTERNS = [/^[*.-]+$/, /^YOUR_/];
+
+/**
+ * 必須の設定値のうち、未設定 (undefined / null / 空文字 / NaN) またはテンプレートの仮の値のままのキー名を返す
  * @param entries 設定キー名と値の組
  */
 export function findMissingConfig(entries: Record<string, unknown>): string[] {
@@ -43,7 +103,8 @@ export function findMissingConfig(entries: Record<string, unknown>): string[] {
         return true;
       }
       if (typeof value === 'string') {
-        return value.trim() === '';
+        const trimmed = value.trim();
+        return trimmed === '' || PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(trimmed));
       }
       if (typeof value === 'number') {
         return Number.isNaN(value);
@@ -103,10 +164,9 @@ export function registerGracefulShutdown(steps: ShutdownStep[], timeoutMs = 10_0
 }
 
 /**
- * どこにも catch されなかった Promise の reject をログに残す (プロセスは落とさない)
+ * どこにも catch されなかった Promise の reject をログに残してからプロセスを終了する
+ * (Node.js の既定の動作と同じく終了させ、状態が壊れたまま動き続けないようにする)
  */
-export function registerUnhandledRejectionLogger(): void {
-  process.on('unhandledRejection', (reason) => {
-    void logError('unhandled-rejection', reason);
-  });
+export function registerUnhandledRejectionHandler(): void {
+  process.on('unhandledRejection', (reason) => logErrorAndExit('unhandled-rejection', reason));
 }

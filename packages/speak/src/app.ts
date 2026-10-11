@@ -15,11 +15,14 @@ import { fs } from 'mz';
 import {
   LogLevel,
   SpeakerRepository,
+  closeHttpServer,
   createDataSource,
+  exitOnError,
   findMissingConfig,
   logError,
   registerGracefulShutdown,
-  registerUnhandledRejectionLogger,
+  registerUnhandledRejectionHandler,
+  waitForPendingHandlers,
   withErrorLog,
 } from '@orangebot/shared';
 import { commandSelector, interactionSelector } from './bot/commands.js';
@@ -31,7 +34,7 @@ import { initializeCoeiroSpeakerIds } from './common/common.js';
 import { Logger } from './common/logger.js';
 import { CONFIG, CommandConfig } from './config/config.js';
 import { DISCORD_CLIENT } from './constant/constants.js';
-import { initJob } from './job/job.js';
+import { initJob, stopJobs } from './job/job.js';
 import { routers } from './routers.js';
 
 // read config file
@@ -66,12 +69,12 @@ const missingConfig = findMissingConfig({
 });
 if (missingConfig.length > 0) {
   console.error(
-    `必須の設定値が未設定です: ${missingConfig.join(', ')} (${json} と src/config/config.ts を確認してください)`
+    `必須の設定値が未設定またはテンプレートのままです: ${missingConfig.join(', ')} (${json} と src/config/config.ts を確認してください)`
   );
   process.exit(1);
 }
 
-registerUnhandledRejectionLogger();
+registerUnhandledRejectionHandler();
 
 const app = express();
 app.use(express.json());
@@ -161,6 +164,9 @@ const dmCommands = [
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(CONFIG.TOKEN);
+// 読み上げキューを処理するタイマー (終了処理で止める)
+let speakTimer: NodeJS.Timeout | undefined;
+
 // ログインできなければ Bot として動作できないため終了する
 DISCORD_CLIENT.login(CONFIG.TOKEN).catch(async (e) => {
   await logError('discord-login', e);
@@ -172,7 +178,8 @@ DISCORD_CLIENT.login(CONFIG.TOKEN).catch(async (e) => {
  */
 DISCORD_CLIENT.once(
   'ready',
-  withErrorLog('ready', async () => {
+  // 起動処理が失敗したら中途半端な状態で動き続けないよう終了する (ギルドごとの処理の失敗はログに残して続行する)
+  exitOnError('ready', async () => {
     await initJob();
     await initializeCoeiroSpeakerIds();
 
@@ -194,7 +201,7 @@ DISCORD_CLIENT.once(
                   message: [`successfully add command to guild: ${guild.name}.`],
                 })
             )
-            .catch(console.error);
+            .catch((e) => logError('reg-command', e));
         })
       )
     );
@@ -212,7 +219,7 @@ DISCORD_CLIENT.once(
           message: ['successfully add command to DM.'],
         });
       })
-      .catch(console.error);
+      .catch((e) => logError('reg-command', e));
 
     // 在籍ユーザーごとに DM チャンネルを作成し、ユーザからのDMを受け取れるようにする
     await Promise.all(
@@ -248,9 +255,7 @@ DISCORD_CLIENT.once(
         })
       )
     );
-    setInterval(() => {
-      SpeakService.speak();
-    }, 100);
+    speakTimer = setInterval(withErrorLog('speak', SpeakService.speak), 100);
   })
 );
 
@@ -375,9 +380,13 @@ DISCORD_CLIENT.on('error', (e) => logError('discord-client-error', e));
 /**
  * 終了処理 (SIGTERM / SIGINT)
  */
+// 新しい処理を受け付けるものから止め、実行中のハンドラが終わるのを待ってから DB 接続を閉じる
 registerGracefulShutdown([
-  { name: 'http-server', run: () => new Promise<void>((resolve) => server.close(() => resolve())) },
+  { name: 'jobs', run: () => stopJobs() },
+  { name: 'speak-timer', run: () => clearInterval(speakTimer) },
+  { name: 'http-server', run: () => closeHttpServer(server, 3_000) },
   { name: 'voice-connections', run: () => getVoiceConnections().forEach((connection) => connection.destroy()) },
   { name: 'discord-client', run: () => DISCORD_CLIENT.destroy() },
+  { name: 'pending-handlers', run: () => waitForPendingHandlers(3_000) },
   { name: 'data-source', run: () => dataSource.destroy() },
 ]);

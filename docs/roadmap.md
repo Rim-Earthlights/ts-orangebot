@@ -11,7 +11,7 @@
 | Phase 3〜5 (API / front / Docker・CI) | 未着手 |
 | ビルド (`pnpm build`) | 通る。ただし `config.ts` は gitignore 対象のため、新規 clone では `config.template.ts` をコピーしないと失敗する |
 | lint (`pnpm lint`) | 通る。対象は全パッケージ (Step 0 で拡大) |
-| テスト | shared のユニット 111 件・インテグレーション 16 件 (テスト用 DB が必要) が通る。bot は 3 件、speak は 0 件 |
+| テスト | shared のユニット 120 件・インテグレーション 16 件 (テスト用 DB が必要) が通る。bot / speak は 0 件 |
 | CI | GitHub Actions で build / lint / unit / integration を実行 (Step 0 で追加) |
 
 ## 2. 基本方針

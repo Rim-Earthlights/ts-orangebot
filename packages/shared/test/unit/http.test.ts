@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isLocalRequest } from '../src/controller/middleware/localOnly.js';
+import { isLocalRequest } from '../../src/common/http.js';
 
 describe('isLocalRequest', () => {
   it('ループバックアドレスからの直接のリクエストは許可する', () => {
