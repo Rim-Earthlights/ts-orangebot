@@ -13,6 +13,9 @@
 #
 # いずれもプロセスが落ちたら自動で再起動する。
 #
+# 本番は systemd の user unit で動かす (systemd/README.md 参照)。
+# このスクリプトは systemd を使わずにその場で動かすとき用。
+#
 set -u
 
 TARGET="${1:-bot}"

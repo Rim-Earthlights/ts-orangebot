@@ -71,7 +71,15 @@ pnpm tts:status         # VOICEVOX / COEIROINK の systemd user unit の状態�
 
 `tts:*` は `systemctl --user` で `orangebot-voicevox` / `orangebot-coeiroink` を操作します。初回は `containers/install.sh` で Quadlet ユニットを設置し、COEIROINK を使う場合は `containers/coeiroink/build.sh` でイメージをローカルビルドしておく必要があります。手順は [containers/README.md](../containers/README.md) を参照してください。
 
-本番起動用の `start.sh` は `git pull` → `pnpm install` → `pnpm run build` の後、プロセスが落ちても自動で再起動します:
+本番は systemd の user unit (`orangebot-bot` / `orangebot-speak@<name>`) で動かします。落ちたら自動で再起動し、マシンの再起動後も自動で立ち上がります。設置は `systemd/install.sh`、更新は手動 (`git pull` → `pnpm install` → `pnpm build` → `systemctl --user restart`) です。手順は [systemd/README.md](../systemd/README.md) を参照してください。
+
+```bash
+./systemd/install.sh lemon lime                          # 設置 + enable (bot と読み上げ bot lemon / lime)
+systemctl --user restart orangebot-bot 'orangebot-speak@*'  # 更新後の再起動
+journalctl --user -u orangebot-bot -f                    # ログ
+```
+
+`start.sh` は systemd を使わずにその場で動かす場合の起動スクリプトです。`git pull` → `pnpm install` → `pnpm run build` の後、プロセスが落ちても自動で再起動します:
 
 ```bash
 ./start.sh bot            # メインの bot
