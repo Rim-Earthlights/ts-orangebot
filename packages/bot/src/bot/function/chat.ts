@@ -3,7 +3,7 @@ import { CacheType, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js
 import { Logger } from '../../common/logger.js';
 import { LiteLLMModel } from '../../config/config.js';
 import { LiteLLMMode, Role, getIdInfoInteraction } from '../../constant/chat/chat.js';
-import { ChatService, LogLevel } from "@orangebot/shared";
+import { ChatService, LogLevel, splitMessage } from "@orangebot/shared";
 import { createChatService } from '../adapters/chat.adapter.js';
 
 /**
@@ -99,24 +99,10 @@ async function talkExclusive(
   liteLLM.chat.push({ role: Role.ASSISTANT, content: completion.content });
   chatService.touchSession(id);
 
-  if (completion.content.length > 2000) {
-    const texts = completion.content.split('\n');
-    let message = '';
-    const chunks = [];
-    for (const text of texts) {
-      if (chunks[chunks.length - 1].length + text.length > 2000) {
-        chunks.push(message);
-        message = text + '\n';
-      } else {
-        message += text + '\n';
-      }
-    }
-    await interaction.editReply(chunks.shift() ?? 'no response');
-    for (const chunk of chunks) {
-      await interaction.followUp({ content: chunk });
-    }
-  } else {
-    await interaction.editReply(completion.content);
+  const chunks = splitMessage(completion.content);
+  await interaction.editReply(chunks.shift() ?? 'no response');
+  for (const chunk of chunks) {
+    await interaction.followUp({ content: chunk });
   }
 
   await chatService.saveHistory({

@@ -18,6 +18,7 @@ import {
   extractReasoning,
   LiteLLMMode,
   LogLevel,
+  splitMessage,
   startTyping,
   stripReasoning,
 } from '@orangebot/shared';
@@ -91,21 +92,7 @@ export async function getUserModelType(userId: string): Promise<LiteLLMModel> {
 }
 
 async function replyChunked(message: Message, content: string) {
-  if (content.length <= 2000) {
-    await message.reply(content);
-    return;
-  }
-  const texts = content.split('\n');
-  let chunk = '';
-  for (const text of texts) {
-    if (chunk.length + text.length > 2000) {
-      await message.reply(chunk + '\n');
-      chunk = '';
-    } else {
-      chunk += text + '\n';
-    }
-  }
-  if (chunk.length > 0) {
+  for (const chunk of splitMessage(content)) {
     await message.reply(chunk);
   }
 }
