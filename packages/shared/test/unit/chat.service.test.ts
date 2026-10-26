@@ -25,6 +25,7 @@ function makeService(overrides: { userSetting?: unknown; saveSpy?: ReturnType<ty
 
 afterEach(() => {
   ChatService.sessions = [];
+  ChatService.locks.clear();
   vi.restoreAllMocks();
 });
 
@@ -203,5 +204,80 @@ describe('ChatService.saveHistory', () => {
         content,
       })
     );
+  });
+});
+
+describe('ChatService runExclusive', () => {
+  /** 外から resolve / reject できる Promise */
+  function deferred() {
+    let resolve!: () => void;
+    let reject!: (e: Error) => void;
+    const promise = new Promise<void>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  it('同じ ID の処理は先行処理の完了後に開始する', async () => {
+    const { service } = makeService();
+    const order: string[] = [];
+    const first = deferred();
+
+    const a = service.runExclusive('100', async () => {
+      order.push('a:start');
+      await first.promise;
+      order.push('a:end');
+    });
+    const b = service.runExclusive('100', async () => {
+      order.push('b:start');
+    });
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect(order).toEqual(['a:start']);
+
+    first.resolve();
+    await Promise.all([a, b]);
+    expect(order).toEqual(['a:start', 'a:end', 'b:start']);
+  });
+
+  it('別の ID の処理は待たずに並行して実行する', async () => {
+    const { service } = makeService();
+    const first = deferred();
+    const started: string[] = [];
+
+    const a = service.runExclusive('100', async () => {
+      started.push('100');
+      await first.promise;
+    });
+    const b = service.runExclusive('200', async () => {
+      started.push('200');
+    });
+
+    await b;
+    expect(started).toEqual(['100', '200']);
+    first.resolve();
+    await a;
+  });
+
+  it('先行処理が失敗しても後続は実行され、失敗は呼び出し元に伝わる', async () => {
+    const { service } = makeService();
+    const first = deferred();
+
+    const a = service.runExclusive('100', () => first.promise);
+    const b = service.runExclusive('100', async () => 'ok');
+
+    first.reject(new Error('boom'));
+    await expect(a).rejects.toThrow('boom');
+    await expect(b).resolves.toBe('ok');
+  });
+
+  it('すべて完了すると待ち行列を片付ける', async () => {
+    const { service } = makeService();
+    await Promise.all([
+      service.runExclusive('100', async () => undefined),
+      service.runExclusive('100', async () => undefined),
+    ]);
+    expect(ChatService.locks.size).toBe(0);
   });
 });
