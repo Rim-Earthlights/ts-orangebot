@@ -6,24 +6,21 @@
 
 ## 設定項目
 
-> 「(未使用)」と記載したキーはテンプレートに残っているものの、現在のコードからは参照されていません。値を設定しても動作は変わりません。
+> 以前のテンプレートにあった `COMMON.DEV` / `COMMON.USER` / `DISCORD.COMMAND_GUILD_ID` / `GACHA.PICKRATE` / `NICONICO.*` はコードから参照されていなかったため削除しました。既存の `config.ts` に残っていても動作は変わりません (削除して構いません)。
 
 ### COMMON - 共通設定
 
 | キー | 型 | 説明 |
 |---|---|---|
-| `DEV` | boolean | 開発モードフラグ (未使用) |
 | `HOSTNAME` | string | ホスト名 |
 | `PORT` | number | ポート番号 |
 | `HOST_URL` | string | ホスト URL |
-| `USER` | string | ユーザー名 (未使用) |
 
 ### DISCORD - Discord 設定
 
 | キー | 型 | 説明 |
 |---|---|---|
 | `APP_ID` | string | Discord アプリケーション ID |
-| `COMMAND_GUILD_ID` | string[] | コマンドを登録するギルド ID の配列 (未使用。スラッシュコマンドは参加中の全ギルドに登録される) |
 | `TOKEN` | string | Discord Bot トークン |
 
 ### API - 音声合成エンジン接続先
@@ -36,12 +33,6 @@
 既存の `config.ts` に `API` が無い場合は、従来ソースに決め打ちしていた
 `http://127.0.0.1:50021` / `http://127.0.0.1:50022` にフォールバックします
 (`packages/bot/src/config/api.ts`)。
-
-### GACHA - ガチャ設定
-
-| キー | 型 | 説明 |
-|---|---|---|
-| `PICKRATE` | number | ガチャの排出率 (未使用) |
 
 ### FORECAST - 天気予報設定
 
@@ -70,14 +61,6 @@
 | `LOW_MODEL` | LiteLLMModel | 軽量モデル (`.model g3` / DM `/model low`) |
 | `HIGH_MODEL` | LiteLLMModel | 高性能モデル (`.model g4` / DM `/model high`) |
 | `ACCESSTOKEN` | string | アクセストークン |
-
-### NICONICO - ニコニコ動画設定 (未使用)
-
-| キー | 型 | 説明 |
-|---|---|---|
-| `ENABLE` | boolean | 有効フラグ (未使用) |
-| `MAIL` | string | ログインメール (未使用) |
-| `PASSWORD` | string | ログインパスワード (未使用) |
 
 ### DB - データベース設定
 
@@ -177,27 +160,31 @@ COEIROINK コンテナはホストの **50022** で公開されます (エンジ
 
 Express サーバーが以下のエンドポイントを提供します:
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| GET | `/` | ヘルスチェック (JSON) |
-| POST | `/message` | 指定ユーザー / チャンネルへのメッセージ送信 (JSON) |
-| GET | `/gacha` | ガチャ結果の表示 (EJS) |
-| GET | `/gacha/history` | プレゼント履歴の表示 (EJS) |
-| GET | `/music` | 再生キューの表示 (EJS) |
-| GET | `/speakers` | TTS 話者一覧の表示 (EJS) |
-| GET | `/session` | セッショントークンの取得 (JSON) |
-| GET | `/chat/history` | チャット履歴一覧の表示 (EJS) |
-| GET | `/chat/history/:uuid` | チャット履歴詳細の表示 (EJS) |
-| DELETE | `/chat/history/:uuid` | チャット履歴の削除 (JSON) |
+| メソッド | パス | 説明 | 接続元 |
+|---|---|---|---|
+| GET | `/` | ヘルスチェック (JSON) | 制限なし |
+| POST | `/message` | 指定ユーザー / チャンネルへのメッセージ送信 (JSON) | 同じマシン上のみ |
+| GET | `/gacha` | ガチャ結果の表示 (EJS) | 制限なし |
+| GET | `/gacha/history` | プレゼント履歴の表示 (EJS) | 制限なし |
+| GET | `/music` | 再生キューの表示 (EJS) | 制限なし |
+| GET | `/speakers` | TTS 話者一覧の表示 (EJS) | 制限なし |
+| GET | `/session` | セッショントークンの取得 (JSON) | 同じマシン上のみ |
+| GET | `/chat/history` | チャット履歴一覧の表示 (EJS) | 制限なし |
+| GET | `/chat/history/:uuid` | チャット履歴詳細の表示 (EJS) | 制限なし |
+| DELETE | `/chat/history/:uuid` | チャット履歴の削除 (JSON) | LAN 内のみ |
 
-※ `controller/spotifyRouter.ts` (POST `/spotify/callback`) も存在しますが、`routers.ts` に登録されておらず現在は無効です。
+「同じマシン上のみ」のエンドポイントには `localOnly` ミドルウェア (`controller/middleware/localOnly.ts`) が付いています。ループバック (`127.0.0.1` / `::1` / `::ffff:127.0.0.1`) 以外からのリクエストと、`X-Forwarded-For` / `X-Real-IP` / `Forwarded` ヘッダが付いたリクエスト (リバースプロキシ経由) は 403 になります。同じマシン上のリバースプロキシで公開する場合は、プロキシ側で必ずこれらのヘッダを付けてください。認証は Phase 3 / 4 で入れる予定です。
+
+「LAN 内のみ」のエンドポイントには `lanOnly` ミドルウェア (`controller/middleware/lanOnly.ts`) が付いています。ループバック・プライベートアドレス (`10.0.0.0/8` / `172.16.0.0/12` / `192.168.0.0/16` / `fc00::/7`)・リンクローカルアドレス (`169.254.0.0/16` / `fe80::/10`) 以外からのリクエストと、上記のリバースプロキシのヘッダが付いたリクエストは 403 になります。チャット履歴一覧画面の削除ボタンも、同じ条件で LAN 内から開いたときだけ表示します。
 
 ### 読み上げ Bot (`packages/speak`)
 
 bot から呼び出される HTTP API:
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| GET | `/speaker/status/:guildId` | 読み上げ Bot の使用状況を取得 |
-| POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す |
-| POST | `/speaker/discon` | 読み上げ Bot を切断する |
+| メソッド | パス | 説明 | 接続元 |
+|---|---|---|---|
+| GET | `/speaker/status/:guildId` | 読み上げ Bot の使用状況を取得 | 制限なし |
+| POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す | 同じマシン上のみ |
+| POST | `/speaker/discon` | 読み上げ Bot を切断する | 同じマシン上のみ |
+
+制限の内容は bot と同じです (`controllers/middleware/localOnly.ts`)。

@@ -11,8 +11,8 @@
   - `/gacha`, `/music` 等も同様
 - **対策**: JWT やAPIキー検証等の認証ミドルウェアを全エンドポイントに追加
 - **方針**: 現行のエンドポイントはユーザーが結果や履歴を見るために外部から使われているため、現行の Express には認証を足さない。認証 (Discord OAuth2 等) はフロントエンドと API を分離する Phase 3 / 4 で作る
-- **暫定措置**: 閲覧以外の操作をする `POST /message` と `GET /session` (サーバーの API キーで OpenAI のセッションを発行する) は、同じマシン上からのリクエストだけを受け付ける (`controller/middleware/localOnly.ts`。リバースプロキシ経由は外部扱い)。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンから使われているため対象外。speak の `POST /speaker/call` / `POST /speaker/discon` (bot からだけ呼ばれる) も同様に制限する
-- **既知の制約**: 判定は「接続元がループバックで、`X-Forwarded-For` / `X-Real-IP` / `Forwarded` ヘッダが無い」ことによる。同じマシン上のリバースプロキシやトンネルがこれらのヘッダを付けずに転送すると外部からのリクエストも通ってしまうため、プロキシ側で必ずヘッダを付けること。根本対策は Phase 3 / 4 の認証
+- **暫定措置**: 閲覧以外の操作をする `POST /message` と `GET /session` (サーバーの API キーで OpenAI のセッションを発行する) は、同じマシン上からのリクエストだけを受け付ける (`controller/middleware/localOnly.ts`。リバースプロキシ経由は外部扱い)。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンから使われているため、LAN 内からのリクエストだけを受け付け (`controller/middleware/lanOnly.ts`)、削除ボタンも LAN 内から開いたときだけ表示する。speak の `POST /speaker/call` / `POST /speaker/discon` (bot からだけ呼ばれる) も同じマシン上に限定する
+- **既知の制約**: 判定は「接続元がループバック (`lanOnly` はループバック・プライベートアドレス・リンクローカルアドレス) で、`X-Forwarded-For` / `X-Real-IP` / `Forwarded` ヘッダが無い」ことによる。同じマシン上のリバースプロキシやトンネルがこれらのヘッダを付けずに転送すると外部からのリクエストも通ってしまうため、プロキシ側で必ずヘッダを付けること。根本対策は Phase 3 / 4 の認証
 
 ### 2. `synchronize: true` が本番環境でも有効 (解決済み — Phase 2-1)
 
@@ -26,9 +26,8 @@
 
 ### 4. テストが存在しない (shared は解決済み — Phase 2 / bot は未着手)
 
-- **CI**: GitHub Actions (`.github/workflows/ci.yml`) で build / lint / ユニットテスト / インテグレーションテストを実行する
-
 - **場所**: プロジェクト全体
+- **CI**: GitHub Actions (`.github/workflows/ci.yml`) で build / lint / ユニットテスト / インテグレーションテストを実行する
 - **状況**: Vitest 導入済み。ルートに `pnpm test` / `pnpm test:integration`、`packages/shared/test/` にサービス・リポジトリのユニットテストとインテグレーションテスト (`migration.test.ts` / `repository.test.ts` 等) が存在する
 - **残課題**: `packages/bot` のテストは 0 件 (`localOnly` の判定処理は shared に移し、テストも shared 側に移した)。`packages/speak` には `test` スクリプト自体が無い。ハンドラ・アダプタ層のテスト作成から着手が必要
 
@@ -53,7 +52,7 @@
 ### 7. イベントハンドラに try/catch がない (解決済み)
 
 - **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts`
-- **状況**: すべてのイベントハンドラと cron・読み上げのタイマー処理を `withErrorLog` (`@orangebot/shared`) で包み、例外は ERROR ログに残してプロセスを継続する。Discord クライアントの `error` イベントもログに残す。catch されなかった Promise の reject はログに残してから終了する (Node.js の既定と同じ)。DB 初期化・Discord へのログイン・ready の起動処理に失敗した場合もプロセスを終了するため、systemd 等のプロセス管理による自動再起動を前提とする。`logError` は DB へのログ保存に失敗しても原因が残るよう、先に標準エラーへスタックを出す
+- **状況**: すべてのイベントハンドラと cron・読み上げのタイマー処理を `withErrorLog` (`@orangebot/shared`) で包み、例外は ERROR ログに残してプロセスを継続する。Discord クライアントの `error` イベントもログに残す。catch されなかった Promise の reject はログに残してから終了する (Node.js の既定と同じ)。DB 初期化・Discord へのログイン・ready の起動処理に失敗した場合もプロセスを終了するため、プロセス管理による自動再起動を前提とする (`systemd/` の `orangebot-bot.service` / `orangebot-speak@.service` は `Restart=always`)。`logError` は DB へのログ保存に失敗しても原因が残るよう、先に標準エラーへスタックを出す
 
 ### 8. エンドポイントの入力値バリデーションがない
 
@@ -76,7 +75,7 @@
 ### 11. グレースフルシャットダウンが未実装 (解決済み)
 
 - **場所**: `packages/bot/src/app.ts`, `packages/speak/src/app.ts`
-- **状況**: `SIGTERM` / `SIGINT` を受けると、cron (と speak の読み上げタイマー) → HTTP サーバー (処理中のリクエストは 3 秒まで待つ) → ボイス接続 → Discord クライアント → 実行中のハンドラの完了待ち (3 秒まで) → DB 接続の順に後処理してから終了する (`registerGracefulShutdown`)。10 秒以内に終わらなければ強制終了する
+- **状況**: `SIGTERM` / `SIGINT` を受けると、新しいハンドラの受け付け停止 → cron (と speak の読み上げタイマー) → HTTP サーバー (処理中のリクエストは 3 秒まで待つ) → 実行中のハンドラの完了待ち (3 秒まで) → ボイス接続 → Discord クライアント → DB 接続の順に後処理してから終了する (`registerGracefulShutdown`)。Discord クライアントを先に閉じると実行中のハンドラの返信が失敗するため、ハンドラの完了を待ってから閉じる。10 秒以内に終わらなければ強制終了する。pnpm 経由で起動すると同じシグナルが 2 回届くことがあるため、2 回目以降は無視する (`process.once` ではなく `process.on` で受ける)
 
 ### 12. ログ出力が不統一
 
@@ -100,7 +99,7 @@
 
 - **場所**:
   - `packages/bot/src/bot/adapters/music.adapter.ts` (約1020行)
-  - `packages/bot/src/bot/adapters/chat.adapter.ts` (約345行。旧 `dot_function/chat.ts` は再エクスポートのみのスタブに移行済み — Phase 2-3)
+  - `packages/bot/src/bot/adapters/chat.adapter.ts` (約360行。旧 `dot_function/chat.ts` は再エクスポートのみのスタブに移行済み — Phase 2-3)
 - **問題**:
   - music.adapter は再生制御・キュー表示・プレイリスト操作・Embed 整形を 1 ファイルに抱えており、最も肥大化している
   - chat.adapter はファイル処理、LLM 呼び出し、Tool Calling 実行、ログ、メッセージフォーマットなど多くの責務を持つ。Tool Calling 化により一部は `chat_tools/`・`chat_attachments.ts` に分離済みだが、本体は依然として大きい

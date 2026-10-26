@@ -135,13 +135,18 @@
 | `.celovs` | | みかんとチンチロリン対戦 |
 | `.choose <選択肢1> <選択肢2> ...` | `.choice` / `.ch` | ランダムに1つ選択 |
 | `.dall` | | ボイスチャット全員で100面ダイス |
-| `.team [num] [?move]` | | ボイスメンバーをチーム分け |
+| `.team <num> [?move]` | | ボイスメンバーを num チームに分ける (num を省略すると何もしない) |
 
 ### ガチャ
 
 | コマンド | エイリアス | 説明 |
 |---|---|---|
 | `.gacha [num\|limit]` | `.g` | ガチャを引く (デフォルト10連) |
+| `.gacha list [uid]` | `.g` | 未使用のプレゼント一覧ページの URL を表示 (他ユーザーの uid 指定は OWNER のみ) |
+| `.gacha hist [uid]` | `.g` | 使用済みも含めたプレゼント履歴ページの URL を表示 (他ユーザーの uid 指定は OWNER のみ) |
+| `.gacha use <id...>` | `.g` | 指定 ID のプレゼントを使用済みにする (OWNER のみ) |
+| `.gacha reset <uid> [num]` | `.g` | 指定ユーザーの抽選回数を num (既定 10) に再設定 (OWNER のみ) |
+| `.gacha extra <num\|等級\|アイテム名>` | `.g` | 景品無効の試し引き。回数を指定するか、指定の等級・アイテムが出るまで引く (DB には記録しない) |
 | `.gp` | | ガチャ排出率を表示 |
 | `.gl` | | 手持ちチケット全消費 |
 | `.give <user_id> <item_id>` | | 指定アイテムをプレゼントとして付与 (OWNER のみ) |
@@ -152,7 +157,7 @@
 |---|---|
 | `.gpt <text>` | GPT (LiteLLM) と会話 |
 | `.mikan <text>` | みかんと会話 |
-| `.raw <text>` | AI のレスポンスをそのまま表示 |
+| `.raw <text>` | システムプロンプト (キャラクター設定) なしで AI と会話。既に会話セッションがある場合はそのセッションのモードのまま続く |
 | `.memory` | メモリ機能の切り替え |
 | `.model [default\|g3\|g4] [model]` / `.model-info` | AI モデル設定を表示。引数を指定すると変更 (g3 = `CONFIG.LITELLM.LOW_MODEL`, g4 = `CONFIG.LITELLM.HIGH_MODEL`) |
 | `.speech <text>` | テキストから音声を生成 |
@@ -239,9 +244,7 @@
 
 ### サーバーコマンド (Guild)
 
-| コマンド | 説明 |
-|---|---|
-| `/speak` | 読み上げを呼び出す |
+現在は登録していません。起動時にギルドへ空のコマンド一覧を送るため、以前登録した `/speak` も消えます。`/speak` は再開時のために定義 (`packages/speak/src/app.ts` の `serverCommands`) と処理 (`packages/speak/src/bot/commands.ts` の `interactionSelector`) を残してあります。コマンド名は `COMMAND.SPEAK.COMMAND_NAME` で変更できます。
 
 ### DM コマンド
 
@@ -249,6 +252,6 @@
 |---|---|
 | `/delete [last]` | LLM とのチャット履歴を削除 |
 | `/revert [uuid]` | 最新のチャット履歴を復元 (uuid 指定でその履歴を復元)。※ speak には `/history` が無いため、Bot の説明文にある「uuid は /history から取得」は現状使えない |
-| `/spcon <voice_id> [speed] [pitch] [intonation]` | 読み上げの声・スピード・ピッチ・抑揚を設定 |
+| `/spcon <voice_id> [speed] [pitch] [intonation]` | 読み上げの声・スピード・ピッチ・抑揚を設定 (コマンド名は `COMMAND.SPEAKER_CONFIG.COMMAND_NAME_SHORT` で変更可能) |
 | `/model-list` | LLM モデル一覧を表示 |
 | `/model-set <model>` | LLM モデルを設定 |

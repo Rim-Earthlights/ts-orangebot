@@ -2,17 +2,19 @@
 
 `docs/migration-proposal.md` (フェーズ計画) と `docs/issues.md` (課題一覧) を踏まえ、「すぐ着手できて効果が大きいものから順に片付ける」ための作業順序をまとめる。
 
-## 1. 現状 (2026-10-11 時点)
+## 1. 現状 (2026-10-27 時点)
 
 | 項目 | 状態 |
 |---|---|
 | Phase 1 モノレポ基盤 | 完了 |
 | Phase 2 サービス層 | サービス切り出しは完了。排他制御・エラー型共通化・bot のテストが残り |
-| Phase 3〜5 (API / front / Docker・CI) | 未着手 |
+| Phase 3・4 (API / front) | 未着手 |
+| Phase 5 (統合・運用基盤) | 終了処理 (#11) と CI (deploy 以外) は完了。Docker Compose・旧 Express 層の除去・構造化ログ・環境別設定は未着手 |
 | ビルド (`pnpm build`) | 通る。ただし `config.ts` は gitignore 対象のため、新規 clone では `config.template.ts` をコピーしないと失敗する |
 | lint (`pnpm lint`) | 通る。対象は全パッケージ (Step 0 で拡大) |
-| テスト | shared のユニット 120 件・インテグレーション 16 件 (テスト用 DB が必要) が通る。bot / speak は 0 件 |
+| テスト | shared のユニット 136 件・インテグレーション 16 件 (テスト用 DB が必要) が通る。bot / speak は 0 件 |
 | CI | GitHub Actions で build / lint / unit / integration を実行 (Step 0 で追加) |
+| 常駐運用 | bot / speak は systemd の user unit (`systemd/`、`Restart=always`) で動かせる |
 
 ## 2. 基本方針
 
@@ -45,7 +47,7 @@ speak の `app.ts` にも同じ対応を入れた。共通処理は `@orangebot/
 
 | 課題 | 内容 |
 |---|---|
-| #21 デッドコード ✅ | 空ファイル (`bot/request/openai.ts`, `spotify.ts`)、未登録の `spotifyRouter.ts`、未使用の設定キー、呼ばれないハンドラ (`dall` / `custom` / `g3` / `g4`) を削除する |
+| #21 デッドコード ✅ | 空ファイル (`bot/request/openai.ts`, `spotify.ts`)、未登録の `spotifyRouter.ts`、未使用の設定キー、呼ばれないハンドラ (スラッシュコマンド側の `dall` / `custom` と、チャットコマンド側の `g3` / `g4`。ドットコマンドの `.dall` / `.custom` は現役) を削除する |
 | #16 依存関係 | 未使用依存を削除し、shared に `mysql2` を追加し、開発用ツールを `devDependencies` へ移す。その後 `shamefully-hoist` の解除を試す |
 
 ### Step 3: 設定の集約
@@ -68,7 +70,7 @@ speak の `app.ts` にも同じ対応を入れた。共通処理は `@orangebot/
 
 認証 (#1)・入力値チェック (#8)・CORS (#9) は、新 API サーバーで根本的に解決する。
 
-- 現行の Express エンドポイントは、ユーザーが結果や履歴を見るために外部から使われている。そのため `127.0.0.1` に限定したり、暫定の API キー認証を入れたりはしない
+- 現行の Express の閲覧用エンドポイントは、ユーザーが結果や履歴を見るために外部から使われている。そのため `127.0.0.1` に限定したり、暫定の API キー認証を入れたりはしない (閲覧用でない `POST /message` / `GET /session` は同じマシン上に、`DELETE /chat/history/:uuid` は LAN 内に限定している。4 章参照)
 - 認証 (Discord OAuth2 など) は、フロントエンド (`packages/front`) と API (`packages/api`) の責務を分けた構成の中で作る。現行の Express (EJS) には足さない
 
 ## 4. 決定事項
@@ -77,4 +79,4 @@ speak の `app.ts` にも同じ対応を入れた。共通処理は `@orangebot/
 - **HTTP エンドポイント (#1) の扱い** — 外部から利用中のため、現行の Express に暫定の認証は入れない。認証はフロントエンドと API を分離する Phase 3 / 4 で作る (Step 5 参照)
 
 - **デッドコード (#21)** — 使う予定が無いため削除する (Step 2 で削除済み)
-- **閲覧用でないエンドポイント** — Phase 3 までの間、`POST /message` と `GET /session` は同じマシン上からのリクエストだけを受け付ける。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンが使っているため制限しない
+- **閲覧用でないエンドポイント** — Phase 3 までの間、`POST /message` と `GET /session` は同じマシン上からのリクエストだけを受け付ける。`DELETE /chat/history/:uuid` はチャット履歴一覧画面の削除ボタンが使うため、LAN 内からのリクエストだけを受け付け、削除ボタンも LAN 内から開いたときだけ表示する
