@@ -1,6 +1,7 @@
 import Express from 'express';
 import { Logger } from '../common/logger.js';
-import { ChatHistoryRepository, stripSystemMessages } from "@orangebot/shared";
+import { ChatHistoryRepository, isLanRequest, stripSystemMessages } from "@orangebot/shared";
+import { lanOnly } from './middleware/lanOnly.js';
 
 export const chatRouter = Express.Router();
 
@@ -37,6 +38,8 @@ chatRouter.get('/chat/history', async (req: Express.Request, res: Express.Respon
       channelId,
       showAllChatsButton,
       isAll: channelId === 'all',
+      // 削除は LAN 内からだけ受け付けるため、それ以外からの閲覧では削除ボタンを出さない
+      canDelete: isLanRequest(req.socket.remoteAddress, req.headers),
     });
   } catch (error) {
     await logger.error('GET /chat/history', [`error: ${error}`]);
@@ -83,7 +86,7 @@ chatRouter.get('/chat/history/:uuid', async (req: Express.Request, res: Express.
  * /chat/history/:uuid DELETE
  * チャット履歴を削除する（ソフトデリート）
  */
-chatRouter.delete('/chat/history/:uuid', async (req: Express.Request, res: Express.Response) => {
+chatRouter.delete('/chat/history/:uuid', lanOnly, async (req: Express.Request, res: Express.Response) => {
   const logger = new Logger();
   const chatHistoryRepository = new ChatHistoryRepository();
 

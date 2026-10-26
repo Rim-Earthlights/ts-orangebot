@@ -151,9 +151,11 @@
                                         <small class="text-muted">
                                             会話ID: <span class="uuid-copy" data-uuid="<%= history.uuid %>" title="クリックでrevertコマンドをコピー" style="cursor: pointer; text-decoration: underline;"><%= history.uuid.substring(0, 8) %>...</span>
                                         </small>
-                                        <button class="btn btn-outline-danger btn-sm delete-btn" data-uuid="<%= history.uuid %>" data-name="<%= history.name || '無名の会話' %>" title="履歴を削除">
-                                            <i class="bi bi-trash"></i> 削除
-                                        </button>
+                                        <% if (canDelete) { %>
+                                            <button class="btn btn-outline-danger btn-sm delete-btn" data-uuid="<%= history.uuid %>" data-name="<%= history.name || '無名の会話' %>" title="履歴を削除">
+                                                <i class="bi bi-trash"></i> 削除
+                                            </button>
+                                        <% } %>
                                     </div>
                                 </div>
                             </div>
