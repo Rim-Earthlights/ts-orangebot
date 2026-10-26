@@ -114,9 +114,21 @@ async function replyChunked(message: Message, content: string) {
  * ChatGPTで会話する
  */
 export async function talk(message: Message, content: string, mode: LiteLLMMode) {
-  const { id, name, isGuild } = getIdInfoMessage(message);
+  const { id } = getIdInfoMessage(message);
   const chatService = createChatService();
   const model = await chatService.resolveUserModel(id);
+  // 同じセッションへの返答は 1 つずつ順に行う
+  await chatService.runExclusive(id, () => talkExclusive(chatService, message, content, mode, model));
+}
+
+async function talkExclusive(
+  chatService: ChatService,
+  message: Message,
+  content: string,
+  mode: LiteLLMMode,
+  model: string
+) {
+  const { id, name, isGuild } = getIdInfoMessage(message);
   const llm = chatService.getOrCreateSession(id, model, mode, isGuild);
   const openai = llm.client;
 
@@ -139,6 +151,10 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
   };
 
   const sendContent = `${JSON.stringify(systemContent)}\n${content}`;
+
+  // 失敗時に今回積んだ発言を巻き戻し、次の発言で再回答されないようにする
+  const base = llm.chat.length;
+  let answered = false;
 
   if (message.attachments.size > 0) {
     const urls = await processAttachments(message);
@@ -219,12 +235,14 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     typing.stop();
 
     if (!completion.content) {
+      llm.chat.splice(base);
       const send = new EmbedBuilder().setColor('#ff0000').setTitle(`エラー`).setDescription(`contentがnull`);
       await message.reply({ embeds: [send] });
       return;
     }
 
     llm.chat.push({ role: ChatRole.ASSISTANT, content: completion.content, ...extractReasoning(completion) });
+    answered = true;
     chatService.touchSession(id);
 
     await replyChunked(message, completion.content);
@@ -257,6 +275,9 @@ export async function talk(message: Message, content: string, mode: LiteLLMMode)
     });
   } catch (e) {
     typing.stop();
+    if (!answered) {
+      llm.chat.splice(base);
+    }
     console.error(e);
     await message.reply(`エラーが発生しました。\n\`\`\`\n${(e as Error).message}\n\`\`\``);
     return;

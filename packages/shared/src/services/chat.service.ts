@@ -26,6 +26,9 @@ export class ChatService {
   /** チャンネル/ギルド単位の会話セッション一覧 */
   static sessions: ChatSession[] = [];
 
+  /** セッション ID ごとの実行待ち行列の末尾 */
+  static locks = new Map<string, Promise<void>>();
+
   constructor(
     private readonly config: ChatLLMConfig,
     private readonly usersRepository: UsersRepositoryLike = new UsersRepository(),
@@ -134,6 +137,28 @@ export class ChatService {
     const session = this.getSession(id);
     if (session) {
       session.timestamp = new Date();
+    }
+  }
+
+  /**
+   * 同じセッション ID の処理を 1 つずつ順に実行する
+   * 応答待ちの間に届いた発言が未回答の発言を含めて送られ、二重に返答するのを防ぐ
+   */
+  async runExclusive<T>(id: string, fn: () => Promise<T>): Promise<T> {
+    const prev = ChatService.locks.get(id) ?? Promise.resolve();
+    const result = prev.then(fn);
+    // 先行処理が失敗しても後続は実行する
+    const tail = result.then(
+      () => undefined,
+      () => undefined
+    );
+    ChatService.locks.set(id, tail);
+    try {
+      return await result;
+    } finally {
+      if (ChatService.locks.get(id) === tail) {
+        ChatService.locks.delete(id);
+      }
     }
   }
 
