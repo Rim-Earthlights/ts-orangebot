@@ -33,13 +33,16 @@ OrangeBot-TS は、Orange Server 向けの多機能 Discord Bot です。TypeScr
 
 `packages/bot/src/app.ts` がメインのエントリーポイントです。起動時に以下を行います:
 
-1. Express サーバーのセットアップ (Helmet, CORS, EJS テンプレート)
-2. TypeORM による MariaDB 接続を開始 (`synchronize: false`、スキーマはマイグレーションで管理)。接続完了後にガチャアイテムをメモリロード
-3. Express の listen 開始
-4. Discord Bot ログイン・イベントハンドラ登録
-5. `ready` イベント内で Cron ジョブの初期化 → スラッシュコマンドの登録
+1. 必須の設定値 (Discord トークン・DB 接続情報など) を確認し、足りなければエラーを出して終了。未処理の Promise reject をログに残して終了するハンドラを登録
+2. Express サーバーのセットアップ (Helmet, CORS, EJS テンプレート)
+3. TypeORM による MariaDB 接続を開始 (`synchronize: false`、スキーマはマイグレーションで管理)。接続完了後にガチャアイテムを DB に投入 (`ItemRepository.init`) してメモリロード
+4. Express の listen 開始
+5. Discord Bot ログイン・イベントハンドラ登録
+6. `ready` イベント内で、API キーの有無による機能切り替え → Cron ジョブの初期化 → ギルドの DB 登録 → ギルドごとに自動削除ルームの掃除とスラッシュコマンドの登録 → DM 用コマンドの登録 → メンバー情報の同期
 
-読み上げ Bot のエントリーポイントは `packages/speak/src/app.ts` です。インスタンス別の JSON 設定 (`src/config/<name>.json`) を引数に取り、Express サーバー起動 → MariaDB 接続 (bot と同一 DB、`synchronize: false`) → Discord ログイン → 読み上げ用スラッシュコマンド登録を行います。インスタンスごとに別の Discord トークン / ポートで複数起動できます (例: lemon=4100, lime=4101)。
+あわせて終了処理 (`SIGTERM` / `SIGINT`) を登録します。順序は [issues.md](issues.md) #11 を参照してください。
+
+読み上げ Bot のエントリーポイントは `packages/speak/src/app.ts` です。インスタンス別の JSON 設定 (`src/config/<name>.json`) を引数に取り、必須の設定値の確認 (`findMissingConfig`。足りなければ終了) → Express サーバー起動 → MariaDB 接続 (bot と同一 DB、`synchronize: false`) → Discord ログイン → ready で Cron ジョブの初期化・COEIROINK の話者 ID 取得・DM 用スラッシュコマンドの登録・在籍メンバーごとの DM チャンネル作成・ギルドごとの読み上げ Bot の登録 (`SpeakerRepository.registerSpeaker`)・読み上げタイマー (100ms ごとの `SpeakService.speak`) の開始を行います (ギルド用コマンドは現在登録していません)。インスタンスごとに別の Discord トークン / ポートで複数起動できます (例: lemon=4100, lime=4101)。
 
 ## モノレポ構成
 
@@ -57,7 +60,7 @@ pnpm workspace を採用しており、以下のパッケージで構成され�
 pnpm build              # 全パッケージをビルド (pnpm -r build, shared → bot/speak の順)
 pnpm clean              # 全パッケージの dist を削除
 pnpm dev                # Bot を nodemon で開発モード起動 (事前に shared のビルドが必要)
-pnpm dev:speak          # 読み上げ Bot を開発モード起動 (src/config/dev.json を使用。事前に shared のビルドが必要)
+pnpm dev:speak          # 読み上げ Bot を開発モード起動 (src/config/dev.json を使用。example.json.template をコピーして作成し、事前に shared をビルドしておく)
 pnpm lint               # 全パッケージに対して ESLint
 pnpm smoke-test         # Bot の起動疎通確認 (事前に shared のビルドが必要)
 pnpm test               # ユニットテスト (vitest)。現状テストがあるのは shared のみ (bot は passWithNoTests、speak は test スクリプトなし)
@@ -100,7 +103,7 @@ pnpm --filter @orangebot/speak build                          # ビルド
 pnpm --filter @orangebot/speak start src/config/<name>.json   # インスタンス別設定で起動
 ```
 
-shared パッケージのマイグレーション CLI (Phase 2-1 以降に本格運用):
+shared パッケージのマイグレーション CLI:
 
 ```bash
 pnpm --filter @orangebot/shared migration:show      # 適用済み/未適用の一覧

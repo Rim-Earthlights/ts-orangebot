@@ -15,18 +15,18 @@ packages/
 
 ```
 packages/shared/src/
-├── config/         # createDataSource ファクトリ + getDataSource アクセサ
+├── config/         # createDataSource ファクトリ + getDataSource アクセサ / entities.ts (SHARED_ENTITIES)
 ├── models/         # 17 個の TypeORM エンティティ
 ├── repository/     # 13 個のリポジトリ (Logger は LoggerPort 経由で注入)
 ├── migrations/     # TypeORM マイグレーション (Phase 2-1 以降で synchronize: false に切替)
 ├── services/       # Discord 非依存のサービス層 (Chat / Dice / Gacha / Music / Photo / Room / User の 7 個)
-├── utils/          # chatHistory.ts / typing.ts (startTyping: LLM 応答待ち中に 8 秒ごと sendTyping を再送)
+├── utils/          # chatHistory.ts / typing.ts (startTyping: LLM 応答待ち中に 8 秒ごと sendTyping を再送) / reasoning.ts (思考ブロックの抽出) / splitMessage.ts (Discord の 2000 字制限に合わせた分割)
 ├── constants/      # dice.ts / gacha.ts
-├── common/         # random.ts
+├── common/         # random.ts / http.ts (isLocalRequest: 同じマシン上からのリクエスト判定、closeHttpServer) / process.ts (logError・exitOnError・withErrorLog・findMissingConfig・registerGracefulShutdown 等の起動・終了処理)
 └── types/          # chat / gacha / log (LogData / LogLevel / LoggerPort) / music (MusicAddItem DTO) / user
 ```
 
-これらはすべて `packages/shared/src/index.ts` から再エクスポートされる。
+migrations 以外は `packages/shared/src/index.ts` から再エクスポートされる (migrations はマイグレーション CLI と統合テストから直接読み込む)。
 
 bot / speak は `@orangebot/shared` 経由でこれらにアクセスし、起動時に `createDataSource(...)` で DataSource を初期化する。`packages/bot/src/common/logger.ts` がモジュール読み込み時に `setLogger()` で自身を shared に登録するため、shared 内のリポジトリから `getLogger().put(...)` で bot 側 Logger を呼び出せる。
 
@@ -43,10 +43,10 @@ packages/speak/src/
 │   ├── dot_function/         # chat / room / speak のビジネスロジック
 │   ├── function/             # スラッシュコマンド向けロジック
 │   └── service/              # chatService (LLM セッション) / speakService (音声合成・再生)
-├── controllers/              # speak.controller (bot から呼ばれる HTTP API)
+├── controllers/              # speak.controller (bot から呼ばれる HTTP API) / middleware/localOnly.ts
 ├── config/                   # config.template.ts (DB/LiteLLM 共通) + api.ts (音声合成エンジンの接続先解決) + example.json.template (インスタンス別 JSON の雛形。例: lemon.json / lime.json、gitignore 対象)
 ├── common/                   # logger / webWrapper / VOICEVOX・COEIROINK のスピーカー ID 解決
-├── constant/                 # 定数 (DISCORD_CLIENT、キャラクターのシステムプロンプト CHATBOT_LEMON_TEMPLATE / CHATBOT_LIME_TEMPLATE) / voiceType.ts
+├── constant/                 # 定数 (DISCORD_CLIENT、キャラクターのシステムプロンプト CHATBOT_LEMON_TEMPLATE / CHATBOT_LIME_TEMPLATE)
 ├── interface/                # 音声合成 API のレスポンス型
 ├── type/                     # 型定義
 └── job/                      # Cron ジョブ (アイドル LLM セッションの破棄)
@@ -56,11 +56,13 @@ speak の LLM チャット (`bot/dot_function/chat.ts`) も shared の `startTyp
 
 bot → speak の HTTP API (`controllers/speak.controller.ts`):
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| GET | `/speaker/status/:guildId` | 読み上げ Bot の使用状況を取得 |
-| POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す |
-| POST | `/speaker/discon` | 読み上げ Bot を切断する |
+| メソッド | パス | 説明 | 接続元 |
+|---|---|---|---|
+| GET | `/speaker/status/:guildId` | 読み上げ Bot の使用状況を取得 | 制限なし |
+| POST | `/speaker/call` | ボイスチャンネルに読み上げ Bot を呼び出す | 同じマシン上のみ |
+| POST | `/speaker/discon` | 読み上げ Bot を切断する | 同じマシン上のみ |
+
+「同じマシン上のみ」のエンドポイントには `localOnly` ミドルウェアが付いており、ループバック以外からのリクエストや、`X-Forwarded-For` などリバースプロキシのヘッダが付いたリクエストを 403 にする (認証を入れるまでの暫定措置)。
 
 使用状況は shared の `SpeakerRepository` (speaker テーブル) で guild × bot ユーザー単位に管理される。音声合成エンジンの接続先は bot / speak それぞれの `config/api.ts` で解決する。`config.ts` の `API.VOICEVOX` / `API.COEIROINK` を参照し、`API` が未設定 (既存の config.ts など) の場合は `127.0.0.1:50021` / `127.0.0.1:50022` にフォールバックする (末尾の `/` は除去)。
 
@@ -71,7 +73,6 @@ bot → speak の HTTP API (`controllers/speak.controller.ts`):
 ```
 packages/bot/src/
 ├── app.ts                    # エントリーポイント (Express + Discord Bot)
-├── auth.ts                   # 認証モジュール
 ├── routers.ts                # Express ルーター集約
 │
 ├── bot/                      # Bot コアロジック
@@ -114,18 +115,16 @@ packages/bot/src/
 │   │
 │   ├── request/              # 外部 API クライアント
 │   │   ├── innertube.ts      # youtubei.js (Innertube) — 音楽再生用ストリーム取得
-│   │   ├── youtube.ts        # YouTube Data API
-│   │   ├── openai.ts         # (空ファイル。未使用)
-│   │   └── spotify.ts        # (空ファイル。未使用)
+│   │   └── youtube.ts        # YouTube Data API (プレイリストの曲一覧取得)
 │   │
 │   ├── function/             # スラッシュコマンド向けロジック (chat / dice / dict / gacha / room / speak / vchat※仮実装)
 │   ├── utils/                # 補助ユーティリティ (roomName.ts, gameSelect.ts: ルーム作成時の「ゲームの選択」メッセージ, memberAccept.ts: ルール同意リアクションと /accept 共通のロール付与・ユーザー登録)
 │   ├── reactions.ts          # リアクション処理
 │   └── mention.ts            # メンションロジック
 │
-├── controller/               # Express ルートハンドラ (8 ルーター。spotifyRouter は routers.ts に未登録)
+├── controller/               # Express ルートハンドラ (7 ルーター。すべて routers.ts に登録) / middleware/localOnly.ts・lanOnly.ts
 ├── config/                   # config.template.ts (→ config.ts) / api.ts (音声合成エンジンの接続先解決)
-├── constant/                 # 定数・定義 (slashCommands.ts、ヘルプ文言、システムプロンプト CHATBOT_TEMPLATE 等)
+├── constant/                 # 定数・定義 (slashCommands.ts、ヘルプ文言、システムプロンプト CHATBOT_TEMPLATE 等。chat/ gacha/ music/ words/ youtube/ のサブディレクトリあり)
 ├── job/                      # Cron ジョブ
 ├── common/                   # 共通ユーティリティ (logger.ts は shared に setLogger 登録)
 ├── service/                  # 追加サービス
@@ -191,7 +190,7 @@ packages/bot/src/
 ### Repository パターン
 - データアクセスはリポジトリ経由で抽象化
 - 各エンティティに対応するリポジトリが存在
-- ソフトデリート対応 (`deleted_at` カラム)
+- 多くのエンティティはソフトデリート対応 (`deleted_at` カラム)。music / music_info / playlist / speaker / timer は物理削除
 
 ### Manager パターン
 - `MessageManager` / `InteractionManager` が Map ベースでハンドラを管理
@@ -202,16 +201,17 @@ packages/bot/src/
 | サービス | 用途 | 設定キー |
 |---|---|---|
 | LiteLLM (openai SDK) | AI チャット (複数モデル対応) | `LITELLM.KEY`, `LITELLM.BASE_URL`, `LITELLM.DEFAULT_MODEL` / `LOW_MODEL` / `HIGH_MODEL` (旧 `OPENAI.*`) |
+| OpenAI (openai SDK、LiteLLM を経由しない) | `.speech` のテキスト読み上げ (`tts-1`。`chat.adapter.ts` の `speech()`) | `LITELLM.KEY`, `LITELLM.ORG`, `LITELLM.PROJECT` |
 | YouTube (Innertube / youtubei.js) | 音楽再生のストリーム取得・検索 | `YOUTUBE.COOKIE` (ログイン Cookie, 任意) |
-| YouTube Data API | プレイリスト取得・検索 | `YOUTUBE.KEY` |
+| YouTube Data API | プレイリストの曲一覧取得 | `YOUTUBE.KEY` |
 | OpenWeatherMap | 天気予報 | `FORECAST.KEY` |
-| Spotify | 歌詞連携・OAuth | Spotify OAuth 設定 |
+| 歌ネット (uta-net.com) | `/lyrics` の歌詞取得 (スクレイピング)。曲名を省略すると Discord の「再生中」アクティビティから取る | なし |
 | VOICEVOX / COEIROINK | テキスト読み上げ (音声合成) | `API.VOICEVOX`, `API.COEIROINK` (既定: `127.0.0.1:50021`, `127.0.0.1:50022`) |
 | Rust ゲームサーバー (rcon) | `/rust whitelist add\|revoke` で whitelist を管理 (`rust.handler.ts` が `rcon` CLI を `execFile` で実行) | `~/rcon.yaml` (rcon CLI の設定ファイル) |
 
 ## ボイスチャンネルの E2EE (DAVE)
 
-Discord のボイスチャンネル E2EE (DAVE プロトコル) には `@discordjs/voice` v0.19 + `@snazzah/davey` で対応している (bot の音楽再生・speak の読み上げ共通)。音楽再生はかつての play-dl / ytdl-core / discord-player-plus から youtubei.js (Innertube) に移行済み。
+Discord のボイスチャンネル E2EE (DAVE プロトコル) には `@discordjs/voice` v0.19 (依存する `@snazzah/davey` を使用) で対応している (bot の音楽再生・speak の読み上げ共通)。音楽再生はかつての play-dl / ytdl-core / discord-player-plus から youtubei.js (Innertube) に移行済み。
 
 ## AI チャットのシステムプロンプト
 

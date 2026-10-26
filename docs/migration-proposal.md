@@ -4,8 +4,10 @@
 > - **Phase 1 (モノレポ基盤構築): 完了** — 1-1 〜 1-4 すべて完了。詳細は「4. 移行フェーズ」の Phase 1 節を参照
 > - **計画外の追加: `packages/speak` (2026-06)** — 別リポジトリだった speak-voicevox を読み上げ Bot として monorepo に統合。DB 層は `@orangebot/shared` を再利用し、bot からは HTTP (`/speaker/call` 等) で呼び出す。本提案の Phase 構成には影響しない
 > - **計画外の追加: TTS エンジンのコンテナ化 (2026-10)** — VOICEVOX / COEIROINK を podman Quadlet (`containers/quadlet/`) で systemd ユーザーサービスとして起動 (`pnpm tts:up`)。Phase 5 の Docker Compose 開発環境とは別物
-> - **Phase 2 (サービス層の整備): サービス切り出しは完了、一部の付帯項目は未着手** — 2-1 〜 2-3 のサービス切り出し・アダプター層・テストは完了 (shared のテスト: unit 98件 + integration 16件)。一方、Phase 2 で対応するとしていた「DB 同時アクセスの排他制御」と「エラー型の共通化」(6章) は未着手。bot 側のテストも 0 件
-> - **Phase 3 〜 5: 未着手** — `packages/api` / `packages/front` / `docker-compose.yml` / CI (`.github/`) はいずれも未作成
+> - **計画外の追加: bot / speak の systemd user unit (2026-10)** — `systemd/orangebot-bot.service` / `orangebot-speak@.service` (`Restart=always`) で常駐させる。詳細は `systemd/README.md`
+> - **Phase 2 (サービス層の整備): サービス切り出しは完了、一部の付帯項目は未着手** — 2-1 〜 2-3 のサービス切り出し・アダプター層・テストは完了 (shared のテスト: unit 136件 + integration 16件)。一方、Phase 2 で対応するとしていた「DB 同時アクセスの排他制御」と「エラー型の共通化」(6章) は未着手。bot 側のテストも 0 件
+> - **Phase 3・4: 未着手** — `packages/api` / `packages/front` は未作成
+> - **Phase 5: 一部完了** — グレースフルシャットダウン、CI (`.github/workflows/ci.yml` で build / lint / unit / integration。deploy は無し)、`synchronize: false` は完了。Docker Compose (`docker-compose.yml`)・旧 Express 層の除去・構造化ログ・環境別設定は未着手
 >
 > 次の作業は Phase 2 の残項目の消化、または Phase 3 (API サーバー新設)。
 
@@ -20,7 +22,7 @@ OrangeBot-TS は Discord Bot 単体として動作しており、Express サー�
 - HTTP エンドポイントに認証がない
 - ビジネスロジックが Discord.js と密結合しており、Web からの再利用が困難 (Phase 2-3 のサービス/アダプター層整備で大幅に緩和)
 - ~~サービス層が未整備~~ → Phase 2 で `@orangebot/shared` の `services/` に 7 サービスを整備済み
-- ~~テストがゼロ~~ → Phase 2-1 で Vitest を導入済み (ユニット + インテグレーション)。ただしテストはほぼ shared のみで、bot は 3 件、speak は 0 件
+- ~~テストがゼロ~~ → Phase 2-1 で Vitest を導入済み (ユニット + インテグレーション)。ただしテストは shared のみで、bot / speak は 0 件
 - Express コントローラが EJS テンプレートに直結し、API として使えない
 
 ### 目的
@@ -278,11 +280,11 @@ GET    /api/rooms/:guildId
    - `packages/bot` から EJS テンプレート・旧コントローラを削除
    - Bot は Discord イベント処理のみに専念
 3. 構造化ログの統一 (全パッケージで共通)
-4. グレースフルシャットダウン実装
+4. グレースフルシャットダウン実装 ✅ 完了 (`registerGracefulShutdown`。`docs/issues.md` #11)
 5. CI/CD パイプライン
-   - lint → test → build → deploy
+   - lint → test → build → deploy (deploy 以外は ✅ 完了。`.github/workflows/ci.yml`)
 6. 環境別設定 (`NODE_ENV` による切り替え)
-   - `synchronize: false` (本番)
+   - `synchronize: false` (本番) ✅ 完了 (Phase 2-1。既定値が false)
    - CORS オリジン制限
    - ログレベル制御
 
